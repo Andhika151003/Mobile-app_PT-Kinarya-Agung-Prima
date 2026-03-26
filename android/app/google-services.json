@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "915430780308",
+    "project_id": "e-commerce-pt-kinarya",
+    "storage_bucket": "e-commerce-pt-kinarya.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:915430780308:android:e32e9a9f15b1831812b381",
+        "android_client_info": {
+          "package_name": "com.kinaryamobile.ecommerce"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJJ1ACDiYs8oheSYLjCaknqIytb2jE8gk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
