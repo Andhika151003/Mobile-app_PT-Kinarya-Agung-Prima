@@ -115,7 +115,7 @@ class _LoginViewState extends State<LoginView> {
 
                     // ==================== EMAIL FIELD ====================
                     const Text(
-                      'Email',  // ← SUDAH DIGANTI DARI "Username"
+                      'Email',  
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,

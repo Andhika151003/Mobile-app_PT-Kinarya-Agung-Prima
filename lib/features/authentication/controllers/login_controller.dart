@@ -63,11 +63,11 @@ class LoginController extends ChangeNotifier {
       // 3. Buat objek Retailer dari data Firestore
       final retailer = Retailer(
         id: userCredential.user!.uid,
-        fullName: data['fullName'] ?? '',
+        fullName: data['fullName'] ?? 'Admin',
         email: data['email'] ?? '',
         password: '', 
-        phoneNumber: data['phoneNumber'] ?? '',
-        address: data['address'] ?? '',
+        phoneNumber: data['phoneNumber'] ?? '-',
+        address: data['address'] ?? '-',
         role: data['role'] ?? 'retailer',
         createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );
@@ -122,4 +122,4 @@ class LoginController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
-}
+} 
