@@ -13,6 +13,8 @@ class LoginController extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  bool _isDisposed = false;
+
   // Validasi untuk field "Username" (diisi email)
   String? validateEmailInput(String? value) {
     if (value == null || value.isEmpty) {
@@ -109,17 +111,29 @@ class LoginController extends ChangeNotifier {
   }
 
   void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
+    if (!_isDisposed) {
+      _isLoading = value;
+      notifyListeners();
+    }
   }
 
   void _setError(String? message) {
-    _errorMessage = message;
-    notifyListeners();
+    if (!_isDisposed) {
+      _errorMessage = message;
+      notifyListeners();
+    }
   }
 
   void _clearError() {
-    _errorMessage = null;
-    notifyListeners();
+    if (!_isDisposed) {
+      _errorMessage = null;
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 } 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/register_controller.dart';
 import 'login_view.dart';
+import '../../shared/main_navigation_user.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -66,8 +67,13 @@ class _RegisterViewState extends State<RegisterView> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context);
-                    _resetForm();
+                    Navigator.pop(context); 
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MainNavigationUser(),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
@@ -92,16 +98,6 @@ class _RegisterViewState extends State<RegisterView> {
         ),
       ),
     );
-  }
-
-  void _resetForm() {
-    _emailController.clear();
-    _fullNameController.clear();
-    _phoneController.clear();
-    _addressController.clear();
-    _passwordController.clear();
-    _confirmPasswordController.clear();
-    _formKey.currentState?.reset();
   }
 
   Future<void> _handleRegister(RegisterController controller) async {
@@ -136,7 +132,6 @@ class _RegisterViewState extends State<RegisterView> {
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          // HAPUS TOMBOL BACK
           automaticallyImplyLeading: false,
         ),
         body: Consumer<RegisterController>(

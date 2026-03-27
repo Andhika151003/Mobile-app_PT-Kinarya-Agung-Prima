@@ -1,8 +1,10 @@
+import 'package:ecommerce/features/shared/main_navigation_admin.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/login_controller.dart';
+import '../../shared/main_navigation_user.dart';
+import '../../shared/main_navigation_cs.dart';
 import 'register_view.dart';
-import 'home_screen.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -27,20 +29,28 @@ class _LoginViewState extends State<LoginView> {
       );
 
       if (user != null && mounted) {
-        String route;
+        
+        Widget mainView;
+
         switch (user.role) {
           case 'admin':
-            route = '/admin_dashboard';
+            mainView = const MainNavigationAdmin();
             break;
+          case 'cs':
           case 'customer_support':
-            route = '/cs_dashboard';
+            mainView = const MainNavigationCs();
             break;
           default:
-            route = '/home';
+            mainView = const MainNavigationUser();
         }
 
-        Navigator.pushReplacementNamed(context, route);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => mainView),
+        );
+
       } else if (mounted && controller.errorMessage != null) {
+        // Jika Login Gagal
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(controller.errorMessage!),
@@ -115,7 +125,7 @@ class _LoginViewState extends State<LoginView> {
 
                     // ==================== EMAIL FIELD ====================
                     const Text(
-                      'Email',  
+                      'Email',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -286,7 +296,7 @@ class _LoginViewState extends State<LoginView> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const RegisterView(),
+                                builder: (context) => const RegisterView(), 
                               ),
                             );
                           },

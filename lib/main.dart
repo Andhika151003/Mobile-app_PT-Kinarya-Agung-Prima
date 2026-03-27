@@ -30,9 +30,20 @@
 //   }
 // }
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+// Import file AuthGate yang baru dibuat
+import 'features/authentication/views/auth_gate.dart'; 
+
+// Import Admin Master View untuk referensi (opsional)
 import 'features/admin/view/admin_master_view.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -42,14 +53,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kinarya Agung Prima',
+      debugShowCheckedModeBanner: false,
+      title: 'E-Commerce App',
       theme: ThemeData(
         primarySwatch: Colors.green,
-        useMaterial3: true,
         fontFamily: 'Inter',
+        useMaterial3: true,
       ),
-      home: const AdminMasterView(),
-      debugShowCheckedModeBanner: false,
+      home: const AuthGate(), // AuthGate akan menentukan halaman berdasarkan status login
     );
   }
 }
