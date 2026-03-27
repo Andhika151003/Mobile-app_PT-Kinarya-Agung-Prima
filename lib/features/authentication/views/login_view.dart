@@ -61,7 +61,6 @@ class _LoginViewState extends State<LoginView> {
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          // HAPUS TOMBOL BACK
           automaticallyImplyLeading: false,
         ),
         body: Consumer<LoginController>(
@@ -71,9 +70,9 @@ class _LoginViewState extends State<LoginView> {
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, // ← KIRI
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Logo di tengah (tetap)
+                    // Logo
                     Center(
                       child: Image.asset(
                         'assets/images/logo.png',
@@ -84,7 +83,7 @@ class _LoginViewState extends State<LoginView> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Title di tengah
+                    // Title
                     const Center(
                       child: Text(
                         'Welcome Back',
@@ -99,7 +98,7 @@ class _LoginViewState extends State<LoginView> {
                     ),
                     const SizedBox(height: 8),
 
-                    // Subtitle di tengah
+                    // Subtitle
                     Center(
                       child: Text(
                         'Sign in to continue to your account',
@@ -114,9 +113,9 @@ class _LoginViewState extends State<LoginView> {
                     ),
                     const SizedBox(height: 32),
 
-                    // ==================== USERNAME FIELD (LABEL DI KIRI) ====================
+                    // ==================== EMAIL FIELD ====================
                     const Text(
-                      'Username',
+                      'Email',  // ← SUDAH DIGANTI DARI "Username"
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -153,7 +152,7 @@ class _LoginViewState extends State<LoginView> {
                       ),
                     const SizedBox(height: 20),
 
-                    // ==================== PASSWORD FIELD (LABEL DI KIRI) ====================
+                    // ==================== PASSWORD FIELD ====================
                     const Text(
                       'Password',
                       style: TextStyle(
@@ -204,7 +203,7 @@ class _LoginViewState extends State<LoginView> {
                       ),
                     const SizedBox(height: 12),
 
-                    // Forgot Password (di kanan)
+                    // Forgot Password
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -268,7 +267,7 @@ class _LoginViewState extends State<LoginView> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Sign Up Link (di tengah)
+                    // Sign Up Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

@@ -1,22 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/retailer.dart';
-import '../services/seed_data.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegisterController extends ChangeNotifier {
-  static final List<Retailer> _tempRetailers = [];
-  static bool _seeded = false;
-
-  static List<Retailer> get tempRetailers {
-    _ensureSeeded();
-    return _tempRetailers;
-  }
-
-  static void _ensureSeeded() {
-    if (!_seeded) {
-      SeedData.seedInitialData(_tempRetailers);
-      _seeded = true;
-    }
-  }
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -43,9 +31,6 @@ class RegisterController extends ChangeNotifier {
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
       return 'Please enter a valid email address';
-    }
-    if (isEmailRegistered(value)) {
-      return 'Email already registered';
     }
     return null;
   }
@@ -91,12 +76,7 @@ class RegisterController extends ChangeNotifier {
     return null;
   }
 
-  // ==================== BUSINESS LOGIC ====================
-
-  bool isEmailRegistered(String email) {
-    _ensureSeeded();
-    return _tempRetailers.any((retailer) => retailer.email == email);
-  }
+  // ==================== REGISTER WITH FIREBASE ====================
 
   Future<bool> register({
     required String fullName,
@@ -109,40 +89,48 @@ class RegisterController extends ChangeNotifier {
     _clearError();
 
     try {
-      await Future.delayed(const Duration(seconds: 1));
-
-      final tempId = DateTime.now().millisecondsSinceEpoch.toString();
-
-      final newRetailer = Retailer(
-        id: tempId,
-        fullName: fullName.trim(),
+      // 1. Buat user di Firebase Authentication
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
-        phoneNumber: phoneNumber.trim(),
-        address: address.trim(),
         password: password,
-        role: 'retailer',
-        createdAt: DateTime.now(),
       );
 
-      _tempRetailers.add(newRetailer);
+      // 2. Simpan data user ke Firestore
+      await _firestore.collection('users').doc(userCredential.user!.uid).set({
+        'uid': userCredential.user!.uid,
+        'fullName': fullName.trim(),
+        'email': email.trim(),
+        'phoneNumber': phoneNumber.trim(),
+        'address': address.trim(),
+        'role': 'retailer', // Hanya retailer yang bisa registrasi
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
       _setLoading(false);
       return true;
+    } on FirebaseAuthException catch (e) {
+      String message;
+      switch (e.code) {
+        case 'email-already-in-use':
+          message = 'Email already registered';
+          break;
+        case 'invalid-email':
+          message = 'Please enter a valid email address';
+          break;
+        case 'weak-password':
+          message = 'Password must be at least 8 characters';
+          break;
+        default:
+          message = 'Registration failed: ${e.message}';
+      }
+      _setError(message);
+      _setLoading(false);
+      return false;
     } catch (e) {
-      _setError('Registrasi gagal: ${e.toString()}');
+      _setError('Registration failed: ${e.toString()}');
       _setLoading(false);
       return false;
     }
-  }
-
-  static List<Retailer> getAllUsers() {
-    _ensureSeeded();
-    return _tempRetailers;
-  }
-
-  static void clearTempUsers() {
-    _tempRetailers.clear();
-    _seeded = false;
   }
 
   void _setLoading(bool value) {

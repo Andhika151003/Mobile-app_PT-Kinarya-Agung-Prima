@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'features/authentication/views/register_view.dart';
-import 'features/authentication/views/login_view.dart';
-import 'features/authentication/views/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Sementara matikan Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -19,12 +24,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Inter',
       ),
-      // Langsung ke RegisterView
       home: const RegisterView(),
-      routes: {
-        '/login': (context) => const LoginView(),
-        '/home': (context) => const HomeScreen(),
-      },
       debugShowCheckedModeBanner: false,
     );
   }

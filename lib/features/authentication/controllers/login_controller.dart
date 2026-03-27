@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/retailer.dart';
-import 'register_controller.dart';
 
 class LoginController extends ChangeNotifier {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  List<Retailer> get _users => RegisterController.tempRetailers;
-
-  // Validasi untuk field "Username" (sebenarnya diisi email)
+  // Validasi untuk field "Username" (diisi email)
   String? validateEmailInput(String? value) {
     if (value == null || value.isEmpty) {
       return 'Email is required';
     }
-    // Validasi format email sederhana
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
       return 'Please enter a valid email address';
@@ -31,6 +32,8 @@ class LoginController extends ChangeNotifier {
     return null;
   }
 
+  // ==================== LOGIN WITH FIREBASE ====================
+
   Future<Retailer?> login({
     required String email,
     required String password,
@@ -39,26 +42,70 @@ class LoginController extends ChangeNotifier {
     _clearError();
 
     try {
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Cari user berdasarkan email
-      final user = _users.firstWhere(
-        (user) => user.email == email,
-        orElse: () => throw Exception('Email not found'),
+      // 1. Login ke Firebase Authentication
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
       );
 
-      // Validasi password
-      if (user.password != password) {
-        throw Exception('Incorrect password');
+      // 2. Ambil data user dari Firestore
+      final docSnapshot = await _firestore
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (!docSnapshot.exists) {
+        throw Exception('User data not found');
       }
 
+      final data = docSnapshot.data()!;
+      
+      // 3. Buat objek Retailer dari data Firestore
+      final retailer = Retailer(
+        id: userCredential.user!.uid,
+        fullName: data['fullName'] ?? '',
+        email: data['email'] ?? '',
+        password: '', 
+        phoneNumber: data['phoneNumber'] ?? '',
+        address: data['address'] ?? '',
+        role: data['role'] ?? 'retailer',
+        createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      );
+
       _setLoading(false);
-      return user;
+      return retailer;
+    } on FirebaseAuthException catch (e) {
+      String message;
+      switch (e.code) {
+        case 'user-not-found':
+          message = 'Email not found';
+          break;
+        case 'wrong-password':
+          message = 'Incorrect password';
+          break;
+        case 'invalid-email':
+          message = 'Please enter a valid email address';
+          break;
+        case 'user-disabled':
+          message = 'This account has been disabled';
+          break;
+        default:
+          message = 'Login failed: ${e.message}';
+      }
+      _setError(message);
+      _setLoading(false);
+      return null;
     } catch (e) {
-      _setError(e.toString());
+      _setError('Login failed: ${e.toString()}');
       _setLoading(false);
       return null;
     }
+  }
+
+  // ==================== LOGOUT ====================
+
+  Future<void> logout() async {
+    await _auth.signOut();
   }
 
   void _setLoading(bool value) {
