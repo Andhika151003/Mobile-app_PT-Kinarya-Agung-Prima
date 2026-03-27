@@ -1,77 +1,133 @@
 import 'package:flutter/material.dart';
+import '../controllers/dashboard_cs_controller.dart';
 
-class DashboardCsView extends StatelessWidget {
+class DashboardCsView extends StatefulWidget {
   const DashboardCsView({super.key});
+
+  @override
+  State<DashboardCsView> createState() => _DashboardCsViewState();
+}
+
+class _DashboardCsViewState extends State<DashboardCsView> {
+  final DashboardCsController _controller = DashboardCsController();
+
+  int openComplaints = 0;
+  int resolvedToday = 0;
+  List<Map<String, dynamic>> recentComplaints = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      final stats = await _controller.getComplaintStats();
+      final complaints = await _controller.getRecentComplaints();
+
+      if (mounted) {
+        setState(() {
+          openComplaints = stats['openComplaints'] ?? 0;
+          resolvedToday = stats['resolvedToday'] ?? 0;
+          recentComplaints = complaints;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading CS dashboard data: $e');
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Logo Section
-              Image.asset(
-                'assets/logo.png',
-                height: 36,
-                fit: BoxFit.contain,
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF458833)),
               ),
-              const SizedBox(height: 30),
-              
-              // 2. Greeting
-              const Text(
-                'Welcome CS!',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+            )
+          : SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Image.asset(
+                      'assets/images/logo.png',
+                      height: 36,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 30),
+
+                    const Text(
+                      'Welcome CS!',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Stats Cards
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            'Open Complaints',
+                            openComplaints.toString(),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildStatCard(
+                            'Resolved Today',
+                            resolvedToday.toString(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+
+                    const Text(
+                      'Recent Complaints',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Complaints List
+                    if (recentComplaints.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: Text('No recent complaints'),
+                        ),
+                      )
+                    else
+                      ...recentComplaints.map((complaint) => Column(
+                            children: [
+                              _buildComplaintCard(
+                                timeAgo: complaint['timeAgo'],
+                                title: complaint['title'],
+                                description: complaint['description'],
+                                storeName: complaint['storeName'],
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                          )),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-              
-              // 3. Stats Cards
-              Row(
-                children: [
-                  Expanded(child: _buildStatCard('Open Complaints', '24')),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildStatCard('Resolved Today', '18')),
-                ],
-              ),
-              const SizedBox(height: 32),
-              
-              // 4. Section Title
-              const Text(
-                'Recent Complaints',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // 5. Complaints List Dummy
-              _buildComplaintCard(
-                timeAgo: '2h ago',
-                title: 'Wrong Product Delivery',
-                description: "Order #5780 - Product received doesn't\nmatch order specifications",
-                storeName: 'Fresh Food Market',
-              ),
-              const SizedBox(height: 16),
-              _buildComplaintCard(
-                timeAgo: '3h ago',
-                title: 'Delayed Delivery',
-                description: 'Order #5781 - Delivery taking longer\nthan estimated time',
-                storeName: 'City Convenince', 
-              ),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+            ),
     );
   }
 
@@ -191,43 +247,6 @@ class DashboardCsView extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: Colors.black87,
-      unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true,
-      selectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-      unselectedLabelStyle: const TextStyle(fontSize: 12),
-      currentIndex: 0,
-      items: [
-        BottomNavigationBarItem(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.home_outlined, color: Color(0xFF1B8A3A)),
-          ),
-          label: 'Home',
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.shopping_bag_outlined), 
-          label: 'Orders'
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.support_agent_outlined),
-          label: 'Supports'
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline), 
-          label: 'Profile'
-        ),
-      ],
     );
   }
 }

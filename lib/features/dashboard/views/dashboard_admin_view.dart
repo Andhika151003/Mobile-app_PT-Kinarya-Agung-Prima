@@ -1,49 +1,88 @@
 import 'package:flutter/material.dart';
+import '../../authentication/views/profile_admin_view.dart';
+import '../controllers/dashboard_admin_controller.dart';
 
-class DashboardUserView extends StatefulWidget {
-  const DashboardUserView({Key? key}) : super(key: key);
+class DashboardAdminView extends StatefulWidget {
+  const DashboardAdminView({super.key});
 
   @override
-  State<DashboardUserView> createState() => _DashboardUserViewState();
+  State<DashboardAdminView> createState() => _DashboardAdminViewState();
 }
 
-class _DashboardUserViewState extends State<DashboardUserView> {
-  int _selectedIndex = 0;
+class _DashboardAdminViewState extends State<DashboardAdminView> {
+  final DashboardAdminController _controller = DashboardAdminController();
 
+  // State untuk overview stats
+  Map<String, dynamic> overviewStats = {};
+  List<Map<String, dynamic>> promotions = [];
+  List<Map<String, dynamic>> retailers = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      final stats = await _controller.getOverviewStats();
+      final proms = await _controller.getPromotions();
+      final retails = await _controller.getRetailers();
+
+      if (mounted) {
+        setState(() {
+          overviewStats = stats;
+          promotions = proms;
+          retailers = retails;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading admin dashboard data: $e');
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 30),
-                const Text(
-                  'Overview',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B8A3A)),
+              ),
+            )
+          : SafeArea(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0, vertical: 10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 30),
+                      const Text(
+                        'Overview',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 15),
+                      _buildOverviewCards(),
+                      const SizedBox(height: 30),
+                      _buildSectionHeader('Active Promotions', '+ New Promo'),
+                      const SizedBox(height: 15),
+                      _buildPromoList(),
+                      const SizedBox(height: 30),
+                      _buildSectionHeader('My Retailers', 'View All'),
+                      const SizedBox(height: 15),
+                      _buildRetailerList(),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 15),
-                _buildOverviewCards(),
-                const SizedBox(height: 30),
-                _buildSectionHeader('Active Promotions', '+ New Promo'),
-                const SizedBox(height: 15),
-                _buildPromoList(),
-                const SizedBox(height: 30),
-                _buildSectionHeader('My Retailers', 'View All'),
-                const SizedBox(height: 15),
-                _buildRetailerList(),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -53,20 +92,29 @@ class _DashboardUserViewState extends State<DashboardUserView> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Image.asset(
-          'assets/logo.png',
+          'assets/images/logo.png',
           height: 35,
         ),
         Row(
-          children: const [
-            Icon(Icons.chat_bubble_outline, color: Colors.black87),
-            SizedBox(width: 20),
-            Icon(Icons.person_outline, color: Colors.black87),
+          children: [
+            const Icon(Icons.chat_bubble_outline, color: Colors.black87),
+            const SizedBox(width: 10),
+            IconButton(
+              icon: const Icon(Icons.person_outline, color: Colors.black87),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileAdminView(), 
+                  ),
+                );
+              },
+            ),
           ],
         )
       ],
     );
   }
-
   // --- WIDGET OVERVIEW CARDS ---
   Widget _buildOverviewCards() {
     return Column(
@@ -76,8 +124,8 @@ class _DashboardUserViewState extends State<DashboardUserView> {
             Expanded(
               child: _buildSingleCard(
                 title: 'Total Sales',
-                value: '\$10,000',
-                subtitle: '+20%',
+                value: overviewStats['totalSales'] ?? '\$0',
+                subtitle: overviewStats['salesChange'] ?? '+0%',
                 subtitleColor: Colors.green,
                 icon: Icons.attach_money,
                 iconColor: Colors.blue,
@@ -87,8 +135,8 @@ class _DashboardUserViewState extends State<DashboardUserView> {
             Expanded(
               child: _buildSingleCard(
                 title: 'Orders',
-                value: '\$10,000',
-                subtitle: '+8.2%',
+                value: '${overviewStats['totalOrders'] ?? 0}',
+                subtitle: overviewStats['ordersChange'] ?? '+0%',
                 subtitleColor: Colors.green,
                 icon: Icons.shopping_basket_outlined,
                 iconColor: Colors.green,
@@ -101,23 +149,23 @@ class _DashboardUserViewState extends State<DashboardUserView> {
           children: [
             Expanded(
               child: _buildSingleCard(
-                title: 'Active Promos',
-                value: '8',
-                subtitle: '3 ending soon',
+                title: 'Total Customers',
+                value: '${overviewStats['totalCustomers'] ?? 0}',
+                subtitle: overviewStats['customersChange'] ?? '+0%',
                 subtitleColor: Colors.orange,
-                icon: Icons.card_giftcard,
-                iconColor: Colors.orange,
+                icon: Icons.people_outline,
+                iconColor: Colors.teal,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _buildSingleCard(
-                title: 'Retailer Member',
-                value: '+2',
-                subtitle: 'new 2 member',
-                subtitleColor: Colors.orange,
-                icon: Icons.people_outline,
-                iconColor: Colors.teal,
+                title: 'Conversion Rate',
+                value: '${overviewStats['conversionRate'] ?? 0}%',
+                subtitle: overviewStats['conversionChange'] ?? '+0%',
+                subtitleColor: Colors.green,
+                icon: Icons.trending_up,
+                iconColor: Colors.purple,
               ),
             ),
           ],
@@ -192,25 +240,39 @@ class _DashboardUserViewState extends State<DashboardUserView> {
 
   // --- WIDGET ACTIVE PROMOTIONS DUMMY ---
   Widget _buildPromoList() {
+    if (promotions.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Text('No active promotions'),
+        ),
+      );
+    }
+
     return Column(
       children: [
-        _buildPromoItem(
-          icon: Icons.percent,
-          title: 'Spring Sale 2025',
-          subtitle: '20% off on all items',
-          badgeText: 'Active',
-          badgeColor: Colors.blue.shade50,
-          badgeTextColor: Colors.blue,
-        ),
-        Divider(color: Colors.grey.shade200),
-        _buildPromoItem(
-          icon: Icons.local_offer_outlined,
-          title: 'Bulk Purchase Discount',
-          subtitle: '15% off on orders over \$5,000',
-          badgeText: 'Ending Soon',
-          badgeColor: Colors.orange.shade50,
-          badgeTextColor: Colors.orange,
-        ),
+        ...promotions.asMap().entries.map((entry) {
+          final isLast = entry.key == promotions.length - 1;
+          final promo = entry.value;
+
+          return Column(
+            children: [
+              _buildPromoItem(
+                icon: Icons.local_offer_outlined,
+                title: promo['name'] ?? 'Promo',
+                subtitle: promo['description'] ?? 'No description',
+                badgeText: promo['status']?.toString().toUpperCase() ?? 'ACTIVE',
+                badgeColor: promo['status'] == 'active'
+                    ? Colors.blue.shade50
+                    : Colors.orange.shade50,
+                badgeTextColor: promo['status'] == 'active'
+                    ? Colors.blue
+                    : Colors.orange,
+              ),
+              if (!isLast) Divider(color: Colors.grey.shade200),
+            ],
+          );
+        }),
       ],
     );
   }
@@ -289,21 +351,36 @@ class _DashboardUserViewState extends State<DashboardUserView> {
 
   // --- WIDGET MY RETAILERS DUMMY ---
   Widget _buildRetailerList() {
+    if (retailers.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Text('No retailers found'),
+        ),
+      );
+    }
+
     return Column(
       children: [
-        _buildRetailerItem(
-          title: 'Sunshine Retail Store',
-          location: 'Kabupaten Sidoarjo, Jawa Timur',
-        ),
-        const SizedBox(height: 5),
-        Divider(color: Colors.grey.shade200),
-        const SizedBox(height: 5),
-        _buildRetailerItem(
-          title: 'Fresh Foods Market',
-          location: 'Surabaya, Jawa Timur',
-        ),
-        const SizedBox(height: 10),
-        Divider(color: Colors.grey.shade200),
+        ...retailers.asMap().entries.map((entry) {
+          final isLast = entry.key == retailers.length - 1;
+          final retailer = entry.value;
+
+          return Column(
+            children: [
+              _buildRetailerItem(
+                title: retailer['fullName'] ?? 'Retailer',
+                location: retailer['address'] ?? 'No location',
+              ),
+              if (!isLast) ...[
+                const SizedBox(height: 5),
+                Divider(color: Colors.grey.shade200),
+                const SizedBox(height: 5),
+              ] else
+                const SizedBox(height: 10),
+            ],
+          );
+        }),
       ],
     );
   }
@@ -338,62 +415,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
           child: const Icon(Icons.chat_bubble, color: Colors.blueAccent, size: 18),
         ),
       ],
-    );
-  }
-
-  // --- WIDGET BOTTOM NAVIGATION BAR ---
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: _selectedIndex,
-      selectedItemColor: Colors.black,
-      unselectedItemColor: Colors.grey,
-      selectedFontSize: 11,
-      unselectedFontSize: 11,
-      onTap: (index) {
-        setState(() {
-          _selectedIndex = index;
-        });
-      },
-      items: [
-        BottomNavigationBarItem(
-          icon: _buildNavIcon(Icons.home, 0),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: _buildNavIcon(Icons.shopping_basket_outlined, 1),
-          label: 'Orders',
-        ),
-        BottomNavigationBarItem(
-          icon: _buildNavIcon(Icons.storefront_outlined, 2),
-          label: 'Products',
-        ),
-        BottomNavigationBarItem(
-          icon: _buildNavIcon(Icons.bar_chart_outlined, 3),
-          label: 'Analytics',
-        ),
-        BottomNavigationBarItem(
-          icon: _buildNavIcon(Icons.card_giftcard_outlined, 4),
-          label: 'Promotions',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNavIcon(IconData icon, int index) {
-    bool isSelected = _selectedIndex == index;
-    return Container(
-      padding: const EdgeInsets.all(8),
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.green.shade100 : Colors.transparent,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        icon,
-        color: isSelected ? Colors.green.shade700 : Colors.grey,
-        size: 24,
-      ),
     );
   }
 }

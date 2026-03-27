@@ -1,61 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../controllers/dashboard_user_controller.dart';
 
-class DashboardUserView extends StatelessWidget {
+class DashboardUserView extends StatefulWidget {
   const DashboardUserView({super.key});
 
   @override
+  State<DashboardUserView> createState() => _DashboardUserViewState();
+}
+
+class _DashboardUserViewState extends State<DashboardUserView> {
+  final DashboardUserController _controller = DashboardUserController();
+  
+  String userName = 'Retailer';
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final fullName = await _controller.getUserFullName();
+      if (mounted) {
+        setState(() {
+          userName = fullName;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading user data: $e');
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(
-        0xFFF8F9FA,
-      ),
-      appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildGreetingSection(),
-            const SizedBox(height: 20),
-            _buildPromoBanner(),
-            const SizedBox(height: 24),
-            _buildQuickActions(),
-            const SizedBox(height: 24),
-            _buildRecentOrders(),
-            const SizedBox(height: 24),
-            _buildRecommendedProducts(),
-          ],
+    return SafeArea(
+      child: Container(
+        color: const Color(0xFFF8F9FA),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildAppBar(),
+              const SizedBox(height: 20),
+              _buildGreetingSection(),
+              const SizedBox(height: 20),
+              _buildPromoBanner(),
+              const SizedBox(height: 24),
+              _buildQuickActions(),
+              const SizedBox(height: 24),
+              _buildRecentOrders(),
+              const SizedBox(height: 24),
+              _buildRecommendedProducts(),
+            ],
+          ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
   // --- WIDGET SECTIONS ---
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      title: Row(
+  Widget _buildAppBar() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Logo
           Image.asset(
-            'assets/logo.png',
+            'assets/images/logo.png',
             height: 40,
             fit: BoxFit.contain,
           ),
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline, color: Colors.black87),
+            onPressed: () {
+              // TODO: Navigasi ke pesan
+            },
+          ),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.chat_bubble_outline, color: Colors.black87),
-          onPressed: () {
-            // TODO: Navigasi ke pesan
-          },
-        ),
-        const SizedBox(width: 8),
-      ],
     );
   }
 
@@ -63,9 +92,9 @@ class DashboardUserView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Welcome Back, Retailer!',
-          style: TextStyle(
+        Text(
+          isLoading ? 'Welcome Back!' : 'Welcome Back, $userName!',
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
@@ -73,7 +102,7 @@ class DashboardUserView extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Tuesday, April 15, 2025',
+          DateFormat('EEEE, MMMM d, y').format(DateTime.now()),
           style: TextStyle(fontSize: 14, color: Colors.grey[600]),
         ),
       ],
@@ -369,31 +398,6 @@ class DashboardUserView extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: Colors.green,
-      unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true,
-      currentIndex: 0, // Set active tab ke Home
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.shopping_bag_outlined),
-          label: 'Orders',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.storefront_outlined),
-          label: 'Products',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          label: 'Profile',
-        ),
-      ],
     );
   }
 }
