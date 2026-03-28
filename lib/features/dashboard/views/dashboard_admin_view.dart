@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../authentication/views/profile_admin_view.dart';
 import '../controllers/dashboard_admin_controller.dart';
+import '../../admin/view/admin_master_view.dart'; 
 
 class DashboardAdminView extends StatefulWidget {
   const DashboardAdminView({super.key});
@@ -43,6 +44,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       if (mounted) setState(() => isLoading = false);
     }
   }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,7 +76,20 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                       const SizedBox(height: 15),
                       _buildPromoList(),
                       const SizedBox(height: 30),
-                      _buildSectionHeader('My Retailers', 'View All'),
+                      // ========== MY RETAILERS DENGAN VIEW ALL ==========
+                      _buildSectionHeader(
+                        'My Retailers', 
+                        'View All',
+                        onAction: () {
+                          // Navigasi ke Admin Master View (Manage Retail)
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AdminMasterView(),
+                            ),
+                          );
+                        },
+                      ),
                       const SizedBox(height: 15),
                       _buildRetailerList(),
                       const SizedBox(height: 20),
@@ -115,6 +130,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       ],
     );
   }
+  
   // --- WIDGET OVERVIEW CARDS ---
   Widget _buildOverviewCards() {
     return Column(
@@ -217,8 +233,8 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET SECTION HEADER ---
-  Widget _buildSectionHeader(String title, String actionText) {
+  // --- WIDGET SECTION HEADER (DENGAN CALLBACK) ---
+  Widget _buildSectionHeader(String title, String actionText, {VoidCallback? onAction}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -226,19 +242,22 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
           title,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        Text(
-          actionText,
-          style: const TextStyle(
-            color: Colors.green,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
+        GestureDetector(
+          onTap: onAction,
+          child: Text(
+            actionText,
+            style: const TextStyle(
+              color: Colors.green,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
           ),
         ),
       ],
     );
   }
 
-  // --- WIDGET ACTIVE PROMOTIONS DUMMY ---
+  // --- WIDGET ACTIVE PROMOTIONS ---
   Widget _buildPromoList() {
     if (promotions.isEmpty) {
       return const Center(
@@ -349,7 +368,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET MY RETAILERS DUMMY ---
+  // --- WIDGET MY RETAILERS ---
   Widget _buildRetailerList() {
     if (retailers.isEmpty) {
       return const Center(

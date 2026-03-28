@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../dashboard/views/dashboard_admin_view.dart';
-
+import '../admin/view/admin_master_view.dart';
 
 class MainNavigationAdmin extends StatefulWidget {
   const MainNavigationAdmin({super.key});
@@ -14,22 +14,21 @@ class _MainNavigationAdminState extends State<MainNavigationAdmin> {
 
   // Daftar halaman Admin
   final List<Widget> _pages = [
-    const DashboardAdminView(),
-    const Center(child: Text('Halaman Orders Admin')), 
-    const Center(child: Text('Halaman Products Admin')), 
-    const Center(child: Text('Halaman Analytics')), 
-    const Center(child: Text('Halaman Promotions')), 
+    const DashboardAdminView(),      // ← Home: Dashboard Admin (sesuai GUI)
+    const Center(child: Text('Halaman Orders Admin')),  // Orders
+    const Center(child: Text('Halaman Products Admin')), // Products
+    const Center(child: Text('Halaman Analytics')),      // Analytics
+    const Center(child: Text('Halaman Promotions')),     // Promotions
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex], 
-      
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.black, // Disamakan dengan desain Anda
+        selectedItemColor: Colors.black,
         unselectedItemColor: Colors.grey,
         selectedFontSize: 11,
         unselectedFontSize: 11,
@@ -64,7 +63,6 @@ class _MainNavigationAdminState extends State<MainNavigationAdmin> {
     );
   }
 
-  // Membawa fungsi ikon yang Anda desain ke Main Wrapper
   Widget _buildNavIcon(IconData icon, int index) {
     bool isSelected = _selectedIndex == index;
     return Container(
