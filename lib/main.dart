@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Inter',
         useMaterial3: true,
       ),
-      home: const AuthGate(), // AuthGate akan menentukan halaman berdasarkan status login
+      home: const AuthGate(),
     );
   }
 }
