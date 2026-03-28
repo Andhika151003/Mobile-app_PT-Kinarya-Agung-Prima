@@ -14,7 +14,7 @@ class _MainNavigationAdminState extends State<MainNavigationAdmin> {
 
   // Daftar halaman Admin
   final List<Widget> _pages = [
-    const DashboardAdminView(),      // ← Home: Dashboard Admin (sesuai GUI)
+    const DashboardAdminView(),      // ← Home: Dashboard Admin 
     const Center(child: Text('Halaman Orders Admin')),  // Orders
     const Center(child: Text('Halaman Products Admin')), // Products
     const Center(child: Text('Halaman Analytics')),      // Analytics
