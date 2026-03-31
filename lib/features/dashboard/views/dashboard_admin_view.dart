@@ -379,10 +379,12 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       );
     }
 
+    final displayRetailers = retailers.take(3).toList();
+
     return Column(
       children: [
-        ...retailers.asMap().entries.map((entry) {
-          final isLast = entry.key == retailers.length - 1;
+        ...displayRetailers.asMap().entries.map((entry) {
+          final isLast = entry.key == displayRetailers.length - 1;
           final retailer = entry.value;
 
           return Column(

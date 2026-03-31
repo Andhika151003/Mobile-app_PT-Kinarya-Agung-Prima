@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../controllers/dashboard_user_controller.dart';
+import '../../product/models/product.dart';
+import '../../product/views/product_detail_user_view.dart';
 
 class DashboardUserView extends StatefulWidget {
   const DashboardUserView({super.key});
@@ -314,38 +316,61 @@ class _DashboardUserViewState extends State<DashboardUserView> {
             ),
           ],
         ),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.65,
-          children: [
-            _buildProductCard(
-              'Dove Soap Shea Butter',
-              'Min. Order: 30 pcs',
-              '\$30.00 per kg',
-              'https://via.placeholder.com/150', // ganti dengan URL Supabase
-            ),
-            _buildProductCard(
-              'Vaseline Body Lotion SPF',
-              'Min. Order: 50 pcs',
-              '\$59.75 per pack',
-              'https://via.placeholder.com/150', // ganti dengan URL Supabase
-            ),
-          ],
+        StreamBuilder<List<ProductModel>>(
+          stream: _controller.getRecommendedProducts(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+            
+            final products = snapshot.data ?? [];
+            if (products.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: Text('No recommended products found.'),
+                ),
+              );
+            }
+
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.65,
+              ),
+              itemCount: products.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ProductDetailUserView(product: products[index]),
+                      ),
+                    );
+                  },
+                  child: _buildProductCard(products[index]),
+                );
+              },
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _buildProductCard(
-    String title,
-    String minOrder,
-    String price,
-    String imageUrl,
-  ) {
+  Widget _buildProductCard(ProductModel product) {
+    final currencyFormatter =
+        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -367,32 +392,40 @@ class _DashboardUserViewState extends State<DashboardUserView> {
             Expanded(
               child: Center(
                 child: Container(
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.grey[100],
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  // Ganti dengan Image.network(imageUrl) jika sudah connect Supabase
-                  child: const Center(
-                    child: Icon(Icons.image, color: Colors.grey, size: 50),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: product.imageUrl.isNotEmpty
+                        ? Image.network(
+                            product.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.image, color: Colors.grey, size: 50),
+                          )
+                        : const Icon(Icons.image, color: Colors.grey, size: 50),
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              title,
+              product.name,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             Text(
-              minOrder,
+              'Min. Order: ${product.moq ?? 1} pcs',
               style: TextStyle(color: Colors.grey[500], fontSize: 11),
             ),
             const SizedBox(height: 8),
             Text(
-              price,
+              currencyFormatter.format(product.price),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ],

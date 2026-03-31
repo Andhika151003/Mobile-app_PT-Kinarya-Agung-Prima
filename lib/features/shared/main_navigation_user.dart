@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../features/dashboard/views/dashboard_user_view.dart';
 import '../../features/authentication/views/profile_user_view.dart';
+import '../product/views/product_user_view.dart';
 
 class MainNavigationUser extends StatefulWidget {
   const MainNavigationUser({super.key});
@@ -15,7 +16,7 @@ class _MainNavigationUserState extends State<MainNavigationUser> {
   final List<Widget> _pages = [
     const DashboardUserView(),
     const Center(child: Text('Halaman Orders')),  
-    const Center(child: Text('Halaman Products')),
+    const ProductUserView(),
     const ProfileUserView(),
   ];
 

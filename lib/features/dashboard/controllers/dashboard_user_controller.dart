@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../product/models/product.dart';
 
 class DashboardUserController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -53,5 +54,16 @@ class DashboardUserController {
     } catch (e) {
       throw Exception("Error fetching dashboard stats: $e");
     }
+  }
+
+  /// Get recommended products (Admin's supply products)
+  Stream<List<ProductModel>> getRecommendedProducts() {
+    return _firestore
+        .collection('products')
+        .limit(10)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ProductModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 }
