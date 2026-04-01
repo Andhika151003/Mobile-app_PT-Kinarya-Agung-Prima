@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../dashboard/views/dashboard_admin_view.dart';
 import '../admin/view/admin_master_view.dart';
 import '../product/views/product_admin_view.dart';
+import '../promotion/views/promotion_admin_view.dart';
 
 class MainNavigationAdmin extends StatefulWidget {
   const MainNavigationAdmin({super.key});
@@ -19,7 +20,7 @@ class _MainNavigationAdminState extends State<MainNavigationAdmin> {
     const Center(child: Text('Halaman Orders Admin')),  // Orders
     const ProductAdminView(), // Products
     const Center(child: Text('Halaman Analytics')),      // Analytics
-    const Center(child: Text('Halaman Promotions')),     // Promotions
+    const PromotionAdminView(), // Promotions
   ];
 
   @override
