@@ -13,6 +13,7 @@ class ProductDetailUserView extends StatefulWidget {
 
 class _ProductDetailUserViewState extends State<ProductDetailUserView> {
   late int _quantity;
+  int _currentImageIndex = 0;
   final Color primaryGreen = const Color(0xFF4C7D3E);
   final Color priceGreen = const Color(0xFF1E8F29);
 
@@ -196,20 +197,67 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
   }
 
   Widget _buildImageSection() {
-    return Center(
-      child: Container(
-        height: 200,
-        margin: const EdgeInsets.symmetric(vertical: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          image: widget.product.imageUrl.isNotEmpty
-              ? DecorationImage(image: NetworkImage(widget.product.imageUrl), fit: BoxFit.contain)
-              : null,
+    List<String> allImages = [];
+    if (widget.product.imageUrl.isNotEmpty) allImages.add(widget.product.imageUrl);
+    if (widget.product.imageUrls != null) allImages.addAll(widget.product.imageUrls!);
+
+    if (allImages.isEmpty) {
+      return Center(
+        child: Container(
+          height: 200,
+          margin: const EdgeInsets.symmetric(vertical: 20),
+          child: Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade300),
         ),
-        child: widget.product.imageUrl.isEmpty 
-            ? Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade300) 
-            : null,
-      ),
+      );
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 250,
+          width: double.infinity,
+          child: PageView.builder(
+            itemCount: allImages.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentImageIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  image: DecorationImage(
+                    image: NetworkImage(allImages[index]),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        if (allImages.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                allImages.length,
+                (index) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                  width: _currentImageIndex == index ? 10.0 : 8.0,
+                  height: _currentImageIndex == index ? 10.0 : 8.0,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentImageIndex == index
+                        ? primaryGreen
+                        : Colors.grey.shade300,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 

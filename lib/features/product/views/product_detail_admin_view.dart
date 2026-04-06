@@ -14,6 +14,7 @@ class ProductDetailAdminView extends StatefulWidget {
 
 class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
   late ProductModel _currentProduct;
+  int _currentImageIndex = 0;
 
   @override
   void initState() {
@@ -199,25 +200,66 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
   }
 
   Widget _buildImageSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20.0),
-      child: Center(
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 200, height: 150,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                image: _currentProduct.imageUrl.isNotEmpty
-                    ? DecorationImage(image: NetworkImage(_currentProduct.imageUrl), fit: BoxFit.contain)
-                    : null,
-              ),
-              child: _currentProduct.imageUrl.isEmpty ? const Icon(Icons.image_outlined, size: 80, color: Colors.grey) : null,
-            ),
-          ],
+    List<String> allImages = [];
+    if (_currentProduct.imageUrl.isNotEmpty) allImages.add(_currentProduct.imageUrl);
+    if (_currentProduct.imageUrls != null) allImages.addAll(_currentProduct.imageUrls!);
+
+    if (allImages.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40.0),
+        child: Center(
+          child: Icon(Icons.image_outlined, size: 80, color: Colors.grey),
         ),
-      ),
+      );
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 250,
+          width: double.infinity,
+          child: PageView.builder(
+            itemCount: allImages.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentImageIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  image: DecorationImage(
+                    image: NetworkImage(allImages[index]),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        if (allImages.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                allImages.length,
+                (index) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                  width: _currentImageIndex == index ? 10.0 : 8.0,
+                  height: _currentImageIndex == index ? 10.0 : 8.0,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentImageIndex == index
+                        ? const Color(0xFF4C7D3E)
+                        : Colors.grey.shade300,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -371,7 +413,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                   Navigator.pop(dialogContext);
                   
                   try {
-                    await AdminProductController().deleteSupplyProduct(_currentProduct.id!);
+                    await AdminProductController().deleteSupplyProduct(_currentProduct);
                     
                     if (context.mounted) {
                       Navigator.pop(context);

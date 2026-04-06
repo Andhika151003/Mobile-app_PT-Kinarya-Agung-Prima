@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/product.dart';
 import '../controllers/product_admin_controller.dart';
 
@@ -40,6 +42,36 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
     'Foods',
   ];
 
+  // --- IMAGE VARIABLES ---
+  List<String> _existingImages = [];
+  List<File> _newImages = [];
+
+  Future<void> _pickImages() async {
+    final ImagePicker picker = ImagePicker();
+    final List<XFile> images = await picker.pickMultiImage();
+    if (images.isNotEmpty) {
+      setState(() {
+        for (var img in images) {
+          if ((_existingImages.length + _newImages.length) < 8) {
+            _newImages.add(File(img.path));
+          }
+        }
+      });
+    }
+  }
+
+  void _removeExistingImage(int index) {
+    setState(() {
+      _existingImages.removeAt(index);
+    });
+  }
+
+  void _removeNewImage(int index) {
+    setState(() {
+      _newImages.removeAt(index);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +95,10 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
       _categories.add(widget.product.category);
       _selectedCategory = widget.product.category;
     }
+
+    _existingImages = [];
+    if (widget.product.imageUrl.isNotEmpty) _existingImages.add(widget.product.imageUrl);
+    if (widget.product.imageUrls != null) _existingImages.addAll(widget.product.imageUrls!);
   }
 
   @override
@@ -115,6 +151,8 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
         length: _lengthController.text,
         width: _widthController.text,
         height: _heightController.text,
+        keptImageUrls: _existingImages,
+        newImageFiles: _newImages,
       );
 
       if (mounted) {
@@ -302,34 +340,77 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
   }
 
   Widget _buildImageUploadSection() {
-    return Row(
+    int totalImages = _existingImages.length + _newImages.length;
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
       children: [
-        Container(
-          width: 90, height: 90,
-          decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.grey.shade300, width: 2), borderRadius: BorderRadius.circular(8)),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add, color: Colors.grey.shade400, size: 28),
-              const SizedBox(height: 4),
-              Text('Add Photo', style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
+        if (totalImages < 8)
+          GestureDetector(
+            onTap: _pickImages,
+            child: Container(
               width: 90, height: 90,
-              decoration: BoxDecoration(
-                color: Colors.white, border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(8),
-                image: widget.product.imageUrl.isNotEmpty ? DecorationImage(image: NetworkImage(widget.product.imageUrl), fit: BoxFit.contain) : null,
+              decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.grey.shade300, width: 2), borderRadius: BorderRadius.circular(8)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add, color: Colors.grey.shade400, size: 28),
+                  const SizedBox(height: 4),
+                  Text('Add Photo', style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
+                ],
               ),
-              child: widget.product.imageUrl.isEmpty ? Icon(Icons.inventory_2_outlined, color: Colors.grey.shade300, size: 40) : null,
             ),
-          ],
-        ),
+          ),
+        ...List.generate(_existingImages.length, (index) {
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 90, height: 90,
+                decoration: BoxDecoration(
+                  color: Colors.white, border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(8),
+                  image: DecorationImage(image: NetworkImage(_existingImages[index]), fit: BoxFit.cover),
+                ),
+              ),
+              Positioned(
+                top: -8, right: -8,
+                child: GestureDetector(
+                  onTap: () => _removeExistingImage(index),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(color: Colors.grey.shade200, shape: BoxShape.circle),
+                    child: const Icon(Icons.close, size: 14, color: Colors.black54),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+        ...List.generate(_newImages.length, (index) {
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 90, height: 90,
+                decoration: BoxDecoration(
+                  color: Colors.white, border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(8),
+                  image: DecorationImage(image: FileImage(_newImages[index]), fit: BoxFit.cover),
+                ),
+              ),
+              Positioned(
+                top: -8, right: -8,
+                child: GestureDetector(
+                  onTap: () => _removeNewImage(index),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(color: Colors.grey.shade200, shape: BoxShape.circle),
+                    child: const Icon(Icons.close, size: 14, color: Colors.black54),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
       ],
     );
   }

@@ -1,23 +1,30 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../controllers/product_admin_controller.dart';
+import '../../../supabase_storage_service.dart';
 
 class FormAddProductAdminView extends StatefulWidget {
   const FormAddProductAdminView({super.key});
 
   @override
-  State<FormAddProductAdminView> createState() => _FormAddProductAdminViewState();
+  State<FormAddProductAdminView> createState() =>
+      _FormAddProductAdminViewState();
 }
 
 class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
   final _formKey = GlobalKey<FormState>();
   final Color primaryGreen = const Color(0xFF00903D);
 
+
+
   // --- CONTROLLERS ---
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _skuController = TextEditingController();
   final TextEditingController _brandController = TextEditingController();
   final TextEditingController _regularPriceController = TextEditingController();
-  final TextEditingController _wholesalePriceController = TextEditingController();
+  final TextEditingController _wholesalePriceController =
+      TextEditingController();
   final TextEditingController _moqController = TextEditingController();
   final TextEditingController _stockController = TextEditingController();
   final TextEditingController _lowStockController = TextEditingController();
@@ -35,6 +42,29 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
     'Health',
     'Foods',
   ];
+
+  // --- IMAGE VARIABLE ---
+  final List<File> _selectedImages = [];
+
+  Future<void> _pickImages() async {
+    final ImagePicker picker = ImagePicker();
+    final List<XFile> images = await picker.pickMultiImage();
+    if (images.isNotEmpty) {
+      setState(() {
+        for (var img in images) {
+          if (_selectedImages.length < 8) {
+            _selectedImages.add(File(img.path));
+          }
+        }
+      });
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
 
   @override
   void dispose() {
@@ -55,21 +85,36 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
   }
 
   final AdminProductController _productController = AdminProductController();
-  
+
+
+
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category!'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Please select a category!'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
+    // Validasi gambar opsional: uncomment jika gambar wajib diisi
+    // if (_uploadedImageUrl == null) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(content: Text('Please upload a product image!'), backgroundColor: Colors.red),
+    //   );
+    //   return;
+    // }
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator(color: Color(0xFF00903D))),
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: Color(0xFF00903D)),
+      ),
     );
 
     try {
@@ -88,24 +133,28 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
         length: _lengthController.text,
         width: _widthController.text,
         height: _heightController.text,
+        imageFiles: _selectedImages,
       );
 
       if (mounted) {
-        Navigator.pop(context); 
-        Navigator.pop(context); 
-        
+        Navigator.pop(context);
+        Navigator.pop(context);
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${_nameController.text} added successfully!'), 
+            content: Text('${_nameController.text} added successfully!'),
             backgroundColor: primaryGreen,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); 
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add product: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Failed to add product: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -140,13 +189,24 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               _buildSectionTitle('Basic Information'),
               const SizedBox(height: 16),
               _buildTextFieldLabel('Product Name'),
-              _buildTextField(controller: _nameController, hint: 'e.g. Vaseline Hand Body Lotion Healthy White 400ml'),
+              _buildTextField(
+                controller: _nameController,
+                hint: 'e.g. Vaseline Hand Body Lotion Healthy White 400ml',
+              ),
               _buildTextFieldLabel('SKU'),
-              _buildTextField(controller: _skuController, hint: 'e.g. PRD-1003', isRequired: false),
+              _buildTextField(
+                controller: _skuController,
+                hint: 'e.g. PRD-1003',
+                isRequired: false,
+              ),
               _buildTextFieldLabel('Category'),
               _buildCategoryDropdown(),
               _buildTextFieldLabel('Brand'),
-              _buildTextField(controller: _brandController, hint: 'e.g. Vaseline', isRequired: false),
+              _buildTextField(
+                controller: _brandController,
+                hint: 'e.g. Vaseline',
+                isRequired: false,
+              ),
               const SizedBox(height: 24),
 
               // 3. PRICING
@@ -154,23 +214,23 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               const SizedBox(height: 16),
               _buildTextFieldLabel('Regular Price'),
               _buildTextField(
-                controller: _regularPriceController, 
-                prefixText: 'Rp ', 
-                isNumber: true, 
+                controller: _regularPriceController,
+                prefixText: 'Rp ',
+                isNumber: true,
                 hint: '85000',
               ),
               _buildTextFieldLabel('Wholesale Price'),
               _buildTextField(
-                controller: _wholesalePriceController, 
+                controller: _wholesalePriceController,
                 prefixText: 'Rp ',
-                isNumber: true, 
+                isNumber: true,
                 hint: '49000',
                 isRequired: false,
               ),
               _buildTextFieldLabel('Minimum Order Quantity'),
               _buildTextField(
-                controller: _moqController, 
-                isNumber: true, 
+                controller: _moqController,
+                isNumber: true,
                 hint: '10',
                 isRequired: false,
               ),
@@ -180,26 +240,44 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               _buildSectionTitle('Inventory'),
               const SizedBox(height: 16),
               _buildTextFieldLabel('Stock Quantity'),
-              _buildTextField(controller: _stockController, isNumber: true, hint: '1000'),
+              _buildTextField(
+                controller: _stockController,
+                isNumber: true,
+                hint: '1000',
+              ),
               _buildTextFieldLabel('Low Stock Alert'),
-              _buildTextField(controller: _lowStockController, isNumber: true, hint: '100', isRequired: false),
+              _buildTextField(
+                controller: _lowStockController,
+                isNumber: true,
+                hint: '100',
+                isRequired: false,
+              ),
               const SizedBox(height: 24),
 
               // 5. SPECIFICATIONS
               _buildSectionTitle('Specifications'),
               const SizedBox(height: 16),
               _buildTextFieldLabel('Description'),
-              _buildTextField(controller: _descriptionController, maxLines: 4, hint: 'Enter product description...'),
+              _buildTextField(
+                controller: _descriptionController,
+                maxLines: 4,
+                hint: 'Enter product description...',
+              ),
               const SizedBox(height: 24),
 
               // 6. SHIPPING
               _buildSectionTitle('Shipping'),
               const SizedBox(height: 16),
               _buildTextFieldLabel('Weight (kg)'),
-              _buildTextField(controller: _weightController, isNumber: true, hint: '4.00', isRequired: false),
+              _buildTextField(
+                controller: _weightController,
+                isNumber: true,
+                hint: '4.00',
+                isRequired: false,
+              ),
               _buildTextFieldLabel('Dimensions (cm)'),
               _buildDimensionsRow(),
-              
+
               const SizedBox(height: 40),
             ],
           ),
@@ -223,14 +301,22 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.black87),
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 16,
+              color: Colors.black87,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
         ),
       ),
       title: const Text(
         'Add New Product',
-        style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       actions: [
         Padding(
@@ -245,7 +331,13 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
-            child: const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Save',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ],
@@ -255,7 +347,11 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+      ),
     );
   }
 
@@ -264,7 +360,11 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         label,
-        style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+        style: TextStyle(
+          fontSize: 13,
+          color: Colors.grey.shade700,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -282,7 +382,9 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextFormField(
         controller: controller,
-        keyboardType: isNumber ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+        keyboardType: isNumber
+            ? const TextInputType.numberWithOptions(decimal: true)
+            : TextInputType.text,
         maxLines: maxLines,
         validator: (value) {
           if (isRequired && (value == null || value.trim().isEmpty)) {
@@ -297,8 +399,15 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
           prefixText: prefixText,
           prefixStyle: const TextStyle(color: Colors.black54, fontSize: 14),
           suffixText: suffixText,
-          suffixStyle: const TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.bold),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          suffixStyle: const TextStyle(
+            color: Colors.grey,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),
             borderSide: BorderSide(color: Colors.grey.shade300),
@@ -323,7 +432,10 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
         value: _selectedCategory,
         icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
         decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),
             borderSide: BorderSide(color: Colors.grey.shade300),
@@ -337,11 +449,17 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
             borderSide: BorderSide(color: primaryGreen),
           ),
         ),
-        hint: Text('Select Category', style: TextStyle(color: Colors.grey.shade400, fontSize: 14)),
+        hint: Text(
+          'Select Category',
+          style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+        ),
         items: _categories.map((String category) {
           return DropdownMenuItem<String>(
             value: category,
-            child: Text(category, style: const TextStyle(fontSize: 14, color: Colors.black87)),
+            child: Text(
+              category,
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+            ),
           );
         }).toList(),
         onChanged: (String? newValue) {
@@ -357,66 +475,99 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
   Widget _buildDimensionsRow() {
     return Row(
       children: [
-        Expanded(child: _buildTextField(controller: _lengthController, isNumber: true, hint: '100', suffixText: 'L', isRequired: false)),
+        Expanded(
+          child: _buildTextField(
+            controller: _lengthController,
+            isNumber: true,
+            hint: '100',
+            suffixText: 'L',
+            isRequired: false,
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _buildTextField(controller: _widthController, isNumber: true, hint: '92', suffixText: 'W', isRequired: false)),
+        Expanded(
+          child: _buildTextField(
+            controller: _widthController,
+            isNumber: true,
+            hint: '92',
+            suffixText: 'W',
+            isRequired: false,
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _buildTextField(controller: _heightController, isNumber: true, hint: '85', suffixText: 'H', isRequired: false)),
+        Expanded(
+          child: _buildTextField(
+            controller: _heightController,
+            isNumber: true,
+            hint: '85',
+            suffixText: 'H',
+            isRequired: false,
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildImageUploadSection() {
-    return Row(
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
       children: [
-        Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.grey.shade300, width: 2), 
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add, color: Colors.grey.shade400, size: 28),
-              const SizedBox(height: 4),
-              Text('Add Photo', style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
+        if (_selectedImages.length < 8)
+          GestureDetector(
+            onTap: _pickImages,
+            child: Container(
               width: 90,
               height: 90,
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: Colors.grey.shade300, width: 2), 
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Icon(Icons.water_drop, color: Colors.pink.shade200, size: 40), 
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add, color: Colors.grey.shade400, size: 28),
+                  const SizedBox(height: 4),
+                  Text('Add Photo', style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
+                ],
               ),
             ),
-            Positioned(
-              top: -8,
-              right: -8,
-              child: Container(
-                padding: const EdgeInsets.all(4),
+          ),
+        ...List.generate(_selectedImages.length, (index) {
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 90,
+                height: 90,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.grey.shade200),
+                  borderRadius: BorderRadius.circular(8),
+                  image: DecorationImage(
+                    image: FileImage(_selectedImages[index]),
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                child: const Icon(Icons.delete_outline, size: 14, color: Colors.black54),
               ),
-            ),
-          ],
-        ),
+              Positioned(
+                top: -8,
+                right: -8,
+                child: GestureDetector(
+                  onTap: () => _removeImage(index),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.delete_outline, size: 14, color: Colors.black54),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
       ],
     );
   }
