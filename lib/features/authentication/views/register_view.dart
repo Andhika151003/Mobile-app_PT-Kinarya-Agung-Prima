@@ -100,16 +100,6 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
-  void _resetForm() {
-    _emailController.clear();
-    _fullNameController.clear();
-    _phoneController.clear();
-    _addressController.clear();
-    _passwordController.clear();
-    _confirmPasswordController.clear();
-    _formKey.currentState?.reset();
-  }
-
   Future<void> _handleRegister(RegisterController controller) async {
     if (_formKey.currentState!.validate()) {
       final success = await controller.register(

@@ -13,7 +13,6 @@ class FormPromotionAdminView extends StatefulWidget {
 }
 
 class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
-  final _formKey = GlobalKey<FormState>();
   final _scrollController = ScrollController();
 
   late TextEditingController _titleController;

@@ -3,7 +3,6 @@ import '../../authentication/views/profile_admin_view.dart';
 import '../controllers/dashboard_admin_controller.dart';
 import '../../admin/view/admin_master_view.dart';
 import '../../promotion/views/form_promotion_admin_view.dart';
-import '../../promotion/views/promotion_detail_admin_view.dart';
 import '../../promotion/models/promotion.dart';
 
 class DashboardAdminView extends StatefulWidget {

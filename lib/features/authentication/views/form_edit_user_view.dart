@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import '../controllers/profile_user_controller.dart';
 
 class FormProfileUserView extends StatefulWidget {
   const FormProfileUserView({super.key});
@@ -20,6 +23,20 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
 
   bool _isLoading = true;
   bool _isSaving = false;
+
+  final RetailProfileController _controller = RetailProfileController();
+  File? _newProfileImage;
+  String? _existingPhotoUrl;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (pickedFile != null) {
+      setState(() {
+        _newProfileImage = File(pickedFile.path);
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -48,6 +65,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
             _locationController.text = data['address'] ?? '';
             _contactController.text = data['phoneNumber'] ?? '';
             _typeController.text = data['businessType'] ?? 'Retail Store';
+            _existingPhotoUrl = data['photoUrl'];
             
             _isLoading = false;
           });
@@ -65,22 +83,20 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
     setState(() => _isSaving = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-          'fullName': _nameController.text.trim(),
-          'address': _locationController.text.trim(),
-          'phoneNumber': _contactController.text.trim(),
-          'businessType': _typeController.text.trim(),
-        });
+      await _controller.updateRetailProfile(
+        storeName: _nameController.text.trim(),
+        location: _locationController.text.trim(),
+        contact: _contactController.text.trim(),
+        businessType: _typeController.text.trim(),
+        profileImage: _newProfileImage,
+      );
 
-        if (mounted) {
+      if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profile updated successfully!')),
           );
           Navigator.pop(context, true);
         }
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -174,6 +190,18 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+            image: _newProfileImage != null
+                ? DecorationImage(
+                    image: FileImage(_newProfileImage!),
+                    fit: BoxFit.cover,
+                  )
+                : (_existingPhotoUrl != null && _existingPhotoUrl!.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(_existingPhotoUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.1),
@@ -187,9 +215,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
           bottom: -8,
           left: -8,
           child: GestureDetector(
-            onTap: () {
-              // TODO: Fungsi upload foto
-            },
+            onTap: _pickImage,
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(

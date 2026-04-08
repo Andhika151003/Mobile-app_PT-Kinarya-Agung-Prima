@@ -30,7 +30,7 @@ class ProductModel {
   
   // --- MEDIA & STATUS ---
   String imageUrl; // Foto utama (Cover)
-  List<String>? imageUrls; // Baru (Untuk menampung hingga 8 foto tambahan)
+  List<String>? imageUrls;
   bool isAvailable; 
 
   // --- PERFORMANCE STATS ---

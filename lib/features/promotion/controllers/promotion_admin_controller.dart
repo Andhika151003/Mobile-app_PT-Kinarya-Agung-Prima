@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../models/promotion.dart';
 
 class PromotionAdminController extends ChangeNotifier {
@@ -42,7 +43,7 @@ class PromotionAdminController extends ChangeNotifier {
       _applyFilters();
       _setLoading(false);
     } catch (e) {
-      print('Error fetching promotions: $e');
+      debugPrint('Error fetching promotions: $e');
       _setError('Gagal mengambil data promo');
       _setLoading(false);
     }
@@ -128,7 +129,7 @@ class PromotionAdminController extends ChangeNotifier {
       _setLoading(false);
       return true;
     } catch (e) {
-      print('Error creating promotion: $e');
+      debugPrint('Error creating promotion: $e');
       _setError('Gagal membuat promo: ${e.toString()}');
       _setLoading(false);
       return false;
@@ -178,7 +179,7 @@ class PromotionAdminController extends ChangeNotifier {
       _setLoading(false);
       return true;
     } catch (e) {
-      print('Error updating promotion: $e');
+      debugPrint('Error updating promotion: $e');
       _setError('Gagal update promo: ${e.toString()}');
       _setLoading(false);
       return false;
@@ -186,33 +187,33 @@ class PromotionAdminController extends ChangeNotifier {
   }
 
   Future<bool> deletePromotion(String promotionId) async {
-  print('DELETE CALLED with ID: $promotionId'); 
+  debugPrint('DELETE CALLED with ID: $promotionId'); 
   _setLoading(true);
   _clearError();
 
   try {
     final docRef = _firestore.collection('promotions').doc(promotionId);
-    print('Document reference: ${docRef.path}'); 
+    debugPrint('Document reference: ${docRef.path}'); 
     
     // Cek apakah dokumen ada
     final doc = await docRef.get();
-    print('Document exists: ${doc.exists}'); 
+    debugPrint('Document exists: ${doc.exists}'); 
     
     if (!doc.exists) {
-      print('Document not found!');
+      debugPrint('Document not found!');
       _setError('Promotion not found');
       _setLoading(false);
       return false;
     }
     
     await docRef.delete();
-    print('Delete successful');
+    debugPrint('Delete successful');
     
     await fetchAllPromotions();
     _setLoading(false);
     return true;
   } catch (e) {
-    print('Delete error: $e');
+    debugPrint('Delete error: $e');
     _setError('Gagal menghapus promo: ${e.toString()}');
     _setLoading(false);
     return false;

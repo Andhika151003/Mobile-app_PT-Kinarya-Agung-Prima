@@ -5,7 +5,6 @@ import '../models/product.dart';
 import '../controllers/product_admin_controller.dart';
 
 class FormEditProductAdminView extends StatefulWidget {
-  // Halaman ini MEMBUTUHKAN data produk yang mau diedit
   final ProductModel product;
 
   const FormEditProductAdminView({super.key, required this.product});
@@ -44,7 +43,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
 
   // --- IMAGE VARIABLES ---
   List<String> _existingImages = [];
-  List<File> _newImages = [];
+  final List<File> _newImages = [];
 
   Future<void> _pickImages() async {
     final ImagePicker picker = ImagePicker();
@@ -313,7 +312,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: DropdownButtonFormField<String>(
-        value: _selectedCategory,
+        initialValue: _selectedCategory,
         icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

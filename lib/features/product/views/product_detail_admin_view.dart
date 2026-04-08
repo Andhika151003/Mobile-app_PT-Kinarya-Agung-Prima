@@ -24,7 +24,6 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryGreen = const Color(0xFF4C7D3E); 
 
     return Scaffold(
       backgroundColor: Colors.white,

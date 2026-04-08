@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../controllers/product_admin_controller.dart';
-import '../../../supabase_storage_service.dart';
 
 class FormAddProductAdminView extends StatefulWidget {
   const FormAddProductAdminView({super.key});
@@ -429,7 +428,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: DropdownButtonFormField<String>(
-        value: _selectedCategory,
+        initialValue: _selectedCategory,
         icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(

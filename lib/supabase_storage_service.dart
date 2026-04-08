@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseStorageService {
@@ -36,7 +37,7 @@ class SupabaseStorageService {
         await _supabase.storage.from('products').remove(paths);
       }
     } catch (e) {
-      print('Error deleting images from Supabase: $e');
+      debugPrint('Error deleting images from Supabase: $e');
     }
   }
 }

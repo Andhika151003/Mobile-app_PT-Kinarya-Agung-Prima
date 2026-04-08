@@ -3,18 +3,22 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'features/authentication/views/auth_gate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  await Supabase.initialize(
-    url: 'https://vlteziwgraboxkqvoklw.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsdGV6aXdncmFib3hrcXZva2x3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTcyODMsImV4cCI6MjA5MTAzMzI4M30.tun4E2VDe8QdpG-wrnPv9UqeQzAcbBKsWf0ukFQNZIE',
+  
+  await dotenv.load(fileName: ".env");
+  
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+  
   runApp(const MyApp());
 }
 

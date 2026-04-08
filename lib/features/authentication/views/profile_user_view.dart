@@ -23,6 +23,7 @@ class _ProfileUserViewState extends State<ProfileUserView> {
   int totalOrders = 0; 
   int totalSpent = 0;
   bool isActive = true;
+  String? photoUrl;
   bool isLoading = true;
 
   @override
@@ -43,6 +44,7 @@ class _ProfileUserViewState extends State<ProfileUserView> {
           businessType = data['businessType'] ?? 'No Business Type';
           storeId = '#KNY${data['uid'].substring(0, 6).toUpperCase()}';
           isActive = data['isActive'] ?? true; 
+          photoUrl = data['photoUrl'];
           
           isLoading = false;
         });
@@ -217,6 +219,24 @@ class _ProfileUserViewState extends State<ProfileUserView> {
     return Center(
       child: Column(
         children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF458833), width: 2),
+            ),
+            child: CircleAvatar(
+              radius: 44,
+              backgroundColor: const Color(0xFFE8F5E9),
+              backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
+                  ? NetworkImage(photoUrl!)
+                  : null,
+              child: photoUrl == null || photoUrl!.isEmpty
+                  ? const Icon(Icons.storefront_outlined, size: 40, color: Color(0xFF458833))
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
             storeName,
             style: const TextStyle(
@@ -237,15 +257,6 @@ class _ProfileUserViewState extends State<ProfileUserView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF458833),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
-              ),
-              const SizedBox(width: 12),
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -427,7 +438,7 @@ class _ProfileUserViewState extends State<ProfileUserView> {
           // TOMBOL SAKLAR ON/OFF
           Switch(
             value: isActive,
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: const Color(0xFF458833),
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: Colors.red.shade300,

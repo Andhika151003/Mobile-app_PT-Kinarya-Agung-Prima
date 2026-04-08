@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../controllers/promotion_admin_controller.dart';
 import '../models/promotion.dart';
 import 'form_promotion_admin_view.dart';
 
