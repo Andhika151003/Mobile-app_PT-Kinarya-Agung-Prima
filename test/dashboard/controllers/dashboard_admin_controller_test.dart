@@ -58,12 +58,12 @@ void main() {
     test('getAdminInfo returns admin doc data', () async {
       await fakeFirestore.collection('users').doc('admin123').set({
         'role': 'admin',
-        'fullName': 'John Doe',
+        'fullName': 'Amirul',
       });
 
       final info = await dashboardController.getAdminInfo();
       expect(info, isNotNull);
-      expect(info!['fullName'], equals('John Doe'));
+      expect(info!['fullName'], equals('Amirul'));
     });
   });
 }
