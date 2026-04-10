@@ -3,7 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/promotion.dart';
 
 class PromotionUserController {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+
+  PromotionUserController({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Fetch semua promo yang sedang aktif saat ini
   Future<List<PromotionModel>> getActivePromotions() async {

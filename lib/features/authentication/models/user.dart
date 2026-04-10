@@ -1,57 +1,40 @@
-class User {
-  final String? userId;
+import 'admin.dart';
+import 'cs.dart';
+import 'retailer.dart';
+
+abstract class BaseUser {
+  final String? id;
   final String username;
   final String email;
-  final String password; 
-  final String role; 
+  final String password;
+  final String role;
   final String phoneNumber;
+  final DateTime createdAt;
 
-  User({
-    this.userId,
+  BaseUser({
+    this.id,
     required this.username,
     required this.email,
     required this.password,
     required this.role,
     required this.phoneNumber,
+    required this.createdAt,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'userId': userId,
-      'username': username,
-      'email': email,
-      'role': role,
-      'phoneNumber': phoneNumber,
-      'createdAt': DateTime.now().toIso8601String(),
-    };
+  Map<String, dynamic> toMap();
+
+  factory BaseUser.fromMap(String id, Map<String, dynamic> map) {
+    String role = map['role']?.toString().toLowerCase() ?? 'retailer';
+
+    if (role == 'admin') {
+      return AdminUser.fromMap(id, map);
+    } else if (role == 'cs') {
+      return CsUser.fromMap(id, map);
+    } else {
+      return RetailerUser.fromMap(id, map);
+    }
   }
 
-  factory User.fromMap(String id, Map<String, dynamic> map) {
-    return User(
-      userId: id,
-      username: map['username'] ?? '',
-      email: map['email'] ?? '',
-      password: '',
-      role: map['role'] ?? 'retailer',
-      phoneNumber: map['phoneNumber'] ?? '',
-    );
-  }
-
-  User copyWith({
-    String? userId,
-    String? username,
-    String? email,
-    String? password,
-    String? role,
-    String? phoneNumber,
-  }) {
-    return User(
-      userId: userId ?? this.userId,
-      username: username ?? this.username,
-      email: email ?? this.email,
-      password: password ?? this.password,
-      role: role ?? this.role,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
-    );
-  }
+  // Abstract copyWith method
+  BaseUser copyWith();
 }

@@ -5,8 +5,12 @@ import 'package:flutter/foundation.dart';
 import '../models/promotion.dart';
 
 class PromotionAdminController extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+
+  PromotionAdminController({FirebaseFirestore? firestore, FirebaseAuth? auth})
+      : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

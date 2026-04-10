@@ -1,68 +1,76 @@
-class Retailer {
-  final String? id;
-  final String fullName;
-  final String email;
-  final String password;
-  final String phoneNumber;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'user.dart';
+
+class RetailerUser extends BaseUser {
   final String address;
-  final String role;
-  final DateTime createdAt;
+  final String? storeName;
 
-  Retailer({
-    this.id,
-    required this.fullName,
-    required this.email,
-    required this.password,
-    required this.phoneNumber,
+  RetailerUser({
+    super.id,
+    required super.username,
+    required super.email,
+    required super.password,
+    required super.phoneNumber,
+    required super.createdAt,
     required this.address,
-    this.role = 'retailer',
-    required this.createdAt,
-  });
+    this.storeName,
+  }) : super(role: 'retailer');
 
+  @override
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'fullName': fullName,
+      'username': username,
+      'fullName': username,
       'email': email,
+      'role': role,
       'phoneNumber': phoneNumber,
       'address': address,
-      'role': role,
+      'storeName': storeName,
       'createdAt': createdAt.toIso8601String(),
     };
   }
 
-  factory Retailer.fromMap(String id, Map<String, dynamic> map) {
-    return Retailer(
+  factory RetailerUser.fromMap(String id, Map<String, dynamic> map) {
+    DateTime parsedDate;
+    if (map['createdAt'] is Timestamp) {
+      parsedDate = (map['createdAt'] as Timestamp).toDate();
+    } else {
+      parsedDate = DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now();
+    }
+
+    return RetailerUser(
       id: id,
-      fullName: map['fullName'] ?? '',
+      username: map['username'] ?? map['fullName'] ?? '',
       email: map['email'] ?? '',
       password: '',
       phoneNumber: map['phoneNumber'] ?? '',
+      createdAt: parsedDate,
       address: map['address'] ?? '',
-      role: map['role'] ?? 'retailer',
-      createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
+      storeName: map['storeName'],
     );
   }
 
-  Retailer copyWith({
+  @override
+  RetailerUser copyWith({
     String? id,
-    String? fullName,
+    String? username,
     String? email,
     String? password,
     String? phoneNumber,
-    String? address,
-    String? role,
     DateTime? createdAt,
+    String? address,
+    String? storeName,
   }) {
-    return Retailer(
+    return RetailerUser(
       id: id ?? this.id,
-      fullName: fullName ?? this.fullName,
+      username: username ?? this.username,
       email: email ?? this.email,
       password: password ?? this.password,
       phoneNumber: phoneNumber ?? this.phoneNumber,
-      address: address ?? this.address,
-      role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
+      address: address ?? this.address,
+      storeName: storeName ?? this.storeName,
     );
   }
 }
