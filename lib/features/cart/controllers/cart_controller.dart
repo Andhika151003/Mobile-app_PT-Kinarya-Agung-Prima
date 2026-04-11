@@ -25,11 +25,21 @@ class CartController extends ChangeNotifier {
     required double price,
     required String imageUrl,
     int quantity = 1,
+    required int minOrder,  
+    required int stockLimit,
   }) {
     final existingIndex = _items.indexWhere((item) => item.id == id);
 
     if (existingIndex >= 0) {
-      _items[existingIndex].quantity += quantity;
+      final existingItem = _items[existingIndex];
+      if (existingItem.quantity + quantity <= stockLimit) {
+        existingItem.quantity += quantity;
+      } else {
+        existingItem.quantity = stockLimit;
+      }
+      
+      existingItem.minOrder = minOrder;
+      existingItem.stockLimit = stockLimit;
     } else {
       _items.add(
         CartItem(
@@ -39,6 +49,8 @@ class CartController extends ChangeNotifier {
           price: price,
           imageUrl: imageUrl,
           quantity: quantity, 
+          minOrder: minOrder,
+          stockLimit: stockLimit,
         ),
       );
     }
@@ -49,16 +61,22 @@ class CartController extends ChangeNotifier {
   void incrementQty(String id) {
     final index = _items.indexWhere((item) => item.id == id);
     if (index != -1) {
-      _items[index].quantity++;
-      notifyListeners(); 
+      final item = _items[index];
+      if (item.quantity < item.stockLimit) {
+        item.quantity++;
+        notifyListeners();
+      }
     }
   }
 
   void decrementQty(String id) {
     final index = _items.indexWhere((item) => item.id == id);
-    if (index != -1 && _items[index].quantity > 1) {
-      _items[index].quantity--;
-      notifyListeners();
+    if (index != -1) {
+      final item = _items[index];
+      if (item.quantity > item.minOrder) {
+        item.quantity--;
+        notifyListeners();
+      }
     }
   }
 

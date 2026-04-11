@@ -66,7 +66,11 @@ class _CartViewState extends State<CartView> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.black12),
+                            Icon(
+                              Icons.shopping_cart_outlined,
+                              size: 64,
+                              color: Colors.black12,
+                            ),
                             SizedBox(height: 16),
                             Text(
                               'Keranjang Masih Kosong',
@@ -91,11 +95,13 @@ class _CartViewState extends State<CartView> {
                             variant: item.variant,
                             price: item.price,
                             qty: item.quantity,
-                            imageUrl: item.imageUrl ?? '',
+                            imageUrl: item.imageUrl,
                             onAdd: () => _cartController.incrementQty(item.id),
                             onRemove: () =>
                                 _cartController.decrementQty(item.id),
                             onDelete: () => _cartController.removeItem(item.id),
+                            minLimit: item.minOrder,
+                            maxLimit: item.stockLimit,
                           );
                         },
                       ),
@@ -104,12 +110,9 @@ class _CartViewState extends State<CartView> {
               // AREA ORDER SUMMARY
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
-                  ),
+                  borderRadius: BorderRadius.circular(24),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,8 +180,8 @@ class _CartViewState extends State<CartView> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) =>
-                                          const CheckoutView()),
+                                    builder: (context) => const CheckoutView(),
+                                  ),
                                 );
                               },
                         style: ElevatedButton.styleFrom(
@@ -220,7 +223,13 @@ class _CartViewState extends State<CartView> {
     required VoidCallback onAdd,
     required VoidCallback onRemove,
     required VoidCallback onDelete,
+    required int minLimit,
+    required int maxLimit,
   }) {
+
+    final bool isAtMin = qty <= minLimit;
+    final bool isAtMax = qty >= maxLimit;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -286,33 +295,35 @@ class _CartViewState extends State<CartView> {
                   variant,
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
+                if (minLimit > 1 || isAtMax)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (minLimit > 1)
+                          Text('Min. Order: $minLimit', style: const TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold)),
+                        if (minLimit > 1 && isAtMax)
+                          const Text(' • ', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                        if (isAtMax)
+                          Text('Stock: $maxLimit', style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      NumberFormat.currency(
-                        locale: 'id_ID',
-                        symbol: 'Rp ',
-                        decimalDigits: 0,
-                      ).format(price),
-                      style: const TextStyle(
-                        color: Colors.black87, 
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                    ),
+                    Text(NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(price),
+                      style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w800, fontSize: 14)),
                     Row(
                       children: [
-                        _buildQtyButton(Icons.remove, onRemove),
+                        _buildQtyButton(Icons.remove, isAtMin ? null : onRemove, isDisabled: isAtMin),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            '$qty',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                          child: Text('$qty', style: const TextStyle(fontWeight: FontWeight.bold)),
                         ),
-                        _buildQtyButton(Icons.add, onAdd),
+                        _buildQtyButton(Icons.add, isAtMax ? null : onAdd, isDisabled: isAtMax),
                       ],
                     ),
                   ],
@@ -325,16 +336,21 @@ class _CartViewState extends State<CartView> {
     );
   }
 
-  Widget _buildQtyButton(IconData icon, VoidCallback onPressed) {
+  Widget _buildQtyButton(IconData icon, VoidCallback? onPressed, {bool isDisabled = false}) {
     return InkWell(
       onTap: onPressed,
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: isDisabled ? Colors.grey.shade200 : Colors.grey.shade100,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 16, color: Colors.black87),
+        child: Icon(
+          icon, 
+          size: 16, 
+          color: isDisabled ? Colors.grey.shade400 : Colors.black87
+        ),
       ),
     );
   }
@@ -350,9 +366,9 @@ class _CartViewState extends State<CartView> {
         Text(
           value,
           style: const TextStyle(
-            color: Colors.black87, 
+            color: Colors.black87,
             fontSize: 14,
-            fontWeight: FontWeight.w500
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],

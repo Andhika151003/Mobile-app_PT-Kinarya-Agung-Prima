@@ -366,6 +366,8 @@ class _ProductUserViewState extends State<ProductUserView> {
                               price: finalPrice,
                               imageUrl: product.imageUrl,
                               quantity: moq,
+                              minOrder: moq,
+                              stockLimit: currentStock,
                             );
 
                             ScaffoldMessenger.of(context).showSnackBar(

@@ -48,6 +48,7 @@ class CheckoutController {
           }
         }
       }
+      
       final String orderId = 'KNY-${DateTime.now().millisecondsSinceEpoch}';
 
       await _firestore.collection('orders').doc(orderId).set({
@@ -84,8 +85,7 @@ class CheckoutController {
 
       await batch.commit();
 
-      const String apiUrl =
-          'https://backend-payment-kinarya.vercel.app/create-transaction';
+      const String apiUrl = 'https://backend-payment-kinarya.vercel.app/create-transaction';
 
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -104,16 +104,20 @@ class CheckoutController {
 
         if (responseData['success'] == true) {
           final String paymentUrl = responseData['paymentUrl'];
+          
+          await _firestore.collection('orders').doc(orderId).update({
+            'paymentUrl': paymentUrl,
+          });
           return {'paymentUrl': paymentUrl, 'orderId': orderId};
+          
         } else {
           return {'error': 'Duitku ditolak: ${responseData['message']}'};
         }
       } else {
-        final errorMsg =
-            (jsonDecode(response.body) as Map)['error'] ??
-            'Terjadi kesalahan backend';
+        final errorMsg = (jsonDecode(response.body) as Map)['error'] ?? 'Terjadi kesalahan backend';
         return {'error': 'Server Error (${response.statusCode}): $errorMsg'};
       }
+
     } catch (e) {
       debugPrint('Checkout Error: $e');
       return {'error': 'Koneksi Error: Tidak dapat terhubung ke server.'};

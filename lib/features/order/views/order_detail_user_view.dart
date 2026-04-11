@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/order.dart';
 import '../controllers/order_user_controller.dart';
 import '../../payment & checkout/views/payment_status_view.dart';
+import '../../payment & checkout/views/payment_webview.dart';
 
 class OrderDetailUserView extends StatefulWidget {
   final String orderId;
@@ -324,10 +325,28 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => PaymentStatusView(orderId: widget.orderId)),
-            ).then((_) => _fetchOrder()),
+            onPressed: () {
+              final paymentUrl = _order?.paymentUrl; 
+
+              if (paymentUrl != null && paymentUrl.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PaymentWebView( 
+                      paymentUrl: paymentUrl, 
+                      orderId: widget.orderId,
+                    ),
+                  ),
+                ).then((_) => _fetchOrder());
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Link pembayaran tidak ditemukan.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: _primaryColor,
               padding: const EdgeInsets.symmetric(vertical: 14),

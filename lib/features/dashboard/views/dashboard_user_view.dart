@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../controllers/dashboard_user_controller.dart';
 import '../../promotion/controllers/promotion_user_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../promotion/models/promotion.dart';
 import '../../product/models/product.dart';
 import '../../product/views/product_detail_user_view.dart';
@@ -58,10 +59,17 @@ class _DashboardUserViewState extends State<DashboardUserView> {
       final promos = await _promoController.getActivePromotions();
       if (mounted) {
         setState(() => _activePromos = promos);
+        
         if (promos.isNotEmpty) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _showPromoPopup(promos.first);
-          });
+          final prefs = await SharedPreferences.getInstance();
+          final bool hasSeenPromo = prefs.getBool('hasSeenPromo_v1') ?? false;
+
+          if (!hasSeenPromo) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _showPromoPopup(promos.first);
+            });
+            await prefs.setBool('hasSeenPromo_v1', true);
+          }
         }
       }
     } catch (e) {
@@ -578,15 +586,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
               'Recent Orders',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            TextButton(
-              onPressed: () {
-                // Navigasi ke Halaman Semua Pesanan bisa diletakkan di sini
-              },
-              child: const Text(
-                'View All',
-                style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
-              ),
-            ),
           ],
         ),
         StreamBuilder<List<Map<String, dynamic>>>(
@@ -615,7 +614,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
             return ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: orders.length,
+              itemCount: orders.length > 3 ? 3 : orders.length,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final order = orders[index];

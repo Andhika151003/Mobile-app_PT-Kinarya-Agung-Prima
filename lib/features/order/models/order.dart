@@ -57,6 +57,7 @@ class OrderModel {
   
   final List<OrderItemModel> items;
   final String status; 
+  final String? paymentUrl;
   
   final DateTime? createdAt;
   final DateTime? paidAt;
@@ -77,6 +78,7 @@ class OrderModel {
     required this.total,
     required this.items,
     required this.status,
+    this.paymentUrl,
     this.createdAt,
     this.paidAt,
     this.shippedAt,
@@ -116,6 +118,7 @@ class OrderModel {
       
       items: parsedItems,
       status: rawStatus,
+      paymentUrl: map['paymentUrl']?.toString(),
       
       createdAt: parseDate(map['createdAt']),
       paidAt: parseDate(map['paidAt']),
@@ -138,6 +141,7 @@ class OrderModel {
       'total': total,
       'items': items.map((item) => item.toMap()).toList(),
       'status': status,
+      'paymentUrl': paymentUrl,
       'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
       'paidAt': paidAt != null ? Timestamp.fromDate(paidAt!) : null,
       'shippedAt': shippedAt != null ? Timestamp.fromDate(shippedAt!) : null,
@@ -165,6 +169,7 @@ class OrderModel {
       total: total,
       items: items,
       status: status ?? this.status,
+      paymentUrl: paymentUrl ?? this.paymentUrl,
       createdAt: createdAt,
       paidAt: paidAt ?? this.paidAt,
       shippedAt: shippedAt ?? this.shippedAt,

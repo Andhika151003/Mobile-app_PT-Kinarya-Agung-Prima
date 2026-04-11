@@ -5,6 +5,8 @@ class CartItem {
   final double price;
   final String imageUrl;
   int quantity;
+  int minOrder; 
+  int stockLimit; 
 
   CartItem({
     required this.id,
@@ -13,6 +15,8 @@ class CartItem {
     required this.price,
     required this.imageUrl,
     this.quantity = 1,
+    required this.minOrder,   
+    required this.stockLimit, 
   });
 
   Map<String, dynamic> toMap() {
@@ -23,6 +27,8 @@ class CartItem {
       'price': price,
       'imageUrl': imageUrl,
       'quantity': quantity,
+      'minOrder': minOrder,
+      'stockLimit': stockLimit,
     };
   }
 }
