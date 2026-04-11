@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
-// Import file AuthGate yang baru dibuat
-import 'features/authentication/views/auth_gate.dart'; 
-
-// Import Admin Master View untuk referensi (opsional)
-import 'features/admin/view/admin_master_view.dart';
+import 'features/authentication/views/auth_gate.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await dotenv.load(fileName: ".env");
+  
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+  
   runApp(const MyApp());
 }
 
@@ -29,7 +35,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Inter',
         useMaterial3: true,
       ),
-      home: const AuthGate(), // AuthGate akan menentukan halaman berdasarkan status login
+      home: const AuthGate(),
     );
   }
 }

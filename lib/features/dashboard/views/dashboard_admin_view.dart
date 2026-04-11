@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../authentication/views/profile_admin_view.dart';
 import '../controllers/dashboard_admin_controller.dart';
-import '../../admin/view/admin_master_view.dart'; 
+import '../../admin/view/admin_master_view.dart';
+import '../../promotion/views/form_promotion_admin_view.dart';
+import '../../promotion/models/promotion.dart';
 
 class DashboardAdminView extends StatefulWidget {
   const DashboardAdminView({super.key});
@@ -72,11 +74,24 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                       const SizedBox(height: 15),
                       _buildOverviewCards(),
                       const SizedBox(height: 30),
-                      _buildSectionHeader('Active Promotions', '+ New Promo'),
+                      // ========== ACTIVE PROMOTIONS ==========
+                      _buildSectionHeader(
+                        'Active Promotions',
+                        '+ New Promo',
+                        onAction: () {
+                          // Navigasi ke halaman tambah promo
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const FormPromotionAdminView(),
+                            ),
+                          );
+                        },
+                      ),
                       const SizedBox(height: 15),
                       _buildPromoList(),
                       const SizedBox(height: 30),
-                      // ========== MY RETAILERS DENGAN VIEW ALL ==========
+                      // ========== MY RETAILERS ==========
                       _buildSectionHeader(
                         'My Retailers', 
                         'View All',
@@ -287,6 +302,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                 badgeTextColor: promo['status'] == 'active'
                     ? Colors.blue
                     : Colors.orange,
+                promotionId: promo['id'],
               ),
               if (!isLast) Divider(color: Colors.grey.shade200),
             ],
@@ -303,6 +319,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     required String badgeText,
     required Color badgeColor,
     required Color badgeTextColor,
+    String? promotionId,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -353,12 +370,43 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Edit',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+              GestureDetector(
+                onTap: () {
+                  if (promotionId != null) {
+                    // Navigasi ke form edit promo
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FormPromotionAdminView(
+                          promotion: PromotionModel(
+                            id: promotionId,
+                            title: title,
+                            description: subtitle,
+                            discountType: 'percentage',
+                            discountValue: 20,
+                            productIds: [],
+                            applicableTo: 'all',
+                            startDate: DateTime.now(),
+                            endDate: DateTime.now().add(const Duration(days: 7)),
+                            startTime: '08:00',
+                            endTime: '23:59',
+                            status: 'active',
+                            sku: '#PRM-${promotionId.substring(0, 6)}',
+                            createdAt: DateTime.now(),
+                            createdBy: 'admin',
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text(
+                  'Edit',
+                  style: TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ],
@@ -379,10 +427,12 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       );
     }
 
+    final displayRetailers = retailers.take(3).toList();
+
     return Column(
       children: [
-        ...retailers.asMap().entries.map((entry) {
-          final isLast = entry.key == retailers.length - 1;
+        ...displayRetailers.asMap().entries.map((entry) {
+          final isLast = entry.key == displayRetailers.length - 1;
           final retailer = entry.value;
 
           return Column(

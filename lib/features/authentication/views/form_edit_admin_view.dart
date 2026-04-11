@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import '../controllers/profile_admin_controller.dart';
 
 class FormProfileAdminView extends StatefulWidget {
   const FormProfileAdminView({super.key});
@@ -22,6 +25,20 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
 
   bool _isLoading = true;
   bool _isSaving = false;
+
+  final AdminProfileController _controller = AdminProfileController();
+  File? _newProfileImage;
+  String? _existingPhotoUrl;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (pickedFile != null) {
+      setState(() {
+        _newProfileImage = File(pickedFile.path);
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -54,6 +71,7 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
             _typeController.text = data['businessType'] ?? 'Distributor';
             _bankAccountController.text = data['bankAccount'] ?? '';
             _bankNameController.text = data['bankName'] ?? '';
+            _existingPhotoUrl = data['photoUrl'];
             
             _isLoading = false;
           });
@@ -71,24 +89,22 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
     setState(() => _isSaving = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-          'fullName': _nameController.text.trim(),
-          'address': _locationController.text.trim(),
-          'phoneNumber': _contactController.text.trim(),
-          'businessType': _typeController.text.trim(),
-          'bankAccount': _bankAccountController.text.trim(),
-          'bankName': _bankNameController.text.trim(),
-        });
+      await _controller.updateAdminProfile(
+        fullName: _nameController.text.trim(),
+        address: _locationController.text.trim(),
+        phoneNumber: _contactController.text.trim(),
+        businessType: _typeController.text.trim(),
+        bankAccount: _bankAccountController.text.trim(),
+        bankName: _bankNameController.text.trim(),
+        profileImage: _newProfileImage,
+      );
 
-        if (mounted) {
+      if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Admin Profile updated successfully!')),
           );
           Navigator.pop(context, true);
         }
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -184,6 +200,18 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+            image: _newProfileImage != null
+                ? DecorationImage(
+                    image: FileImage(_newProfileImage!),
+                    fit: BoxFit.cover,
+                  )
+                : (_existingPhotoUrl != null && _existingPhotoUrl!.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(_existingPhotoUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.1),
@@ -197,9 +225,7 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
           bottom: -8,
           left: -8,
           child: GestureDetector(
-            onTap: () {
-              // TODO: Fungsi upload foto
-            },
+            onTap: _pickImage,
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(

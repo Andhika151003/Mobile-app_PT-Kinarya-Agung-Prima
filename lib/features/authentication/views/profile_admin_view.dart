@@ -21,6 +21,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
   String distributorId = '-';
   int totalSupply = 0; 
   int totalRevenue = 0; 
+  String? photoUrl;
 
   bool isLoading = true;
 
@@ -42,6 +43,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
           bankAccount = data['bankAccount'] ?? 'Not Set';
           bankName = data['bankName'] ?? 'Not Set';
           distributorId = '#DS${data['uid'].substring(0, 6).toUpperCase()}';
+          photoUrl = data['photoUrl'];
 
           isLoading = false;
         });
@@ -237,6 +239,24 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
     return Center(
       child: Column(
         children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF458833), width: 2),
+            ),
+            child: CircleAvatar(
+              radius: 44,
+              backgroundColor: const Color(0xFFE8F5E9),
+              backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
+                  ? NetworkImage(photoUrl!)
+                  : null,
+              child: photoUrl == null || photoUrl!.isEmpty
+                  ? const Icon(Icons.storefront_outlined, size: 40, color: Color(0xFF458833))
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
             adminName,
             style: const TextStyle(
@@ -257,15 +277,6 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF458833),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
-              ),
-              const SizedBox(width: 12),
               ElevatedButton(
                 onPressed: () async {
                   final result = await Navigator.push(

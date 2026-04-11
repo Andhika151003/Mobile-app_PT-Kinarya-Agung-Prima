@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class AdminMasterController extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+
+  AdminMasterController({FirebaseFirestore? firestore, FirebaseAuth? auth})
+      : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -32,11 +37,11 @@ class AdminMasterController extends ChangeNotifier {
           .where('role', isEqualTo: 'retailer')
           .get();  
 
-      print('Jumlah retailer dari Firestore: ${snapshot.docs.length}'); 
+      debugPrint('Jumlah retailer dari Firestore: ${snapshot.docs.length}'); 
 
       _retailers = snapshot.docs.map((doc) {
         final data = doc.data();
-        print('Retailer: ${data['fullName']} - ${data['email']}'); 
+        debugPrint('Retailer: ${data['fullName']} - ${data['email']}'); 
         return {
           'id': doc.id,
           ...data,
@@ -47,7 +52,7 @@ class AdminMasterController extends ChangeNotifier {
       _filteredRetailers = List.from(_retailers);
       _setLoading(false);
     } catch (e) {
-      print('Error fetching retailers: $e');
+      debugPrint('Error fetching retailers: $e');
       _setError('Gagal mengambil data: ${e.toString()}');
       _setLoading(false);
     }
@@ -100,7 +105,7 @@ class AdminMasterController extends ChangeNotifier {
       _setLoading(false);
       return true;
     } catch (e) {
-      print('Error disabling retailer: $e');
+      debugPrint('Error disabling retailer: $e');
       _setError('Gagal menonaktifkan: ${e.toString()}');
       _setLoading(false);
       return false;
@@ -127,7 +132,7 @@ class AdminMasterController extends ChangeNotifier {
       _setLoading(false);
       return true;
     } catch (e) {
-      print('Error enabling retailer: $e');
+      debugPrint('Error enabling retailer: $e');
       _setError('Gagal mengaktifkan: ${e.toString()}');
       _setLoading(false);
       return false;
@@ -147,7 +152,7 @@ class AdminMasterController extends ChangeNotifier {
       _setLoading(false);
       return true;
     } catch (e) {
-      print('Error deleting retailer: $e');
+      debugPrint('Error deleting retailer: $e');
       _setError('Gagal menghapus: ${e.toString()}');
       _setLoading(false);
       return false;
