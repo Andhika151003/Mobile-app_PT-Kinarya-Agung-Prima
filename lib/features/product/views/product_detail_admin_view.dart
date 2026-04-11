@@ -127,7 +127,8 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                         child: _buildStatCard(
                           title: 'Monthly Sales',
                           value: '${_currentProduct.monthlySales ?? 0}',
-                          percentage: '12%', 
+                          // Mengambil nilai tren dari model, default 0.0 jika null
+                          percentage: _currentProduct.monthlySalesTrend ?? 0.0, 
                           titleColor: Colors.blue.shade600,
                           bgColor: const Color(0xFFF0F6FF),
                         ),
@@ -137,7 +138,8 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                         child: _buildStatCard(
                           title: 'Revenue',
                           value: _formatRevenue(_currentProduct.revenue ?? 0),
-                          percentage: '8%', 
+                          // Mengambil nilai tren dari model, default 0.0 jika null
+                          percentage: _currentProduct.revenueTrend ?? 0.0, 
                           titleColor: Colors.purple.shade400,
                           bgColor: const Color(0xFFF7F0FF),
                         ),
@@ -309,7 +311,18 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
   }
 
   // --- TAMBAHAN WIDGET KOTAK STATS ---
-  Widget _buildStatCard({required String title, required String value, required String percentage, required Color titleColor, required Color bgColor}) {
+  Widget _buildStatCard({
+    required String title, 
+    required String value, 
+    required double percentage, 
+    required Color titleColor, 
+    required Color bgColor
+  }) {
+    final bool isPositive = percentage >= 0;
+    final Color trendColor = isPositive ? const Color(0xFF4C7D3E) : Colors.red;
+    final IconData trendIcon = isPositive ? Icons.arrow_upward : Icons.arrow_downward;
+    final String percentageText = '${percentage.abs().toStringAsFixed(1)}%';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
@@ -322,9 +335,12 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.arrow_upward, color: Color(0xFF4C7D3E), size: 14),
+              Icon(trendIcon, color: trendColor, size: 14),
               const SizedBox(width: 4),
-              Text(percentage, style: const TextStyle(color: Color(0xFF4C7D3E), fontSize: 12, fontWeight: FontWeight.bold)),
+              Text(
+                percentageText, 
+                style: TextStyle(color: trendColor, fontSize: 12, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
         ],

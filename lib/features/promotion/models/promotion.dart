@@ -58,6 +58,15 @@ class PromotionModel {
   }
 
   factory PromotionModel.fromMap(String id, Map<String, dynamic> map) {
+    DateTime parseDate(dynamic value) {
+      if (value is Timestamp) {
+        return value.toDate();
+      } else if (value is String) {
+        return DateTime.tryParse(value) ?? DateTime.now();
+      }
+      return DateTime.now();
+    }
+
     return PromotionModel(
       id: id,
       title: map['title'] ?? '',
@@ -66,14 +75,14 @@ class PromotionModel {
       discountValue: (map['discountValue'] ?? 0).toDouble(),
       productIds: List<String>.from(map['productIds'] ?? []),
       applicableTo: map['applicableTo'] ?? 'all',
-      startDate: (map['startDate'] as Timestamp).toDate(),
-      endDate: (map['endDate'] as Timestamp).toDate(),
+      startDate: parseDate(map['startDate']),
+      endDate: parseDate(map['endDate']),
       startTime: map['startTime'] ?? '00:00',
       endTime: map['endTime'] ?? '23:59',
       status: map['status'] ?? 'active',
       imageUrl: map['imageUrl'],
       sku: map['sku'] ?? '',
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      createdAt: parseDate(map['createdAt']),
       createdBy: map['createdBy'] ?? '',
     );
   }

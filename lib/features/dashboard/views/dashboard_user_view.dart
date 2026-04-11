@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../controllers/dashboard_user_controller.dart';
 import '../../promotion/controllers/promotion_user_controller.dart';
 import '../../promotion/models/promotion.dart';
@@ -57,7 +58,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
       final promos = await _promoController.getActivePromotions();
       if (mounted) {
         setState(() => _activePromos = promos);
-        // Tampilkan pop up kalau ada promo aktif
         if (promos.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _showPromoPopup(promos.first);
@@ -78,123 +78,136 @@ class _DashboardUserViewState extends State<DashboardUserView> {
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 32),
         child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
           decoration: BoxDecoration(
             color: const Color(0xFF1B8A3A),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Icon hadiah
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Image / Icon
+                      Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                          image: promo.imageUrl != null && promo.imageUrl!.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(promo.imageUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: promo.imageUrl == null || promo.imageUrl!.isEmpty
+                            ? const Icon(
+                                Icons.card_giftcard,
+                                color: Colors.white,
+                                size: 40,
+                              )
+                            : null,
                       ),
-                      child: const Icon(
-                        Icons.card_giftcard,
-                        color: Colors.white,
-                        size: 44,
+                      const SizedBox(height: 16),
+  
+                      // Title
+                      Text(
+                        promo.title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Title
-                    Text(
-                      promo.title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
+                      const SizedBox(height: 8),
+  
+                      // Description
+                      Text(
+                        promo.description,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                        maxLines: 4,
+                        overflow: TextOverflow.visible,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Description
-                    Text(
-                      promo.description,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 13,
-                        height: 1.4,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Discount badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.5)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.local_offer,
-                              color: Colors.white, size: 16),
-                          const SizedBox(width: 8),
-                          Text(
-                            promo.discountText,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
+                      const SizedBox(height: 16),
+  
+                      // Discount badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.5)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.local_offer,
+                                color: Colors.white, size: 16),
+                            const SizedBox(width: 8),
+                            Text(
+                              promo.discountText,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
                             ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+  
+                      // Valid until
+                      Text(
+                        'Valid until ${_formatDate(promo.endDate)}',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+  
+                      // Claim button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF1B8A3A),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Valid until
-                    Text(
-                      'Valid until ${_formatDate(promo.endDate)}',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Claim button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF1B8A3A),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Claim Offer Now',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 15),
+                          child: const Text(
+                            'Claim Offer Now',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 15),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-
+  
               // Close button
               Positioned(
                 top: 10,
@@ -345,7 +358,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
       children: [
         // Banner carousel
         SizedBox(
-          height: 140,
+          height: 160,
           child: PageView.builder(
             controller: _bannerPageController,
             itemCount: _activePromos.length,
@@ -385,7 +398,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
   }
 
   Widget _buildSingleBanner(PromotionModel promo) {
-    // Warna banner berdasarkan discount type
+    // Warna backup jika tidak ada gambar (berdasarkan discount type)
     Color bannerColor;
     switch (promo.discountType) {
       case 'bogo':
@@ -401,94 +414,125 @@ class _DashboardUserViewState extends State<DashboardUserView> {
         bannerColor = const Color(0xFF1B8A3A);
     }
 
+    final bool hasImage = promo.imageUrl != null && promo.imageUrl!.isNotEmpty;
+
     return GestureDetector(
       onTap: () => _showPromoPopup(promo),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 2),
-        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: bannerColor,
           borderRadius: BorderRadius.circular(16),
+          image: hasImage 
+              ? DecorationImage(
+                  image: NetworkImage(promo.imageUrl!),
+                  fit: BoxFit.cover,
+                )
+              : null,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Ending soon badge
-                  if (promo.isEndingSoon)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 6),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(4),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Colors.black.withValues(alpha: 0.6),
+                Colors.black.withValues(alpha: 0.2),
+                Colors.transparent,
+              ],
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Ending soon badge
+                    if (promo.isEndingSoon)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          '⏰ Ending Soon!',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+  
+                    Text(
+                      promo.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(blurRadius: 4, color: Colors.black45, offset: Offset(2, 2)),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      promo.discountText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        shadows: [
+                          Shadow(blurRadius: 2, color: Colors.black45, offset: Offset(1, 1)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => _showPromoPopup(promo),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF1B8A3A),
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: const Text(
-                        '⏰ Ending Soon!',
+                        'Claim Now',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600),
+                            fontWeight: FontWeight.bold, fontSize: 12),
                       ),
                     ),
-
-                  Text(
-                    promo.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    promo.discountText,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () => _showPromoPopup(promo),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: bannerColor,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Text(
-                      'Claim Now',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Icon(
-              promo.discountType == 'bogo'
-                  ? Icons.shopping_bag_outlined
-                  : promo.discountType == 'bundle'
-                      ? Icons.inventory_2_outlined
-                      : Icons.card_giftcard,
-              color: Colors.white,
-              size: 56,
-            ),
-          ],
+              if (!hasImage) ...[
+                const SizedBox(width: 12),
+                Icon(
+                  promo.discountType == 'bogo'
+                      ? Icons.shopping_bag_outlined
+                      : promo.discountType == 'bundle'
+                          ? Icons.inventory_2_outlined
+                          : Icons.card_giftcard,
+                  color: Colors.white,
+                  size: 56,
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -532,24 +576,101 @@ class _DashboardUserViewState extends State<DashboardUserView> {
           children: [
             const Text(
               'Recent Orders',
-              style:
-                  TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                // Navigasi ke Halaman Semua Pesanan bisa diletakkan di sini
+              },
               child: const Text(
                 'View All',
-                style: TextStyle(
-                    color: Colors.green, fontWeight: FontWeight.bold),
+                style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
               ),
             ),
           ],
         ),
-        _buildOrderItem(
-            '#ORD-7844', 'Processing', '\$845', 'Mar 14, 2025', Colors.blue),
-        const SizedBox(height: 12),
-        _buildOrderItem(
-            '#ORD-7845', 'Delivered', '\$1,234', 'Mar 16, 2025', Colors.green),
+        StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _controller.getRecentOrders(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+            final orders = snapshot.data ?? [];
+            if (orders.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Text('No recent orders found', style: TextStyle(color: Colors.grey)),
+                ),
+              );
+            }
+
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: orders.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final order = orders[index];
+                final status = order['status']?.toString() ?? 'Unknown';
+                final amount = (order['total'] as num?)?.toDouble() ?? 0.0;
+                DateTime? date;
+                if (order['createdAt'] is Timestamp) {
+                  date = (order['createdAt'] as Timestamp).toDate();
+                } else if (order['createdAt'] is String) {
+                  date = DateTime.tryParse(order['createdAt']);
+                }
+                
+                final dateStr = date != null 
+                    ? DateFormat('MMM dd, yyyy').format(date)
+                    : '-';
+
+                // Logika Warna Status
+                Color statusColor;
+                switch (status.toLowerCase()) {
+                  case 'paid':
+                  case 'delivered':
+                    statusColor = Colors.green;
+                    break;
+                  case 'shipped':
+                  case 'processing':
+                    statusColor = Colors.blue;
+                    break;
+                  case 'ordered':
+                  case 'pending':
+                    statusColor = Colors.orange;
+                    break;
+                  case 'cancelled':
+                    statusColor = Colors.red;
+                    break;
+                  default:
+                    statusColor = Colors.grey;
+                }
+
+                final orderIdRaw = order['orderId'] ?? order['id'] ?? '-';
+                // Format ID menjadi #ORD-XXXX (ambil 4 angka terakhir)
+                final digits = orderIdRaw.toString().replaceAll(RegExp(r'[^0-9]'), '');
+                final suffix = digits.length >= 4 ? digits.substring(digits.length - 4) : digits;
+                final formattedShortId = '#ORD-$suffix';
+
+                return _buildOrderItem(
+                  formattedShortId,
+                  status,
+                  NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(amount),
+                  dateStr,
+                  statusColor,
+                );
+              },
+            );
+          },
+        ),
       ],
     );
   }
@@ -576,19 +697,28 @@ class _DashboardUserViewState extends State<DashboardUserView> {
             children: [
               Text(orderId,
                   style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text(status,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  status,
                   style: TextStyle(
-                      color: statusColor, fontWeight: FontWeight.w500)),
+                      color: statusColor, fontWeight: FontWeight.bold, fontSize: 11),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total: $total',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                  style: TextStyle(color: Colors.grey[700], fontSize: 13, fontWeight: FontWeight.w500)),
               Text(date,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
             ],
           ),
         ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../authentication/views/profile_admin_view.dart';
 import '../controllers/dashboard_admin_controller.dart';
 import '../../admin/view/admin_master_view.dart';
@@ -14,8 +15,8 @@ class DashboardAdminView extends StatefulWidget {
 
 class _DashboardAdminViewState extends State<DashboardAdminView> {
   final DashboardAdminController _controller = DashboardAdminController();
+  final NumberFormat _currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
-  // State untuk overview stats
   Map<String, dynamic> overviewStats = {};
   List<Map<String, dynamic>> promotions = [];
   List<Map<String, dynamic>> retailers = [];
@@ -79,7 +80,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                         'Active Promotions',
                         '+ New Promo',
                         onAction: () {
-                          // Navigasi ke halaman tambah promo
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -96,7 +96,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                         'My Retailers', 
                         'View All',
                         onAction: () {
-                          // Navigasi ke Admin Master View (Manage Retail)
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -155,9 +154,9 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
             Expanded(
               child: _buildSingleCard(
                 title: 'Total Sales',
-                value: overviewStats['totalSales'] ?? '\$0',
-                subtitle: overviewStats['salesChange'] ?? '+0%',
-                subtitleColor: Colors.green,
+                value: _currencyFormat.format(overviewStats['totalSales'] ?? 0),
+                subtitle: 'Real-time revenue',
+                subtitleColor: Colors.blue.shade300,
                 icon: Icons.attach_money,
                 iconColor: Colors.blue,
               ),
@@ -167,7 +166,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               child: _buildSingleCard(
                 title: 'Orders',
                 value: '${overviewStats['totalOrders'] ?? 0}',
-                subtitle: overviewStats['ordersChange'] ?? '+0%',
+                subtitle: 'Paid orders',
                 subtitleColor: Colors.green,
                 icon: Icons.shopping_basket_outlined,
                 iconColor: Colors.green,
@@ -180,10 +179,10 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
           children: [
             Expanded(
               child: _buildSingleCard(
-                title: 'Total Customers',
+                title: 'Customers',
                 value: '${overviewStats['totalCustomers'] ?? 0}',
-                subtitle: overviewStats['customersChange'] ?? '+0%',
-                subtitleColor: Colors.orange,
+                subtitle: 'Registered Retailers',
+                subtitleColor: Colors.orange.shade300,
                 icon: Icons.people_outline,
                 iconColor: Colors.teal,
               ),
@@ -193,8 +192,8 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               child: _buildSingleCard(
                 title: 'Conversion Rate',
                 value: '${overviewStats['conversionRate'] ?? 0}%',
-                subtitle: overviewStats['conversionChange'] ?? '+0%',
-                subtitleColor: Colors.green,
+                subtitle: 'Sales per Customer',
+                subtitleColor: Colors.purple.shade300,
                 icon: Icons.trending_up,
                 iconColor: Colors.purple,
               ),

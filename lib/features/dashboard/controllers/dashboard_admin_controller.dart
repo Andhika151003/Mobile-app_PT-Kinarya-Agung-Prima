@@ -9,29 +9,45 @@ class DashboardAdminController {
       : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance;
 
-  /// Get overview stats (total sales, orders, customers)
   Future<Map<String, dynamic>> getOverviewStats() async {
     try {
       final user = _auth.currentUser;
       if (user == null) throw Exception("User not authenticated");
 
-      // TODO: Integrate dengan Firestore data untuk statistik real
+      final ordersSnapshot = await _firestore
+          .collection('orders')
+          .where('status', whereIn: ['Paid', 'Shipped', 'Delivered'])
+          .get();
+
+      double totalRevenue = 0;
+      int totalOrders = ordersSnapshot.docs.length;
+
+      for (var doc in ordersSnapshot.docs) {
+        final data = doc.data();
+        totalRevenue += (data['total'] as num?)?.toDouble() ?? 0.0;
+      }
+
+      final customersSnapshot = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'retailer')
+          .get();
+      int totalCustomers = customersSnapshot.docs.length;
+
       return {
-        'totalSales': '\$10,000',
-        'salesChange': '+20%',
-        'totalOrders': 850,
-        'ordersChange': '+8.2%',
-        'totalCustomers': 1200,
-        'customersChange': '+4.5%',
-        'conversionRate': 65.5,
-        'conversionChange': '+2.3%',
+        'totalSales': totalRevenue,
+        'salesChange': '+0%',
+        'totalOrders': totalOrders,
+        'ordersChange': '+0%',
+        'totalCustomers': totalCustomers,
+        'customersChange': '+0%',
+        'conversionRate': totalCustomers > 0 ? (totalOrders / totalCustomers * 100).toStringAsFixed(1) : '0',
+        'conversionChange': '+0%',
       };
     } catch (e) {
       throw Exception("Error fetching overview stats: $e");
     }
   }
 
-  /// Get list of active promotions
   Future<List<Map<String, dynamic>>> getPromotions() async {
     try {
       final user = _auth.currentUser;
@@ -54,7 +70,6 @@ class DashboardAdminController {
     }
   }
 
-  /// Get list of retailers managed by admin
   Future<List<Map<String, dynamic>>> getRetailers() async {
     try {
       final user = _auth.currentUser;
@@ -77,7 +92,6 @@ class DashboardAdminController {
     }
   }
 
-  /// Get admin profile info
   Future<Map<String, dynamic>?> getAdminInfo() async {
     try {
       final user = _auth.currentUser;

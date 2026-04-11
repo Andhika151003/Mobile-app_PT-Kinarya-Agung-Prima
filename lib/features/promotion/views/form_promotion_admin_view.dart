@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../controllers/promotion_admin_controller.dart';
 import '../models/promotion.dart';
@@ -25,6 +27,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
   late String _status;
+  File? _imageFile;
   bool _isLoading = false;
 
   // ── Validation state ─────────────────────────────────────
@@ -181,6 +184,17 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
   // ── Validasi manual ───────────────────────────────────────
   bool _validateAll() {
     bool valid = true;
@@ -216,7 +230,6 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     });
 
     if (_showTopWarning) {
-      // Scroll ke atas supaya warning banner terlihat
       _scrollController.animateTo(
         0,
         duration: const Duration(milliseconds: 300),
@@ -399,7 +412,6 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   }
 
   Future<void> _savePromotion() async {
-    // Jalankan validasi manual
     if (!_validateAll()) return;
 
     setState(() => _isLoading = true);
@@ -424,6 +436,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         startTime: _formatTime(_startTime),
         endTime: _formatTime(_endTime),
         sku: _skuController.text,
+        imageFile: _imageFile,
       );
     } else {
       success = await _controller.updatePromotion(
@@ -441,6 +454,8 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         endTime: _formatTime(_endTime),
         status: _status,
         sku: _skuController.text,
+        imageFile: _imageFile,
+        currentImageUrl: widget.promotion!.imageUrl,
       );
     }
 
@@ -469,8 +484,8 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     setState(() => _isLoading = false);
     if (!mounted) return;
     if (ok) {
-      Navigator.pop(context); // pop form
-      Navigator.pop(context); // pop detail
+      Navigator.pop(context);
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Promotion deleted'),
         backgroundColor: Colors.red,
@@ -579,7 +594,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             _label('Product Image'),
             const SizedBox(height: 8),
             GestureDetector(
-              onTap: () {},
+              onTap: _pickImage,
               child: Container(
                 height: 110,
                 width: double.infinity,
@@ -587,30 +602,55 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFD1D5DB)),
+                  image: _imageFile != null
+                      ? DecorationImage(
+                          image: FileImage(_imageFile!),
+                          fit: BoxFit.cover,
+                        )
+                      : (widget.promotion?.imageUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(widget.promotion!.imageUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(10),
+                child: (_imageFile == null && widget.promotion?.imageUrl == null)
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5E9),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.camera_alt_outlined,
+                                color: Color(0xFF2E7D32), size: 22),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            isEditing
+                                ? 'Replace Promotion Banner'
+                                : 'Upload Promotion Banner',
+                            style: const TextStyle(
+                                fontSize: 12, color: Color(0xFF9CA3AF)),
+                          ),
+                        ],
+                      )
+                    : Align(
+                        alignment: Alignment.bottomRight,
+                        child: Container(
+                          margin: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.edit,
+                              color: Colors.white, size: 16),
+                        ),
                       ),
-                      child: const Icon(Icons.camera_alt_outlined,
-                          color: Color(0xFF2E7D32), size: 22),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      isEditing
-                          ? 'Replace Promotion Banner'
-                          : 'Upload Promotion Banner',
-                      style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF9CA3AF)),
-                    ),
-                  ],
-                ),
               ),
             ),
 

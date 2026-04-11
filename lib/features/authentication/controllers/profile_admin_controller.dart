@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../supabase_storage_service.dart';
 
@@ -65,6 +66,55 @@ class AdminProfileController {
       }
     } catch (e) {
       throw Exception("Gagal update profil Admin: $e");
+    }
+  }
+
+  /// Fetch Admin Stats (Revenue & Monthly Sales)
+  Future<Map<String, dynamic>> getAdminStats() async {
+    try {
+      final now = DateTime.now();
+      final firstDayOfMonth = DateTime(now.year, now.month, 1);
+
+      // 1. Get all completed orders for total revenue
+      final ordersSnapshot = await _firestore
+          .collection('orders')
+          .where('status', whereIn: ['Paid', 'Shipped', 'Delivered'])
+          .get();
+
+      double totalRevenue = 0;
+      int monthlySalesUnits = 0;
+
+      for (var doc in ordersSnapshot.docs) {
+        final data = doc.data();
+        totalRevenue += (data['total'] as num?)?.toDouble() ?? 0.0;
+
+        // 2. Count monthly units sold
+        final createdAt = data['createdAt'];
+        DateTime? orderDate;
+        if (createdAt is Timestamp) {
+          orderDate = createdAt.toDate();
+        } else if (createdAt is String) {
+          orderDate = DateTime.tryParse(createdAt);
+        }
+
+        if (orderDate != null && orderDate.isAfter(firstDayOfMonth)) {
+          final items = data['items'] as List<dynamic>? ?? [];
+          for (var item in items) {
+            monthlySalesUnits += (item['quantity'] as num?)?.toInt() ?? 0;
+          }
+        }
+      }
+
+      return {
+        'totalRevenue': totalRevenue,
+        'monthlySales': monthlySalesUnits,
+      };
+    } catch (e) {
+      debugPrint("Error fetching admin stats: $e");
+      return {
+        'totalRevenue': 0.0,
+        'monthlySales': 0,
+      };
     }
   }
 }

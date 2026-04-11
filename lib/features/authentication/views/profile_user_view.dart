@@ -21,7 +21,7 @@ class _ProfileUserViewState extends State<ProfileUserView> {
   String businessType = 'Loading...';
   String storeId = '-';
   int totalOrders = 0; 
-  int totalSpent = 0;
+  double totalSpent = 0;
   bool isActive = true;
   String? photoUrl;
   bool isLoading = true;
@@ -35,6 +35,7 @@ class _ProfileUserViewState extends State<ProfileUserView> {
   Future<void> _fetchUserData() async {
     try {
       final data = await _retailController.getRetailProfile();
+      final stats = await _retailController.getRetailStats();
       
       if (data != null && mounted) {
         setState(() {
@@ -45,6 +46,10 @@ class _ProfileUserViewState extends State<ProfileUserView> {
           storeId = '#KNY${data['uid'].substring(0, 6).toUpperCase()}';
           isActive = data['isActive'] ?? true; 
           photoUrl = data['photoUrl'];
+          
+          // Stats dari controller
+          totalOrders = stats['totalOrders'] ?? 0;
+          totalSpent = stats['totalSpent'] ?? 0.0;
           
           isLoading = false;
         });

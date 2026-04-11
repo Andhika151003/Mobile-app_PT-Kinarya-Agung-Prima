@@ -78,4 +78,38 @@ class RetailProfileController {
       throw Exception("Gagal mengubah status toko: $e");
     }
   }
+
+  /// Get Retailer Stats (Total Orders & Total Spent)
+  Future<Map<String, dynamic>> getRetailStats() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception("User not authenticated");
+
+      // 1. Get all orders for this user
+      final ordersSnapshot = await _firestore
+          .collection('orders')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      double totalSpent = 0;
+      int totalOrders = ordersSnapshot.docs.length;
+
+      for (var doc in ordersSnapshot.docs) {
+        final data = doc.data();
+        final status = data['status']?.toString() ?? '';
+
+        // Hanya hitung spent untuk order yang sudah dibayar/selesai
+        if (['Paid', 'Shipped', 'Delivered'].contains(status)) {
+          totalSpent += (data['total'] as num?)?.toDouble() ?? 0.0;
+        }
+      }
+
+      return {
+        'totalOrders': totalOrders,
+        'totalSpent': totalSpent,
+      };
+    } catch (e) {
+      throw Exception("Gagal memuat statistik Retail: $e");
+    }
+  }
 }

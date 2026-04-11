@@ -3,6 +3,8 @@ import '../models/product.dart';
 import '../controllers/product_admin_controller.dart';
 import '../controllers/product_user_controller.dart';
 import 'product_detail_user_view.dart';
+import '../../cart/controllers/cart_controller.dart';
+import '../../cart/views/cart_view.dart';
 
 class ProductUserView extends StatefulWidget {
   const ProductUserView({super.key});
@@ -13,6 +15,7 @@ class ProductUserView extends StatefulWidget {
 
 class _ProductUserViewState extends State<ProductUserView> {
   final AdminProductController _productController = AdminProductController();
+  final CartController _cartController = CartController();
   
   final Color primaryGreen = const Color(0xFF00903D);
   String _selectedCategory = 'All Products';
@@ -85,9 +88,9 @@ class _ProductUserViewState extends State<ProductUserView> {
         IconButton(
           icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black87, size: 26),
           onPressed: () {
-            // TODO: Buka halaman Keranjang (Cart)
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Membuka halaman Keranjang Belanja...')),
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CartView()),
             );
           },
         )
@@ -127,7 +130,7 @@ class _ProductUserViewState extends State<ProductUserView> {
             child: IconButton(
               icon: const Icon(Icons.search, color: Colors.white, size: 20),
               onPressed: () {
-                // TODO: Eksekusi pencarian
+                setState(() {});
               },
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               padding: EdgeInsets.zero,
@@ -198,7 +201,6 @@ class _ProductUserViewState extends State<ProductUserView> {
           );
         }
 
-        // --- LAKUKAN FILTER KATEGORI & PENCARIAN & SORTING MELALUI CONTROLLER ---
         final allProducts = snapshot.data!;
         final displayProducts = ProductUserController().filterAndSortProducts(
           allProducts, 
@@ -238,7 +240,6 @@ class _ProductUserViewState extends State<ProductUserView> {
   Widget _buildProductCard(BuildContext context, ProductModel product) {
     return GestureDetector(
       onTap: () {
-        // TODO: Navigasi ke Halaman Detail Versi User
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => ProductDetailUserView(product: product)),
@@ -300,6 +301,11 @@ class _ProductUserViewState extends State<ProductUserView> {
                           'Min. Order: ${product.moq ?? 1} pcs',
                           style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
                         ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Sisa stok: ${product.stock ?? 0}',
+                          style: TextStyle(color: (product.stock ?? 0) < 10 ? Colors.red : Colors.grey.shade600, fontSize: 11),
+                        ),
                       ],
                     ),
                     
@@ -318,9 +324,56 @@ class _ProductUserViewState extends State<ProductUserView> {
                         ),
                         InkWell(
                           onTap: () {
-                            // TODO: Fungsi Add to Cart
+                            int currentStock = product.stock ?? 0; 
+                            int moq = product.moq ?? 1;
+
+                            int qtyInCart = 0;
+                            try {
+                              final existingItem = _cartController.items.firstWhere((item) => item.id == product.id!);
+                              qtyInCart = existingItem.quantity;
+                            } catch (e) {
+                              qtyInCart = 0;
+                            }
+
+                            if (currentStock < moq) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Maaf, stok ${product.name} tidak mencukupi. Sisa stok: $currentStock'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+
+                            if ((qtyInCart + moq) > currentStock) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Stok terbatas! Anda sudah memiliki $qtyInCart di keranjang (Sisa stok di gudang: $currentStock)'),
+                                  backgroundColor: Colors.orange.shade700,
+                                ),
+                              );
+                              return;
+                            }
+
+                            double finalPrice = (product.wholesalePrice != null && product.wholesalePrice! > 0) 
+                                ? product.wholesalePrice!.toDouble() 
+                                : product.price.toDouble();
+
+                            _cartController.addToCart(
+                              id: product.id!,
+                              title: product.name,
+                              variant: product.category,
+                              price: finalPrice,
+                              imageUrl: product.imageUrl,
+                              quantity: moq,
+                            );
+
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('${product.name} ditambahkan ke keranjang!', style: const TextStyle(fontSize: 12))),
+                              SnackBar(
+                                content: Text('${product.name} dimasukkan ke keranjang!'),
+                                backgroundColor: primaryGreen, 
+                                duration: const Duration(seconds: 2),
+                              ),
                             );
                           },
                           child: const Icon(Icons.add_shopping_cart, size: 20, color: Colors.black54),

@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/promotion.dart';
+import '../../../supabase_storage_service.dart';
 
 class PromotionAdminController extends ChangeNotifier {
   final FirebaseFirestore _firestore;
@@ -100,7 +102,7 @@ class PromotionAdminController extends ChangeNotifier {
     required String startTime,
     required String endTime,
     required String sku,
-    String? imageUrl,
+    File? imageFile,
   }) async {
     _setLoading(true);
     _clearError();
@@ -108,6 +110,13 @@ class PromotionAdminController extends ChangeNotifier {
     try {
       final user = _auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
+
+      String? imageUrl;
+      if (imageFile != null) {
+        final storageService = SupabaseStorageService();
+        final fileName = 'promo_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        imageUrl = await storageService.uploadProductImage(imageFile, fileName);
+      }
 
       final newPromo = PromotionModel(
         title: title,
@@ -154,7 +163,8 @@ class PromotionAdminController extends ChangeNotifier {
     required String endTime,
     required String status,
     required String sku,
-    String? imageUrl,
+    File? imageFile,
+    String? currentImageUrl,
   }) async {
     _setLoading(true);
     _clearError();
@@ -162,6 +172,13 @@ class PromotionAdminController extends ChangeNotifier {
     try {
       final promotionRef = _firestore.collection('promotions').doc(promotionId);
       
+      String? imageUrl = currentImageUrl;
+      if (imageFile != null) {
+        final storageService = SupabaseStorageService();
+        final fileName = 'promo_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        imageUrl = await storageService.uploadProductImage(imageFile, fileName);
+      }
+
       await promotionRef.update({
         'title': title,
         'description': description,
@@ -199,7 +216,6 @@ class PromotionAdminController extends ChangeNotifier {
     final docRef = _firestore.collection('promotions').doc(promotionId);
     debugPrint('Document reference: ${docRef.path}'); 
     
-    // Cek apakah dokumen ada
     final doc = await docRef.get();
     debugPrint('Document exists: ${doc.exists}'); 
     

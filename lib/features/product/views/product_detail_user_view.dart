@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/product.dart';
+import '../../cart/controllers/cart_controller.dart';
 
 class ProductDetailUserView extends StatefulWidget {
   final ProductModel product;
@@ -16,15 +17,33 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
   int _currentImageIndex = 0;
   final Color primaryGreen = const Color(0xFF4C7D3E);
   final Color priceGreen = const Color(0xFF1E8F29);
+  
+  final CartController _cartController = CartController(); 
 
   @override
   void initState() {
     super.initState();
-    _quantity = widget.product.moq ?? 1;
+    int moq = widget.product.moq ?? 1;
+    int stock = widget.product.stock ?? 0;
+    
+    _quantity = moq > stock ? stock : moq;
+    if (_quantity < 0) _quantity = 0;
   }
 
   void _increment() {
-    setState(() => _quantity++);
+    int stock = widget.product.stock ?? 0;
+    
+    if (_quantity < stock) {
+      setState(() => _quantity++);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Maksimal stok yang tersedia adalah $stock pcs'),
+          backgroundColor: Colors.orange.shade700,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _decrement() {
@@ -45,6 +64,11 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
     int displayPrice = widget.product.wholesalePrice != null && widget.product.wholesalePrice! > 0 
         ? widget.product.wholesalePrice! 
         : widget.product.price;
+        
+    int currentStock = widget.product.stock ?? 0;
+    int moq = widget.product.moq ?? 1;
+    
+    bool isOutOfStock = currentStock < moq;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -53,8 +77,39 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: ElevatedButton(
-            onPressed: () {
-              // TODO: Fungsi Add to Cart
+            onPressed: isOutOfStock ? null : () {
+              int qtyInCart = 0;
+              try {
+                final existingItem = _cartController.items.firstWhere((item) => item.id == widget.product.id);
+                qtyInCart = existingItem.quantity;
+              } catch (e) {
+                qtyInCart = 0;
+              }
+
+              if ((qtyInCart + _quantity) > currentStock) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Stok terbatas! Anda sudah memiliki $qtyInCart di keranjang (Sisa stok gudang: $currentStock)'),
+                    backgroundColor: Colors.orange.shade700,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+                return; 
+              }
+
+              double finalPrice = (widget.product.wholesalePrice != null && widget.product.wholesalePrice! > 0) 
+                  ? widget.product.wholesalePrice!.toDouble() 
+                  : widget.product.price.toDouble();
+
+              _cartController.addToCart(
+                id: widget.product.id ?? '', 
+                title: widget.product.name,
+                variant: widget.product.category,
+                price: finalPrice,
+                imageUrl: widget.product.imageUrl,
+                quantity: _quantity,
+              );
+
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('$_quantity ${widget.product.name} added to cart!'),
@@ -65,11 +120,19 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryGreen,
+              disabledBackgroundColor: Colors.grey.shade300,
               elevation: 0,
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Add to Cart', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            child: Text(
+              isOutOfStock ? 'Out of Stock' : 'Add to Cart', 
+              style: TextStyle(
+                color: isOutOfStock ? Colors.grey.shade600 : Colors.white, 
+                fontSize: 16, 
+                fontWeight: FontWeight.bold
+              ),
+            ),
           ),
         ),
       ),
@@ -112,7 +175,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                     ),
                   ],
                 ),
-                _buildCounter(),
+                isOutOfStock ? const SizedBox.shrink() : _buildCounter(),
               ],
             ),
             const SizedBox(height: 24),
@@ -141,7 +204,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildInfoCard('Stock', '${widget.product.stock} pcs')),
+                Expanded(child: _buildInfoCard('Stock', '$currentStock pcs')),
                 const SizedBox(width: 12),
                 Expanded(child: _buildInfoCard('Weight', '${widget.product.weight ?? 0} kg')),
               ],

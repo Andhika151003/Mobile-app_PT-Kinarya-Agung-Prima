@@ -8,7 +8,6 @@ class PromotionUserController {
   PromotionUserController({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  /// Fetch semua promo yang sedang aktif saat ini
   Future<List<PromotionModel>> getActivePromotions() async {
     try {
       final now = DateTime.now();
@@ -21,12 +20,10 @@ class PromotionUserController {
       final activePromos = snapshot.docs
           .map((doc) => PromotionModel.fromMap(doc.id, doc.data()))
           .where((promo) {
-            // Filter manual karena Firestore tidak bisa query 2 range sekaligus
-            return promo.startDate.isBefore(now) && promo.endDate.isAfter(now);
+            return !promo.startDate.isAfter(now) && promo.endDate.isAfter(now);
           })
           .toList();
 
-      // Urutkan: yang ending soon duluan, lalu by startDate terbaru
       activePromos.sort((a, b) {
         if (a.isEndingSoon && !b.isEndingSoon) return -1;
         if (!a.isEndingSoon && b.isEndingSoon) return 1;
@@ -40,7 +37,6 @@ class PromotionUserController {
     }
   }
 
-  /// Ambil satu promo terbaru untuk pop up (promo pertama yang aktif)
   Future<PromotionModel?> getLatestPromoForPopup() async {
     try {
       final promos = await getActivePromotions();
