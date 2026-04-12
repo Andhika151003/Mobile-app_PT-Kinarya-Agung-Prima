@@ -276,10 +276,15 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
         bool isCompleted = index <= currentIndex;
         
         DateTime? stepDate;
-        if (index == 0) stepDate = order.createdAt;
-        else if (index == 1) stepDate = order.paidAt;
-        else if (index == 2) stepDate = order.shippedAt;
-        else if (index == 3) stepDate = order.deliveredAt;
+        if (index == 0) {
+          stepDate = order.createdAt;
+        } else if (index == 1) {
+          stepDate = order.paidAt;
+        } else if (index == 2) {
+          stepDate = order.shippedAt;
+        } else if (index == 3) {
+          stepDate = order.deliveredAt;
+        }
 
         return Expanded(
           child: Column(

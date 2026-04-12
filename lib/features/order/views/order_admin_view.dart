@@ -324,17 +324,17 @@ class _Pagination extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _PageBtn(child: const Icon(Icons.chevron_left, size: 20), enabled: currentPage > 1, isSelected: false, onTap: () => onPageChanged(currentPage - 1)),
+          _PageBtn(enabled: currentPage > 1, isSelected: false, onTap: () => onPageChanged(currentPage - 1), child: const Icon(Icons.chevron_left, size: 20)),
           const SizedBox(width: 8),
           ...pages.map((p) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: _PageBtn(
-                  child: Text('$p', style: TextStyle(fontSize: 14, fontWeight: p == currentPage ? FontWeight.bold : FontWeight.normal, color: p == currentPage ? Colors.white : Colors.black87)),
                   enabled: true, isSelected: p == currentPage, onTap: () => onPageChanged(p),
+                  child: Text('$p', style: TextStyle(fontSize: 14, fontWeight: p == currentPage ? FontWeight.bold : FontWeight.normal, color: p == currentPage ? Colors.white : Colors.black87)),
                 ),
               )),
           const SizedBox(width: 8),
-          _PageBtn(child: const Icon(Icons.chevron_right, size: 20), enabled: currentPage < totalPages, isSelected: false, onTap: () => onPageChanged(currentPage + 1)),
+          _PageBtn(enabled: currentPage < totalPages, isSelected: false, onTap: () => onPageChanged(currentPage + 1), child: const Icon(Icons.chevron_right, size: 20)),
         ],
       ),
     );

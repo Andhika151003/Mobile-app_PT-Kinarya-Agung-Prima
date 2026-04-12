@@ -23,11 +23,19 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
 
   String _selectedFilter = 'All Transactions';
   final List<String> _filters = ['All Transactions', 'Today', 'This Week'];
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _fetchOrders();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchOrders() async {
@@ -37,7 +45,7 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
       if (mounted) {
         setState(() {
           _allOrders = docs.map((e) => OrderModel.fromMap(e)).toList();
-          _applyFilter(_selectedFilter);
+          _filterItems();
           _isLoading = false;
         });
       }
@@ -54,25 +62,43 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
   void _applyFilter(String filter) {
     setState(() {
       _selectedFilter = filter;
-      final now = DateTime.now();
-
-      if (filter == 'All Transactions') {
-        _filteredOrders = List.from(_allOrders);
-      } else if (filter == 'Today') {
-        _filteredOrders = _allOrders.where((order) {
-          if (order.createdAt == null) return false;
-          return order.createdAt!.year == now.year &&
-                 order.createdAt!.month == now.month &&
-                 order.createdAt!.day == now.day;
-        }).toList();
-      } else if (filter == 'This Week') {
-        final weekAgo = now.subtract(const Duration(days: 7));
-        _filteredOrders = _allOrders.where((order) {
-          if (order.createdAt == null) return false;
-          return order.createdAt!.isAfter(weekAgo);
-        }).toList();
-      }
+      _filterItems();
     });
+  }
+
+  void _filterItems() {
+    final now = DateTime.now();
+    List<OrderModel> results = List.from(_allOrders);
+
+    // 1. Time Filter
+    if (_selectedFilter == 'Today') {
+      results = results.where((order) {
+        if (order.createdAt == null) return false;
+        return order.createdAt!.year == now.year &&
+               order.createdAt!.month == now.month &&
+               order.createdAt!.day == now.day;
+      }).toList();
+    } else if (_selectedFilter == 'This Week') {
+      final weekAgo = now.subtract(const Duration(days: 7));
+      results = results.where((order) {
+        if (order.createdAt == null) return false;
+        return order.createdAt!.isAfter(weekAgo);
+      }).toList();
+    }
+
+    // 2. Search Filter
+    if (_searchQuery.isNotEmpty) {
+      results = results.where((order) {
+        final q = _searchQuery.toLowerCase();
+        final matchesId = order.orderId.toLowerCase().contains(q);
+        final matchesName = order.fullName.toLowerCase().contains(q);
+        final matchesAddress = order.shippingAddress.toLowerCase().contains(q);
+        final matchesItems = order.items.any((item) => item.title.toLowerCase().contains(q));
+        return matchesId || matchesName || matchesAddress || matchesItems;
+      }).toList();
+    }
+
+    _filteredOrders = results;
   }
 
   @override
@@ -91,17 +117,59 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.receipt_long_outlined, color: Colors.black87),
-            const SizedBox(width: 8),
-            const Text('Transactions', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+            Icon(Icons.receipt_long_outlined, color: Colors.black87),
+            SizedBox(width: 8),
+            Text('Transactions', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Search Bar ──────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Container(
+              height: 46,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Search ID, Name, or Product...',
+                  hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+                  prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  suffixIcon: _searchQuery.isNotEmpty 
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                            _filterItems();
+                          });
+                        },
+                      )
+                    : null,
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                    _filterItems();
+                  });
+                },
+              ),
+            ),
+          ),
+
           // ── Filter Chips ──────────────────────────────────────────────
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -147,9 +215,16 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey.shade300),
+                            Icon(
+                              _searchQuery.isNotEmpty ? Icons.search_off_rounded : Icons.receipt_long_outlined, 
+                              size: 64, 
+                              color: Colors.grey.shade300
+                            ),
                             const SizedBox(height: 16),
-                            Text('No transactions found', style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                            Text(
+                              _searchQuery.isNotEmpty ? 'No results found' : 'No transactions found',
+                              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                            ),
                           ],
                         ),
                       )
@@ -203,7 +278,7 @@ class _TransactionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),

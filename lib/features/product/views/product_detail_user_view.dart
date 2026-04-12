@@ -24,14 +24,14 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
   void initState() {
     super.initState();
     int moq = widget.product.moq ?? 1;
-    int stock = widget.product.stock ?? 0;
+    int stock = widget.product.stock;
 
     _quantity = moq > stock ? stock : moq;
     if (_quantity < 0) _quantity = 0;
   }
 
   void _increment() {
-    int stock = widget.product.stock ?? 0;
+    int stock = widget.product.stock;
 
     if (_quantity < stock) {
       setState(() => _quantity++);
@@ -77,7 +77,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
         ? widget.product.wholesalePrice!
         : widget.product.price;
 
-    int currentStock = widget.product.stock ?? 0;
+    int currentStock = widget.product.stock;
     int moq = widget.product.moq ?? 1;
 
     bool isOutOfStock = currentStock < moq;
@@ -125,9 +125,9 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                       id: widget.product.id!,
                       title: widget.product.name,
                       variant: 'Default',
-                      price: widget.product.price.toDouble(),
+                      price: finalPrice,
                       imageUrl: widget.product.imageUrl,
-                      quantity: widget.product.moq ?? 1,
+                      quantity: _quantity,
                       minOrder: widget.product.moq ?? 1,
                       stockLimit: currentStock,
                     );
@@ -191,25 +191,45 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      currencyFormatter.format(displayPrice),
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: priceGreen,
+                    if (widget.product.wholesalePrice != null &&
+                        widget.product.wholesalePrice! > 0) ...[
+                      Text(
+                        'Retail: ${currencyFormatter.format(widget.product.price)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                          decoration: TextDecoration.lineThrough,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'per item',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade500,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      const SizedBox(height: 2),
+                    ],
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          currencyFormatter.format(displayPrice),
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: priceGreen,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          widget.product.wholesalePrice != null &&
+                                  widget.product.wholesalePrice! > 0
+                              ? 'Wholesale'
+                              : 'per item',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -325,10 +345,12 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
 
   Widget _buildImageSection() {
     List<String> allImages = [];
-    if (widget.product.imageUrl.isNotEmpty)
+    if (widget.product.imageUrl.isNotEmpty) {
       allImages.add(widget.product.imageUrl);
-    if (widget.product.imageUrls != null)
+    }
+    if (widget.product.imageUrls != null) {
       allImages.addAll(widget.product.imageUrls!);
+    }
 
     if (allImages.isEmpty) {
       return Center(

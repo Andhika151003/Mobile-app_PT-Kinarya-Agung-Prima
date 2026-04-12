@@ -854,10 +854,21 @@ class _DashboardUserViewState extends State<DashboardUserView> {
               style: TextStyle(color: Colors.grey[500], fontSize: 11),
             ),
             const SizedBox(height: 8),
+            if (product.wholesalePrice != null && product.wholesalePrice! > 0)
+              Text(
+                currencyFormatter.format(product.price),
+                style: TextStyle(
+                  decoration: TextDecoration.lineThrough,
+                  color: Colors.grey[400],
+                  fontSize: 10,
+                ),
+              ),
             Text(
-              currencyFormatter.format(product.price),
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 13),
+              currencyFormatter.format(product.wholesalePrice != null &&
+                      product.wholesalePrice! > 0
+                  ? product.wholesalePrice!
+                  : product.price),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ],
         ),

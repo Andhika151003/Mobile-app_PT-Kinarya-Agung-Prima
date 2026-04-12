@@ -129,7 +129,7 @@ class _CartViewState extends State<CartView> {
                     _buildSummaryRow(
                       'Subtotal',
                       NumberFormat.currency(
-                        locale: 'id',
+                        locale: 'id_ID',
                         symbol: 'Rp ',
                         decimalDigits: 0,
                       ).format(isEmpty ? 0 : _cartController.subtotal),
@@ -138,7 +138,7 @@ class _CartViewState extends State<CartView> {
                     _buildSummaryRow(
                       'Shipping',
                       NumberFormat.currency(
-                        locale: 'id',
+                        locale: 'id_ID',
                         symbol: 'Rp ',
                         decimalDigits: 0,
                       ).format(isEmpty ? 0 : _cartController.shippingCost),
@@ -159,7 +159,7 @@ class _CartViewState extends State<CartView> {
                         ),
                         Text(
                           NumberFormat.currency(
-                            locale: 'id',
+                            locale: 'id_ID',
                             symbol: 'Rp ',
                             decimalDigits: 0,
                           ).format(isEmpty ? 0 : _cartController.total),

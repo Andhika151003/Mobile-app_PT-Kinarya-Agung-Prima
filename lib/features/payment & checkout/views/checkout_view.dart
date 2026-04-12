@@ -34,13 +34,9 @@ class _CheckoutViewState extends State<CheckoutView> {
 
   static const List<Map<String, String>> _paymentMethods = [
     {'code': 'BC',  'name': 'BCA Virtual Account', 'icon': 'bank',    'desc': 'Cek otomatis'},
-    {'code': 'BV',  'name': 'BRI Virtual Account', 'icon': 'bank',    'desc': 'Cek otomatis'},
     {'code': 'I1',  'name': 'BNI Virtual Account', 'icon': 'bank',    'desc': 'Cek otomatis'},
-    {'code': 'IR',  'name': 'Mandiri Virtual Account', 'icon': 'bank','desc': 'Cek otomatis'},
-    {'code': 'NC',  'name': 'QRIS',                'icon': 'qr',      'desc': 'Scan QR Code'},
-    {'code': 'OL',  'name': 'OVO',                 'icon': 'wallet',  'desc': 'OVO e-wallet'},
-    {'code': 'DA',  'name': 'DANA',                'icon': 'wallet',  'desc': 'DANA e-wallet'},
-    {'code': 'SA',  'name': 'ShopeePay',           'icon': 'wallet',  'desc': 'ShopeePay e-wallet'},
+    {'code': 'M2',  'name': 'Mandiri Virtual Account', 'icon': 'bank','desc': 'Cek otomatis'},
+    {'code': 'BR',  'name': 'BRIVA', 'icon': 'bank',    'desc': 'Cek otomatis'},
   ];
 
   @override
@@ -377,7 +373,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade200)),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: (item.imageUrl != null && item.imageUrl!.isNotEmpty) ? Image.network(item.imageUrl!, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_outlined, color: Colors.grey)) : const Icon(Icons.image_outlined, color: Colors.grey),
+                                child: item.imageUrl.isNotEmpty ? Image.network(item.imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_outlined, color: Colors.grey)) : const Icon(Icons.image_outlined, color: Colors.grey),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -469,7 +465,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                   'variant': item.variant,
                   'quantity': item.quantity,
                   'price': item.price,
-                  'imageUrl': item.imageUrl ?? '',
+                  'imageUrl': item.imageUrl,
                 };
               }).toList();
               
@@ -487,27 +483,29 @@ class _CheckoutViewState extends State<CheckoutView> {
                 discountAmount: discountAmount,
               );
 
-              if (mounted) setState(() => _isProcessing = false);
+              if (!mounted) return;
+              setState(() => _isProcessing = false);
+
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
 
               if (result.containsKey('error')) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['error']!), backgroundColor: Colors.red, duration: const Duration(seconds: 5)));
+                if (!context.mounted) return;
+                messenger.showSnackBar(SnackBar(content: Text(result['error']!), backgroundColor: Colors.red, duration: const Duration(seconds: 5)));
               } else {
-                if (mounted) {
-                  final bool? paid = await Navigator.push<bool>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => PaymentWebView(
-                        paymentUrl: result['paymentUrl']!,
-                        orderId: result['orderId']!,
-                      ),
+                if (!context.mounted) return;
+                await navigator.push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => PaymentWebView(
+                      paymentUrl: result['paymentUrl']!,
+                      orderId: result['orderId']!,
                     ),
-                  );
+                  ),
+                );
 
-                  if (mounted) {
-                    _cartController.clearCart(); 
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => PaymentStatusView(orderId: result['orderId']!)));
-                  }
-                }
+                if (!context.mounted) return;
+                _cartController.clearCart(); 
+                navigator.pushReplacement(MaterialPageRoute(builder: (_) => PaymentStatusView(orderId: result['orderId']!)));
               }
             },
             style: ElevatedButton.styleFrom(

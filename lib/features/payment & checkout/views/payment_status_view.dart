@@ -90,7 +90,7 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
           if (mounted && doc.exists) {
             setState(() {
               _order = doc.data();
-              _syncMessage = '✅ Status diperbarui dari Duitku';
+              _syncMessage = 'Status diperbarui dari Duitku';
             });
           }
         }
@@ -178,8 +178,7 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
     final total = (_order?['total'] as num?)?.toDouble() ?? 0.0;
     final paymentMethod = _order?['paymentMethod'] as String? ?? '-';
     final Timestamp? createdAt = _order?['createdAt'] as Timestamp?;
-    final DateTime? date =
-        createdAt != null ? createdAt.toDate().toLocal() : null;
+    final DateTime? date = createdAt?.toDate().toLocal();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
@@ -203,7 +202,7 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                                   width: 56,
                                   height: 56,
                                   decoration: BoxDecoration(
-                                    color: _statusColor(status).withOpacity(0.1),
+                                    color: _statusColor(status).withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(

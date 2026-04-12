@@ -15,6 +15,9 @@ class OrderUserView extends StatefulWidget {
 class _OrderUserViewState extends State<OrderUserView>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  String _searchQuery = '';
 
   final List<_TabConfig> _tabs = const [
     _TabConfig(label: 'All Orders', statusFilter: null),
@@ -33,6 +36,7 @@ class _OrderUserViewState extends State<OrderUserView>
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -46,24 +50,50 @@ class _OrderUserViewState extends State<OrderUserView>
         centerTitle: false,
         automaticallyImplyLeading: false,
         titleSpacing: 20,
-        title: const Text(
-          'Orders',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.black, fontSize: 18),
+                decoration: const InputDecoration(
+                  hintText: 'Search ID or Product...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.grey),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.toLowerCase();
+                  });
+                },
+              )
+            : const Text(
+                'Orders',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.black87, size: 24),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_none_outlined,
+            icon: Icon(_isSearching ? Icons.close : Icons.search,
                 color: Colors.black87, size: 24),
-            onPressed: () {},
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchController.clear();
+                  _searchQuery = '';
+                }
+              });
+            },
           ),
+          if (!_isSearching)
+            IconButton(
+              icon: const Icon(Icons.notifications_none_outlined,
+                  color: Colors.black87, size: 24),
+              onPressed: () {},
+            ),
           const SizedBox(width: 8),
         ],
         bottom: PreferredSize(
@@ -99,7 +129,7 @@ class _OrderUserViewState extends State<OrderUserView>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: _tabs.map((tab) => _OrderList(tab: tab)).toList(),
+        children: _tabs.map((tab) => _OrderList(tab: tab, searchQuery: _searchQuery)).toList(),
       ),
     );
   }
@@ -116,8 +146,9 @@ class _TabConfig {
 // ── Order List per tab ────────────────────────────────────────────────────────
 class _OrderList extends StatelessWidget {
   final _TabConfig tab;
+  final String searchQuery;
 
-  const _OrderList({required this.tab});
+  const _OrderList({required this.tab, required this.searchQuery});
 
   @override
   Widget build(BuildContext context) {
@@ -139,15 +170,26 @@ class _OrderList extends StatelessWidget {
         }
 
         final docs = snapshot.data?.docs ?? [];
-        if (docs.isEmpty) return _EmptyState();
+        if (docs.isEmpty) return _EmptyState(hasSearch: searchQuery.isNotEmpty);
 
         List<OrderModel> allOrders = docs.map((doc) => OrderModel.fromMap(doc.data())).toList();
 
+        // 1. Filter by Status
         if (tab.statusFilter != null) {
           allOrders = allOrders.where((order) => tab.statusFilter!.contains(order.status)).toList();
         }
 
-        if (allOrders.isEmpty) return _EmptyState();
+        // 2. Filter by Search Query (Order ID or Product Names)
+        if (searchQuery.isNotEmpty) {
+          allOrders = allOrders.where((order) {
+            final matchesId = order.orderId.toLowerCase().contains(searchQuery);
+            final matchesProduct = order.items.any((item) =>
+                item.title.toLowerCase().contains(searchQuery));
+            return matchesId || matchesProduct;
+          }).toList();
+        }
+
+        if (allOrders.isEmpty) return _EmptyState(hasSearch: searchQuery.isNotEmpty);
 
         // Urutkan dari yang terbaru
         allOrders.sort((a, b) {
@@ -203,7 +245,7 @@ class _OrderCard extends StatelessWidget {
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -350,17 +392,37 @@ class _StatusBadge extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
+  final bool hasSearch;
+  const _EmptyState({this.hasSearch = false});
+
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.receipt_long_outlined, size: 72, color: Colors.grey.shade300),
+          Icon(
+            hasSearch ? Icons.search_off_rounded : Icons.receipt_long_outlined,
+            size: 72,
+            color: Colors.grey.shade300,
+          ),
           const SizedBox(height: 16),
-          Text('Belum ada pesanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          Text(
+            hasSearch ? 'Tidak ada hasil' : 'Belum ada pesanan',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text('Pesanan yang Anda buat akan muncul di sini.', style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
+          Text(
+            hasSearch
+                ? 'Kami tidak menemukan pesanan yang cocok dengan pencarian Anda.'
+                : 'Pesanan yang Anda buat akan muncul di sini.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+          ),
         ],
       ),
     );

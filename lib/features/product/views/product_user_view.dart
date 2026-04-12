@@ -303,8 +303,8 @@ class _ProductUserViewState extends State<ProductUserView> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Sisa stok: ${product.stock ?? 0}',
-                          style: TextStyle(color: (product.stock ?? 0) < 10 ? Colors.red : Colors.grey.shade600, fontSize: 11),
+                          'Sisa stok: ${product.stock}',
+                          style: TextStyle(color: product.stock < 10 ? Colors.red : Colors.grey.shade600, fontSize: 11),
                         ),
                       ],
                     ),
@@ -315,16 +315,30 @@ class _ProductUserViewState extends State<ProductUserView> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Expanded(
-                          child: Text(
-                            'Rp ${product.wholesalePrice != null && product.wholesalePrice! > 0 ? product.wholesalePrice : product.price}',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (product.wholesalePrice != null && product.wholesalePrice! > 0)
+                                Text(
+                                  'Rp ${product.price}',
+                                  style: TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Colors.grey.shade400,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              Text(
+                                'Rp ${product.wholesalePrice != null && product.wholesalePrice! > 0 ? product.wholesalePrice : product.price}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
                         ),
                         InkWell(
                           onTap: () {
-                            int currentStock = product.stock ?? 0; 
+                            int currentStock = product.stock; 
                             int moq = product.moq ?? 1;
 
                             int qtyInCart = 0;
