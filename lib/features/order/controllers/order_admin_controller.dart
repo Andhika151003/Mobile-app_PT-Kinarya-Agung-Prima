@@ -57,4 +57,50 @@ class OrderAdminController {
       throw Exception('Gagal memperbarui status: $e');
     }
   }
+
+  Future<void> cancelOrder(String orderId) async {
+    final orderRef = _firestore.collection('orders').doc(orderId);
+    
+    await _firestore.runTransaction((transaction) async {
+      final orderDoc = await transaction.get(orderRef);
+      if (!orderDoc.exists) throw Exception('Pesanan tidak ditemukan');
+
+      final data = orderDoc.data() as Map<String, dynamic>;
+      final String currentStatus = data['status']?.toString() ?? '';
+      final bool statsRecorded = data['statsRecorded'] ?? false;
+      final List<dynamic> itemsData = data['items'] as List<dynamic>? ?? [];
+
+      if (currentStatus == 'Cancelled') throw Exception('Pesanan sudah dibatalkan sebelumnya');
+
+      // 1. Update status pesanan
+      transaction.update(orderRef, {
+        'status': 'Cancelled',
+        'cancelledAt': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Kembalikan Stok (Restock)
+      for (var itemMap in itemsData) {
+        final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
+        final int quantity = (itemMap['quantity'] as num?)?.toInt() ?? 0;
+
+        if (productId != null && productId.isNotEmpty && quantity > 0) {
+          final productRef = _firestore.collection('products').doc(productId);
+          transaction.update(productRef, {
+            'stock': FieldValue.increment(quantity),
+          });
+
+          // 3. Batalkan Statistik (jika sudah tercatat)
+          if (statsRecorded) {
+            final int price = (itemMap['price'] as num?)?.toInt() ?? 0;
+            final int revenue = price * quantity;
+            
+            transaction.update(productRef, {
+              'monthlySales': FieldValue.increment(-quantity),
+              'revenue': FieldValue.increment(-revenue),
+            });
+          }
+        }
+      }
+    });
+  }
 }

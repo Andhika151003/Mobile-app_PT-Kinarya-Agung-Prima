@@ -69,8 +69,8 @@ class PromotionModel {
 
     return PromotionModel(
       id: id,
-      title: map['title'] ?? '',
-      description: map['description'] ?? '',
+      title: map['title'] ?? map['name'] ?? '',
+      description: map['description'] ?? map['subtitle'] ?? '',
       discountType: map['discountType'] ?? 'percentage',
       discountValue: (map['discountValue'] ?? 0).toDouble(),
       productIds: List<String>.from(map['productIds'] ?? []),
@@ -88,8 +88,21 @@ class PromotionModel {
   }
 
   bool get isActive {
+    if (status != 'active') return false;
     final now = DateTime.now();
-    return status == 'active' && now.isAfter(startDate) && now.isBefore(endDate);
+    
+    // Sesuaikan endDate agar mencakup seluruh hari sampai jam 23:59:59
+    final inclusiveEndDate = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+    final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
+
+    return !now.isBefore(inclusiveStartDate) && !now.isAfter(inclusiveEndDate);
+  }
+
+  bool get isUpcoming {
+    if (status != 'active') return false;
+    final now = DateTime.now();
+    final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
+    return now.isBefore(inclusiveStartDate);
   }
 
   bool get isEndingSoon {

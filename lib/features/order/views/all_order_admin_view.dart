@@ -363,12 +363,28 @@ class _TransactionCard extends StatelessWidget {
       label = 'Cancelled';
     }
 
+    IconData? icon;
+    if (label == 'Verified' || label == 'Delivered') {
+      icon = Icons.check_circle_outline;
+    } else if (label == 'Cancelled') {
+      icon = Icons.cancel_outlined;
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Text(
-        label,
-        style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.bold),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: fg),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }

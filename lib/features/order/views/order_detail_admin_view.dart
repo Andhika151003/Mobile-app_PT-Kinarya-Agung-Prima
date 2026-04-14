@@ -88,6 +88,40 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
     }
   }
 
+  Future<void> _cancelOrder() async {
+    if (_order == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text('Batalkan Pesanan?'),
+        content: const Text('Tindakan ini akan mengembalikan stok produk dan membatalkan pesanan secara permanen.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tutup', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, elevation: 0),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Batalkan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isUpdating = true);
+    try {
+      await _adminController.cancelOrder(widget.orderId);
+      await _fetchOrder();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pesanan berhasil dibatalkan dan stok dikembalikan'), backgroundColor: Colors.orange));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal pembatalan: $e'), backgroundColor: Colors.red));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading || _order == null) {
@@ -139,13 +173,30 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
             if (order.status != 'Delivered' && order.status != 'Expired' && order.status != 'Cancelled')
               Padding(
                 padding: const EdgeInsets.only(top: 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _updateStatus,
-                    style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
-                    child: const Text('Update Status', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-                  ),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _updateStatus,
+                        style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
+                        child: const Text('Update Status', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: _cancelOrder,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text('Batalkan Pesanan', style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             
@@ -233,12 +284,28 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
               Text(orderId, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: isDelivered ? const Color(0xFFE6F4EA) : const Color(0xFFFEF7E0), borderRadius: BorderRadius.circular(20)),
+                decoration: BoxDecoration(
+                  color: status == 'Cancelled' 
+                    ? const Color(0xFFFDE8E8) 
+                    : (isDelivered ? const Color(0xFFE6F4EA) : const Color(0xFFFEF7E0)), 
+                  borderRadius: BorderRadius.circular(20)
+                ),
                 child: Row(
                   children: [
-                    Icon(isDelivered ? Icons.check : Icons.access_time, size: 12, color: isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00)),
+                    Icon(
+                      status == 'Cancelled' ? Icons.close : (isDelivered ? Icons.check : Icons.access_time), 
+                      size: 12, 
+                      color: status == 'Cancelled' ? Colors.red : (isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00))
+                    ),
                     const SizedBox(width: 4),
-                    Text(isDelivered ? 'Delivered' : status, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00))),
+                    Text(
+                      status == 'Cancelled' ? 'Cancelled' : (isDelivered ? 'Delivered' : status), 
+                      style: TextStyle(
+                        fontSize: 12, 
+                        fontWeight: FontWeight.bold, 
+                        color: status == 'Cancelled' ? Colors.red : (isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00))
+                      )
+                    ),
                   ],
                 ),
               )
@@ -311,8 +378,16 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                   Expanded(child: Container(height: 3, color: index == 0 ? Colors.transparent : (isCompleted ? _primaryColor : Colors.grey.shade300))),
                   Container(
                     width: 24, height: 24,
-                    decoration: BoxDecoration(color: isCompleted ? _primaryColor : Colors.white, shape: BoxShape.circle, border: Border.all(color: isCompleted ? _primaryColor : Colors.grey.shade300)),
-                    child: Icon(Icons.check, size: 14, color: isCompleted ? Colors.white : Colors.grey.shade300),
+                    decoration: BoxDecoration(
+                      color: isCompleted ? (currentStatus == 'Cancelled' ? Colors.red : _primaryColor) : Colors.white, 
+                      shape: BoxShape.circle, 
+                      border: Border.all(color: isCompleted ? (currentStatus == 'Cancelled' ? Colors.red : _primaryColor) : Colors.grey.shade300)
+                    ),
+                    child: Icon(
+                      currentStatus == 'Cancelled' && index == currentIndex ? Icons.close : Icons.check, 
+                      size: 14, 
+                      color: isCompleted ? Colors.white : Colors.grey.shade300
+                    ),
                   ),
                   Expanded(child: Container(height: 3, color: index == steps.length - 1 ? Colors.transparent : (isCompleted && index < currentIndex ? _primaryColor : Colors.grey.shade300))),
                 ],

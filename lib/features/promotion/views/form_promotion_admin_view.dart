@@ -201,8 +201,10 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
 
     final titleEmpty = _titleController.text.trim().isEmpty;
     final discountTypeEmpty = _discountType.isEmpty;
-    final needsAmount =
-        _discountType != 'bogo' && _discountType != 'bundle';
+    
+    // BOGO tidak butuh amount, tapi BUNDLE BUTUH amount
+    final needsAmount = _discountType != 'bogo'; 
+    
     final discountAmtEmpty = needsAmount &&
         (_discountValueController.text.trim().isEmpty ||
             double.tryParse(_discountValueController.text.trim()) ==
@@ -211,8 +213,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     final timeInvalid = (_startTime.hour > _endTime.hour) ||
         (_startTime.hour == _endTime.hour &&
             _startTime.minute >= _endTime.minute);
-    final isAddMode = widget.promotion == null;
-    final productEmpty = isAddMode && _selectedProductIds.isEmpty;
+    final productEmpty = _selectedProductIds.isEmpty;
 
     setState(() {
       _titleError = titleEmpty;
@@ -723,8 +724,6 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                         value: 'percentage',
                         child: Text('Percentage')),
                     DropdownMenuItem(
-                        value: 'fixed', child: Text('Fixed Amount')),
-                    DropdownMenuItem(
                         value: 'bogo', child: Text('BOGO')),
                     DropdownMenuItem(
                         value: 'bundle', child: Text('Bundle Deal')),
@@ -741,8 +740,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
               _errorText('Silakan pilih jenis diskon untuk promo ini.'),
 
             // ── Discount Amount ───────────────────────────────
-            if (_discountType != 'bogo' &&
-                _discountType != 'bundle') ...[
+            if (_discountType != 'bogo') ...[
               const SizedBox(height: 20),
               _label('Discount Amount'),
               const SizedBox(height: 8),
@@ -759,10 +757,10 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                 },
                 decoration: _inputDeco(
                   isEditing
-                      ? 'Change Discount Percentage'
+                      ? 'Change Discount Value'
                       : (_discountType == 'percentage'
                           ? 'Enter Discount Percentage'
-                          : 'Enter Discount Amount'),
+                          : 'Enter Discount per Set (Rp)'),
                   hasError: _discountAmountError,
                 ).copyWith(
                   suffixIcon: _discountType == 'percentage'
@@ -846,8 +844,8 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
 
             const SizedBox(height: 24),
 
-            // ── Product Selection (hanya Add mode) ────────────
-            if (!isEditing) ...[
+            // ── Product Selection ─────────────────────────────
+            if (true) ...[
               _label('Product Selection'),
               const SizedBox(height: 6),
               if (_selectedProductIds.isNotEmpty)

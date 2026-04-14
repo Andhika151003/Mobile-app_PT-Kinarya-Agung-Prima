@@ -26,11 +26,16 @@ class _DashboardUserViewState extends State<DashboardUserView> {
   int _currentBannerIndex = 0;
   final PageController _bannerPageController = PageController();
 
+  late Stream<List<Map<String, dynamic>>> _recentOrdersStream;
+  late Stream<List<ProductModel>> _recommendedProductsStream;
+
   @override
   void initState() {
     super.initState();
     _loadUserData();
     _loadPromotions();
+    _recentOrdersStream = _controller.getRecentOrders();
+    _recommendedProductsStream = _controller.getRecommendedProducts();
   }
 
   @override
@@ -589,7 +594,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
           ],
         ),
         StreamBuilder<List<Map<String, dynamic>>>(
-          stream: _controller.getRecentOrders(),
+          stream: _recentOrdersStream, 
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -748,7 +753,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
           ],
         ),
         StreamBuilder<List<ProductModel>>(
-          stream: _controller.getRecommendedProducts(),
+          stream: _recommendedProductsStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
