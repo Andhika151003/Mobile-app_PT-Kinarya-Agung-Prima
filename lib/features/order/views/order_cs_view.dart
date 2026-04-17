@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../controllers/order_cs_controller.dart';
 import '../models/order.dart';
 import 'order_detail_cs_view.dart';
@@ -18,7 +19,7 @@ class _OrderCsViewState extends State<OrderCsView> {
   final List<Map<String, String>> _tabs = [
     {'label': 'All Orders', 'value': 'all'},
     {'label': 'Pending', 'value': 'Ordered'},
-    {'label': 'Processing', 'value': 'Processing'},
+    {'label': 'Paid', 'value': 'Paid'},
     {'label': 'Delivered', 'value': 'Delivered'},
     {'label': 'Cancelled', 'value': 'Cancelled'},
   ];
@@ -178,16 +179,16 @@ class _OrderCsViewState extends State<OrderCsView> {
         statusIcon = Icons.access_time;
         statusLabel = 'Pending';
         break;
-      case 'Processing':
+      case 'Paid':
         statusColor = const Color(0xFF2563EB);
         statusBgColor = const Color(0xFFEFF6FF);
         statusIcon = Icons.access_time;
-        statusLabel = 'Process';
+        statusLabel = 'Paid';
         break;
       case 'Shipped':
         statusColor = const Color(0xFF7C3AED);
         statusBgColor = const Color(0xFFF5F3FF);
-        statusIcon = null;
+        statusIcon = Icons.local_shipping_outlined;
         statusLabel = 'Shipped';
         break;
       case 'Delivered':
@@ -242,7 +243,7 @@ class _OrderCsViewState extends State<OrderCsView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '#${order.orderId}',
+                  '#ORD-${order.orderId.replaceAll(RegExp(r'[^0-9]'), '').length >= 4 ? order.orderId.replaceAll(RegExp(r'[^0-9]'), '').substring(order.orderId.replaceAll(RegExp(r'[^0-9]'), '').length - 4) : order.orderId.replaceAll(RegExp(r'[^0-9]'), '')}',
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -328,7 +329,7 @@ class _OrderCsViewState extends State<OrderCsView> {
                   ),
                 ),
                 Text(
-                  'Rp ${_formatCurrency(order.total)}',
+                  NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(order.total),
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -363,26 +364,7 @@ class _OrderCsViewState extends State<OrderCsView> {
   }
 
   String _formatDateTime(DateTime date) {
-    final months = [
-      '',
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    final hour = date.hour.toString().padLeft(2, '0');
-    final minute = date.minute.toString().padLeft(2, '0');
-    return '${months[date.month]} ${date.day}, ${date.year} • $hour:$minute AM';
-  }
-
-  String _formatCurrency(double amount) {
-    final str = amount.toStringAsFixed(0);
-    final buffer = StringBuffer();
-    int count = 0;
-    for (int i = str.length - 1; i >= 0; i--) {
-      if (count > 0 && count % 3 == 0) buffer.write('.');
-      buffer.write(str[i]);
-      count++;
-    }
-    return buffer.toString().split('').reversed.join();
+    return DateFormat('MMMM dd, yyyy • hh:mm a').format(date);
   }
 }
 
