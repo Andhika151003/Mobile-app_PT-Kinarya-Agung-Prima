@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../authentication/views/profile_admin_view.dart';
 import '../controllers/dashboard_admin_controller.dart';
 import '../../admin/view/admin_master_view.dart';
@@ -14,8 +15,12 @@ class DashboardAdminView extends StatefulWidget {
 
 class _DashboardAdminViewState extends State<DashboardAdminView> {
   final DashboardAdminController _controller = DashboardAdminController();
+  final NumberFormat _currencyFormat = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
 
-  // State untuk overview stats
   Map<String, dynamic> overviewStats = {};
   List<Map<String, dynamic>> promotions = [];
   List<Map<String, dynamic>> retailers = [];
@@ -46,7 +51,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       if (mounted) setState(() => isLoading = false);
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,7 +66,9 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0, vertical: 10.0),
+                    horizontal: 20.0,
+                    vertical: 10.0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -69,7 +76,10 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                       const SizedBox(height: 30),
                       const Text(
                         'Overview',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 15),
                       _buildOverviewCards(),
@@ -79,11 +89,11 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                         'Active Promotions',
                         '+ New Promo',
                         onAction: () {
-                          // Navigasi ke halaman tambah promo
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const FormPromotionAdminView(),
+                              builder: (context) =>
+                                  const FormPromotionAdminView(),
                             ),
                           );
                         },
@@ -93,10 +103,9 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                       const SizedBox(height: 30),
                       // ========== MY RETAILERS ==========
                       _buildSectionHeader(
-                        'My Retailers', 
+                        'My Retailers',
                         'View All',
                         onAction: () {
-                          // Navigasi ke Admin Master View (Manage Retail)
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -121,10 +130,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Image.asset(
-          'assets/images/logo.png',
-          height: 35,
-        ),
+        Image.asset('assets/images/logo.png', height: 35),
         Row(
           children: [
             const Icon(Icons.chat_bubble_outline, color: Colors.black87),
@@ -135,17 +141,17 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ProfileAdminView(), 
+                    builder: (context) => const ProfileAdminView(),
                   ),
                 );
               },
             ),
           ],
-        )
+        ),
       ],
     );
   }
-  
+
   // --- WIDGET OVERVIEW CARDS ---
   Widget _buildOverviewCards() {
     return Column(
@@ -155,9 +161,9 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
             Expanded(
               child: _buildSingleCard(
                 title: 'Total Sales',
-                value: overviewStats['totalSales'] ?? '\$0',
-                subtitle: overviewStats['salesChange'] ?? '+0%',
-                subtitleColor: Colors.green,
+                value: _currencyFormat.format(overviewStats['totalSales'] ?? 0),
+                subtitle: 'Real-time revenue',
+                subtitleColor: Colors.blue.shade300,
                 icon: Icons.attach_money,
                 iconColor: Colors.blue,
               ),
@@ -167,7 +173,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               child: _buildSingleCard(
                 title: 'Orders',
                 value: '${overviewStats['totalOrders'] ?? 0}',
-                subtitle: overviewStats['ordersChange'] ?? '+0%',
+                subtitle: 'Paid orders',
                 subtitleColor: Colors.green,
                 icon: Icons.shopping_basket_outlined,
                 iconColor: Colors.green,
@@ -180,10 +186,10 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
           children: [
             Expanded(
               child: _buildSingleCard(
-                title: 'Total Customers',
+                title: 'Customers',
                 value: '${overviewStats['totalCustomers'] ?? 0}',
-                subtitle: overviewStats['customersChange'] ?? '+0%',
-                subtitleColor: Colors.orange,
+                subtitle: 'Registered Retailers',
+                subtitleColor: Colors.orange.shade300,
                 icon: Icons.people_outline,
                 iconColor: Colors.teal,
               ),
@@ -193,8 +199,8 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               child: _buildSingleCard(
                 title: 'Conversion Rate',
                 value: '${overviewStats['conversionRate'] ?? 0}%',
-                subtitle: overviewStats['conversionChange'] ?? '+0%',
-                subtitleColor: Colors.green,
+                subtitle: 'Sales per Customer',
+                subtitleColor: Colors.purple.shade300,
                 icon: Icons.trending_up,
                 iconColor: Colors.purple,
               ),
@@ -239,17 +245,18 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 5),
-          Text(
-            subtitle,
-            style: TextStyle(color: subtitleColor, fontSize: 13),
-          ),
+          Text(subtitle, style: TextStyle(color: subtitleColor, fontSize: 13)),
         ],
       ),
     );
   }
 
   // --- WIDGET SECTION HEADER (DENGAN CALLBACK) ---
-  Widget _buildSectionHeader(String title, String actionText, {VoidCallback? onAction}) {
+  Widget _buildSectionHeader(
+    String title,
+    String actionText, {
+    VoidCallback? onAction,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -283,26 +290,58 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       );
     }
 
+    // FILTER & TAKE 3 (Hanya tampilkan Active atau Upcoming, maks 3 item)
+    final filteredPromos = promotions.map((promoMap) {
+      return PromotionModel.fromMap(promoMap['id'] ?? '', promoMap);
+    }).where((promoModel) {
+      return promoModel.isActive || promoModel.isUpcoming;
+    }).take(3).toList();
+
+    if (filteredPromos.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Text('No active or upcoming promotions'),
+        ),
+      );
+    }
+
     return Column(
       children: [
-        ...promotions.asMap().entries.map((entry) {
-          final isLast = entry.key == promotions.length - 1;
-          final promo = entry.value;
+        ...filteredPromos.asMap().entries.map((entry) {
+          final isLast = entry.key == filteredPromos.length - 1;
+          final promoModel = entry.value;
+
+          String badgeText;
+          Color badgeColor;
+          Color badgeTextColor;
+
+          // Status Expired dihapus karena sudah difilter di atas
+          if (promoModel.isUpcoming) {
+            badgeText = 'UPCOMING';
+            badgeColor = Colors.cyan.shade50;
+            badgeTextColor = Colors.cyan.shade700;
+          } else if (promoModel.isEndingSoon) {
+            badgeText = 'ENDING SOON';
+            badgeColor = Colors.orange.shade50;
+            badgeTextColor = Colors.orange;
+          } else { 
+            badgeText = 'ACTIVE';
+            badgeColor = Colors.blue.shade50;
+            badgeTextColor = Colors.blue;
+          }
 
           return Column(
             children: [
               _buildPromoItem(
                 icon: Icons.local_offer_outlined,
-                title: promo['name'] ?? 'Promo',
-                subtitle: promo['description'] ?? 'No description',
-                badgeText: promo['status']?.toString().toUpperCase() ?? 'ACTIVE',
-                badgeColor: promo['status'] == 'active'
-                    ? Colors.blue.shade50
-                    : Colors.orange.shade50,
-                badgeTextColor: promo['status'] == 'active'
-                    ? Colors.blue
-                    : Colors.orange,
-                promotionId: promo['id'],
+                title: promoModel.title,
+                subtitle: promoModel.description,
+                badgeText: badgeText,
+                badgeColor: badgeColor,
+                badgeTextColor: badgeTextColor,
+                promotionId: promoModel.id,
+                promotionModel: promoModel,
               ),
               if (!isLast) Divider(color: Colors.grey.shade200),
             ],
@@ -320,6 +359,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     required Color badgeColor,
     required Color badgeTextColor,
     String? promotionId,
+    required PromotionModel promotionModel,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -341,7 +381,10 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -373,29 +416,12 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               GestureDetector(
                 onTap: () {
                   if (promotionId != null) {
-                    // Navigasi ke form edit promo
+                    // Navigasi ke form edit promo dengan data ASLI dari model
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => FormPromotionAdminView(
-                          promotion: PromotionModel(
-                            id: promotionId,
-                            title: title,
-                            description: subtitle,
-                            discountType: 'percentage',
-                            discountValue: 20,
-                            productIds: [],
-                            applicableTo: 'all',
-                            startDate: DateTime.now(),
-                            endDate: DateTime.now().add(const Duration(days: 7)),
-                            startTime: '08:00',
-                            endTime: '23:59',
-                            status: 'active',
-                            sku: '#PRM-${promotionId.substring(0, 6)}',
-                            createdAt: DateTime.now(),
-                            createdBy: 'admin',
-                          ),
-                        ),
+                        builder: (context) =>
+                            FormPromotionAdminView(promotion: promotionModel),
                       ),
                     );
                   }
@@ -465,7 +491,10 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -481,7 +510,11 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
             color: Colors.blue.shade50,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.chat_bubble, color: Colors.blueAccent, size: 18),
+          child: const Icon(
+            Icons.chat_bubble,
+            color: Colors.blueAccent,
+            size: 18,
+          ),
         ),
       ],
     );

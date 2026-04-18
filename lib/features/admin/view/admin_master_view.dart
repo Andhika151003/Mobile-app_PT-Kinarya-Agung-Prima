@@ -278,7 +278,7 @@ class _AdminMasterViewState extends State<AdminMasterView> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'ID: ${retailer['id'] ?? 'N/A'}',
+                      'ID: #KNY${(retailer['id']?.toString() ?? '').length >= 6 ? retailer['id'].toString().substring(0, 6).toUpperCase() : (retailer['id']?.toString() ?? '').toUpperCase()}',
                       style: const TextStyle(
                         fontSize: 12,
                         fontFamily: 'Inter',

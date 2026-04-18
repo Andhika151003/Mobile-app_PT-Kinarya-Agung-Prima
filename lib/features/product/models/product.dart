@@ -36,6 +36,8 @@ class ProductModel {
   // --- PERFORMANCE STATS ---
   int? monthlySales; // Total barang terjual bulan ini
   int? revenue; // Total pendapatan dari barang ini
+  double? monthlySalesTrend; // Persentase tren penjualan bulanan
+  double? revenueTrend;      // Persentase tren pendapatan
 
   ProductModel({
     this.id,
@@ -59,9 +61,10 @@ class ProductModel {
     this.isAvailable = true,
     this.monthlySales,
     this.revenue,
+    this.monthlySalesTrend,
+    this.revenueTrend,
   });
 
-  // --- MENGUBAH DATA MENJADI FORMAT FIRESTORE (Save/Update) ---
   Map<String, dynamic> toMap() {
     return {
       'retailerId': retailerId,
@@ -85,10 +88,11 @@ class ProductModel {
       'createdAt': FieldValue.serverTimestamp(),
       'monthlySales': monthlySales ?? 0,
       'revenue': revenue ?? 0,
+      'monthlySalesTrend': monthlySalesTrend ?? 0.0,
+      'revenueTrend': revenueTrend ?? 0.0,
     };
   }
 
-  // --- MEMBACA DATA DARI FIRESTORE (Load/Read) ---
   factory ProductModel.fromMap(Map<String, dynamic> map, String documentId) {
     return ProductModel(
       id: documentId,
@@ -108,11 +112,12 @@ class ProductModel {
       width: map['width']?.toDouble(),
       height: map['height']?.toDouble(),
       imageUrl: map['imageUrl'] ?? '',
-      // Parsing List dinamis dari Firestore dengan aman
       imageUrls: map['imageUrls'] != null ? List<String>.from(map['imageUrls']) : [],
       isAvailable: map['isAvailable'] ?? true,
       monthlySales: map['monthlySales']?.toInt(),
       revenue: map['revenue']?.toInt(),
+      monthlySalesTrend: map['monthlySalesTrend']?.toDouble(),
+      revenueTrend: map['revenueTrend']?.toDouble(),
     );
   }
 }

@@ -68,8 +68,15 @@ class AdminMasterController extends ChangeNotifier {
       _filteredRetailers = _retailers.where((retailer) {
         final fullName = retailer['fullName']?.toLowerCase() ?? '';
         final email = retailer['email']?.toLowerCase() ?? '';
+        
+        // Buat format ID yang sama dengan di View untuk pencarian
+        final uid = retailer['id'] ?? '';
+        final formattedId = '#KNY${uid.length >= 6 ? uid.substring(0, 6).toUpperCase() : uid.toUpperCase()}';
+        
         final search = query.toLowerCase();
-        return fullName.contains(search) || email.contains(search);
+        return fullName.contains(search) || 
+               email.contains(search) || 
+               formattedId.toLowerCase().contains(search);
       }).toList();
     }
     notifyListeners();

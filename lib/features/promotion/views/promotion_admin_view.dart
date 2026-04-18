@@ -171,14 +171,18 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
     Color statusColor;
     Color statusBgColor;
 
-    if (promo.isEndingSoon) {
+    if (promo.isUpcoming) {
+      statusText = 'Upcoming';
+      statusColor = const Color(0xFF0891B2); // Cyan 600
+      statusBgColor = const Color(0xFFECFEFF); // Cyan 50
+    } else if (promo.isEndingSoon) {
       statusText = 'Ending Soon';
       statusColor = const Color(0xFFD97706);
       statusBgColor = const Color(0xFFFEF3C7);
     } else if (promo.isActive) {
       statusText = 'Active';
-      statusColor = const Color(0xFF6366F1);
-      statusBgColor = const Color(0xFFEEF2FF);
+      statusColor = const Color(0xFF2E7D32); // Green
+      statusBgColor = const Color(0xFFE8F5E9);
     } else {
       statusText = 'Expired';
       statusColor = const Color(0xFF9CA3AF);
@@ -205,7 +209,7 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
         discountBgColor = const Color(0xFFDCFCE7);
     }
 
-    final isExpired = !promo.isActive && !promo.isEndingSoon;
+    final isExpired = !promo.isActive && !promo.isEndingSoon && !promo.isUpcoming;
 
     return GestureDetector(
       onTap: () async {

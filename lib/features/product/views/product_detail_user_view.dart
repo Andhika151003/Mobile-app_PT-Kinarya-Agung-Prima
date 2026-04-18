@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/product.dart';
+import '../../cart/controllers/cart_controller.dart';
 
 class ProductDetailUserView extends StatefulWidget {
   final ProductModel product;
@@ -17,14 +18,32 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
   final Color primaryGreen = const Color(0xFF4C7D3E);
   final Color priceGreen = const Color(0xFF1E8F29);
 
+  final CartController _cartController = CartController();
+
   @override
   void initState() {
     super.initState();
-    _quantity = widget.product.moq ?? 1;
+    int moq = widget.product.moq ?? 1;
+    int stock = widget.product.stock;
+
+    _quantity = moq > stock ? stock : moq;
+    if (_quantity < 0) _quantity = 0;
   }
 
   void _increment() {
-    setState(() => _quantity++);
+    int stock = widget.product.stock;
+
+    if (_quantity < stock) {
+      setState(() => _quantity++);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Maksimal stok yang tersedia adalah $stock pcs'),
+          backgroundColor: Colors.orange.shade700,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _decrement() {
@@ -33,18 +52,35 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
       setState(() => _quantity--);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Minimum order is $minOrder pcs'), duration: const Duration(seconds: 1)),
+        SnackBar(
+          content: Text('Minimum order is $minOrder pcs'),
+          duration: const Duration(seconds: 1),
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-    String displaySku = (widget.product.sku != null && widget.product.sku!.isNotEmpty) ? widget.product.sku! : 'N/A';
-    int displayPrice = widget.product.wholesalePrice != null && widget.product.wholesalePrice! > 0 
-        ? widget.product.wholesalePrice! 
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+    String displaySku =
+        (widget.product.sku != null && widget.product.sku!.isNotEmpty)
+        ? widget.product.sku!
+        : 'N/A';
+    int displayPrice =
+        widget.product.wholesalePrice != null &&
+            widget.product.wholesalePrice! > 0
+        ? widget.product.wholesalePrice!
         : widget.product.price;
+
+    int currentStock = widget.product.stock;
+    int moq = widget.product.moq ?? 1;
+
+    bool isOutOfStock = currentStock < moq;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -53,23 +89,75 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: ElevatedButton(
-            onPressed: () {
-              // TODO: Fungsi Add to Cart
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('$_quantity ${widget.product.name} added to cart!'),
-                  backgroundColor: primaryGreen,
-                ),
-              );
-              Navigator.pop(context);
-            },
+            onPressed: isOutOfStock
+                ? null
+                : () {
+                    int qtyInCart = 0;
+                    try {
+                      final existingItem = _cartController.items.firstWhere(
+                        (item) => item.id == widget.product.id,
+                      );
+                      qtyInCart = existingItem.quantity;
+                    } catch (e) {
+                      qtyInCart = 0;
+                    }
+
+                    if ((qtyInCart + _quantity) > currentStock) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Stok terbatas! Anda sudah memiliki $qtyInCart di keranjang (Sisa stok gudang: $currentStock)',
+                          ),
+                          backgroundColor: Colors.orange.shade700,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                      return;
+                    }
+
+                    double finalPrice =
+                        (widget.product.wholesalePrice != null &&
+                            widget.product.wholesalePrice! > 0)
+                        ? widget.product.wholesalePrice!.toDouble()
+                        : widget.product.price.toDouble();
+
+                    _cartController.addToCart(
+                      id: widget.product.id!,
+                      title: widget.product.name,
+                      variant: 'Default',
+                      price: finalPrice,
+                      imageUrl: widget.product.imageUrl,
+                      quantity: _quantity,
+                      minOrder: widget.product.moq ?? 1,
+                      stockLimit: currentStock,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '$_quantity ${widget.product.name} added to cart!',
+                        ),
+                        backgroundColor: primaryGreen,
+                      ),
+                    );
+                    Navigator.pop(context);
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryGreen,
+              disabledBackgroundColor: Colors.grey.shade300,
               elevation: 0,
               minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Add to Cart', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            child: Text(
+              isOutOfStock ? 'Out of Stock' : 'Add to Cart',
+              style: TextStyle(
+                color: isOutOfStock ? Colors.grey.shade600 : Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ),
@@ -85,7 +173,12 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             // 2. NAMA & SKU
             Text(
               widget.product.name,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black, height: 1.2),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                height: 1.2,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -98,21 +191,49 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      currencyFormatter.format(displayPrice),
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: priceGreen),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'per item',
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                    if (widget.product.wholesalePrice != null &&
+                        widget.product.wholesalePrice! > 0) ...[
+                      Text(
+                        'Retail: ${currencyFormatter.format(widget.product.price)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                    ],
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          currencyFormatter.format(displayPrice),
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: priceGreen,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          widget.product.wholesalePrice != null &&
+                                  widget.product.wholesalePrice! > 0
+                              ? 'Wholesale'
+                              : 'per item',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                _buildCounter(),
+                isOutOfStock ? const SizedBox.shrink() : _buildCounter(),
               ],
             ),
             const SizedBox(height: 24),
@@ -121,10 +242,14 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             _buildSectionTitle('Description'),
             const SizedBox(height: 8),
             Text(
-              widget.product.description.isEmpty 
+              widget.product.description.isEmpty
                   ? 'No description available for this product.'
                   : widget.product.description,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.5),
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -133,31 +258,46 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildInfoCard('Category', widget.product.category)),
+                Expanded(
+                  child: _buildInfoCard('Category', widget.product.category),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: _buildInfoCard('Brand', widget.product.brand?.isNotEmpty == true ? widget.product.brand! : '-')),
+                Expanded(
+                  child: _buildInfoCard(
+                    'Brand',
+                    widget.product.brand?.isNotEmpty == true
+                        ? widget.product.brand!
+                        : '-',
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildInfoCard('Stock', '${widget.product.stock} pcs')),
+                Expanded(child: _buildInfoCard('Stock', '$currentStock pcs')),
                 const SizedBox(width: 12),
-                Expanded(child: _buildInfoCard('Weight', '${widget.product.weight ?? 0} kg')),
+                Expanded(
+                  child: _buildInfoCard(
+                    'Weight',
+                    '${widget.product.weight ?? 0} kg',
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: _buildInfoCard('Dimensions (LxWxH)', 
-                    '${widget.product.length ?? 0} x ${widget.product.width ?? 0} x ${widget.product.height ?? 0} cm'
+                  child: _buildInfoCard(
+                    'Dimensions (LxWxH)',
+                    '${widget.product.length ?? 0} x ${widget.product.width ?? 0} x ${widget.product.height ?? 0} cm',
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 24),
-            
+
             const SizedBox(height: 20),
           ],
         ),
@@ -175,14 +315,21 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
       titleSpacing: 24,
       title: const Text(
         'Product Details',
-        style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 20.0),
           child: Center(
             child: Container(
-              decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                shape: BoxShape.circle,
+              ),
               child: IconButton(
                 icon: const Icon(Icons.close, size: 20, color: Colors.black54),
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -198,15 +345,23 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
 
   Widget _buildImageSection() {
     List<String> allImages = [];
-    if (widget.product.imageUrl.isNotEmpty) allImages.add(widget.product.imageUrl);
-    if (widget.product.imageUrls != null) allImages.addAll(widget.product.imageUrls!);
+    if (widget.product.imageUrl.isNotEmpty) {
+      allImages.add(widget.product.imageUrl);
+    }
+    if (widget.product.imageUrls != null) {
+      allImages.addAll(widget.product.imageUrls!);
+    }
 
     if (allImages.isEmpty) {
       return Center(
         child: Container(
           height: 200,
           margin: const EdgeInsets.symmetric(vertical: 20),
-          child: Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade300),
+          child: Icon(
+            Icons.inventory_2_outlined,
+            size: 80,
+            color: Colors.grey.shade300,
+          ),
         ),
       );
     }
@@ -276,7 +431,10 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             child: Container(
               width: 32,
               alignment: Alignment.center,
-              child: const Text('-', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+              child: const Text(
+                '-',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
             ),
           ),
           VerticalDivider(width: 1, thickness: 1, color: Colors.grey.shade400),
@@ -294,7 +452,10 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             child: Container(
               width: 32,
               alignment: Alignment.center,
-              child: const Text('+', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+              child: const Text(
+                '+',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
             ),
           ),
         ],
@@ -305,7 +466,11 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.bold,
+        color: Colors.black87,
+      ),
     );
   }
 
@@ -320,9 +485,19 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          ),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );

@@ -1,56 +1,69 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ecommerce/features/authentication/models/user.dart';
+import 'package:ecommerce/features/authentication/models/admin.dart';
+import 'package:ecommerce/features/authentication/models/cs.dart';
+import 'package:ecommerce/features/authentication/models/retailer.dart';
 
 void main() {
-  group('User Model Tests', () {
-    test('toMap harus mengonversi object User menjadi Map Firebase', () {
-      final user = User(
-        userId: 'user-001',
-        username: 'Mirza',
-        email: 'mirza@mail.com',
-        password: 'password123',
-        role: 'customer',
-        phoneNumber: '08111222333',
-      );
-
-      final map = user.toMap();
-
-      expect(map['userId'], 'user-001');
-      expect(map['username'], 'Mirza');
-      expect(map['email'], 'mirza@mail.com');
-      expect(map['role'], 'customer');
-      expect(map['phoneNumber'], '08111222333');
-      expect(map['createdAt'], isNotNull);
-      expect(map.containsKey('password'), false);
-    });
-
-    test('fromMap harus membuat object User dari data Map Firebase', () {
-      final mapFromFirebase = {
-        'username': 'Siti',
-        'email': 'siti@mail.com',
+  group('BaseUser Polymorphic Tests', () {
+    test('fromMap returns AdminUser if role is admin', () {
+      final map = {
+        'username': 'Admin Mirza',
+        'email': 'admin@mail.com',
         'role': 'admin',
-        'phoneNumber': '08555666777',
+        'accessLevel': 5,
       };
 
-      final user = User.fromMap('doc-789', mapFromFirebase);
+      final user = BaseUser.fromMap('user-001', map);
 
-      expect(user.userId, 'doc-789');
-      expect(user.username, 'Siti');
-      expect(user.email, 'siti@mail.com');
-      expect(user.password, '');
+      expect(user is AdminUser, true);
+      expect((user as AdminUser).accessLevel, 5);
       expect(user.role, 'admin');
-      expect(user.phoneNumber, '08555666777');
     });
 
-    test(
-      'fromMap harus memberikan role default jika tidak ada di Firebase',
-      () {
-        final mapTanpaRole = {'username': 'Budi', 'email': 'budi@mail.com'};
+    test('fromMap returns CsUser if role is cs', () {
+      final map = {
+        'username': 'CS Andi',
+        'email': 'cs@mail.com',
+        'role': 'cs',
+        'department': 'Support',
+      };
 
-        final user = User.fromMap('doc-101', mapTanpaRole);
+      final user = BaseUser.fromMap('user-002', map);
 
-        expect(user.role, 'retailer');
-      },
-    );
+      expect(user is CsUser, true);
+      expect((user as CsUser).department, 'Support');
+    });
+
+    test('fromMap returns RetailerUser if role is retailer or missing', () {
+      final map = {
+        'username': 'Toko ABC',
+        'email': 'toko@abc.com',
+        // tanpa role explicit
+      };
+
+      final user = BaseUser.fromMap('user-003', map);
+
+      expect(user is RetailerUser, true);
+      expect(user.role, 'retailer'); // Default role fallback
+    });
+
+    test('toMap converts RetailerUser correctly', () {
+      final retailer = RetailerUser(
+        id: '123',
+        username: 'Budi',
+        email: 'budi@mail.com',
+        password: 'pass',
+        phoneNumber: '0812',
+        address: 'Bandung',
+        createdAt: DateTime.now(),
+      );
+
+      final map = retailer.toMap();
+      expect(map['id'], '123');
+      expect(map['role'], 'retailer');
+      expect(map['address'], 'Bandung');
+      expect(map.containsKey('fullName'), true);
+    });
   });
-}
+} 

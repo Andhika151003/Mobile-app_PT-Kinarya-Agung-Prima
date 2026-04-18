@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../features/dashboard/views/dashboard_cs_view.dart';
+import '../../features/order/views/order_cs_view.dart'; 
 import '../../features/authentication/views/profile_cs_view.dart';
 
 class MainNavigationCs extends StatefulWidget {
@@ -14,7 +15,7 @@ class _MainNavigationCsState extends State<MainNavigationCs> {
 
   final List<Widget> _pages = [
     const DashboardCsView(),
-    const Center(child: Text('Halaman Orders')),
+    const OrderCsView(), 
     const Center(child: Text('Halaman Support')),
     const ProfileCsView(),
   ];
@@ -23,7 +24,6 @@ class _MainNavigationCsState extends State<MainNavigationCs> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_selectedIndex],
-
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF458833),

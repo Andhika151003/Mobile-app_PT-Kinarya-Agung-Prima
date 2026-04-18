@@ -58,29 +58,51 @@ class PromotionModel {
   }
 
   factory PromotionModel.fromMap(String id, Map<String, dynamic> map) {
+    DateTime parseDate(dynamic value) {
+      if (value is Timestamp) {
+        return value.toDate();
+      } else if (value is String) {
+        return DateTime.tryParse(value) ?? DateTime.now();
+      }
+      return DateTime.now();
+    }
+
     return PromotionModel(
       id: id,
-      title: map['title'] ?? '',
-      description: map['description'] ?? '',
+      title: map['title'] ?? map['name'] ?? '',
+      description: map['description'] ?? map['subtitle'] ?? '',
       discountType: map['discountType'] ?? 'percentage',
       discountValue: (map['discountValue'] ?? 0).toDouble(),
       productIds: List<String>.from(map['productIds'] ?? []),
       applicableTo: map['applicableTo'] ?? 'all',
-      startDate: (map['startDate'] as Timestamp).toDate(),
-      endDate: (map['endDate'] as Timestamp).toDate(),
+      startDate: parseDate(map['startDate']),
+      endDate: parseDate(map['endDate']),
       startTime: map['startTime'] ?? '00:00',
       endTime: map['endTime'] ?? '23:59',
       status: map['status'] ?? 'active',
       imageUrl: map['imageUrl'],
       sku: map['sku'] ?? '',
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      createdAt: parseDate(map['createdAt']),
       createdBy: map['createdBy'] ?? '',
     );
   }
 
   bool get isActive {
+    if (status != 'active') return false;
     final now = DateTime.now();
-    return status == 'active' && now.isAfter(startDate) && now.isBefore(endDate);
+    
+    // Sesuaikan endDate agar mencakup seluruh hari sampai jam 23:59:59
+    final inclusiveEndDate = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+    final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
+
+    return !now.isBefore(inclusiveStartDate) && !now.isAfter(inclusiveEndDate);
+  }
+
+  bool get isUpcoming {
+    if (status != 'active') return false;
+    final now = DateTime.now();
+    final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
+    return now.isBefore(inclusiveStartDate);
   }
 
   bool get isEndingSoon {

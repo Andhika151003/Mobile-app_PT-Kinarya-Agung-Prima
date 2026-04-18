@@ -129,7 +129,7 @@ class _ProductAdminViewState extends State<ProductAdminView> {
             decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(6)),
             child: IconButton(
               icon: const Icon(Icons.search, color: Colors.white, size: 20),
-              onPressed: () {},
+              onPressed: () => setState(() {}),
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               padding: EdgeInsets.zero,
             ),
