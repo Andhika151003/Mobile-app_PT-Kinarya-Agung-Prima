@@ -2,8 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DashboardCsController {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
+  DashboardCsController({FirebaseAuth? auth, FirebaseFirestore? firestore})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Get complaints statistics
   Future<Map<String, dynamic>> getComplaintStats() async {
@@ -35,7 +39,8 @@ class DashboardCsController {
           'id': '001',
           'timeAgo': '2h ago',
           'title': 'Wrong Product Delivery',
-          'description': "Order #5780 - Product received doesn't\nmatch order specifications",
+          'description':
+              "Order #5780 - Product received doesn't\nmatch order specifications",
           'storeName': 'Fresh Food Market',
           'status': 'open',
         },
@@ -43,7 +48,8 @@ class DashboardCsController {
           'id': '002',
           'timeAgo': '3h ago',
           'title': 'Delayed Delivery',
-          'description': 'Order #5781 - Delivery taking longer\nthan estimated time',
+          'description':
+              'Order #5781 - Delivery taking longer\nthan estimated time',
           'storeName': 'City Convenience',
           'status': 'open',
         },
@@ -79,14 +85,11 @@ class DashboardCsController {
       final user = _auth.currentUser;
       if (user == null) throw Exception("User not authenticated");
 
-      await _firestore
-          .collection('complaints')
-          .doc(complaintId)
-          .update({
-            'status': 'resolved',
-            'resolvedAt': DateTime.now(),
-            'resolvedBy': user.uid,
-          });
+      await _firestore.collection('complaints').doc(complaintId).update({
+        'status': 'resolved',
+        'resolvedAt': DateTime.now(),
+        'resolvedBy': user.uid,
+      });
 
       return true;
     } catch (e) {

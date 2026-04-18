@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/register_controller.dart';
 import 'login_view.dart';
-import '../../shared/main_navigation_user.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -52,7 +51,7 @@ class _RegisterViewState extends State<RegisterView> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Account Created Successfully!',
+                'Akun Anda Berhasil Dibuat',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -67,11 +66,12 @@ class _RegisterViewState extends State<RegisterView> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); 
+                    Navigator.pop(context); // tutup dialog
+                    // Navigasi ke halaman Login
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const MainNavigationUser(),
+                        builder: (context) => const LoginView(),
                       ),
                     );
                   },
@@ -84,7 +84,7 @@ class _RegisterViewState extends State<RegisterView> {
                     elevation: 0,
                   ),
                   child: const Text(
-                    'OK',
+                    'Login',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

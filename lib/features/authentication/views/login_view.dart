@@ -125,7 +125,7 @@ class _LoginViewState extends State<LoginView> {
 
                     // ==================== EMAIL FIELD ====================
                     const Text(
-                      'Email', 
+                      'Email',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,

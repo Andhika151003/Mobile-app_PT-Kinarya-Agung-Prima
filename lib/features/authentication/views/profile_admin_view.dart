@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 import 'login_view.dart';
 import 'form_edit_admin_view.dart';
 import '../controllers/profile_admin_controller.dart';
@@ -19,8 +20,9 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
   String bankAccount = 'Loading...';
   String bankName = 'Loading...';
   String distributorId = '-';
-  int totalSupply = 0; 
-  int totalRevenue = 0; 
+  int monthlySales = 0; 
+  double totalRevenue = 0; 
+  String? photoUrl;
 
   bool isLoading = true;
 
@@ -33,6 +35,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
   Future<void> _fetchAdminData() async {
     try {
       final data = await _adminController.getAdminProfile();
+      final stats = await _adminController.getAdminStats();
 
       if (data != null && mounted) {
         setState(() {
@@ -42,6 +45,11 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
           bankAccount = data['bankAccount'] ?? 'Not Set';
           bankName = data['bankName'] ?? 'Not Set';
           distributorId = '#DS${data['uid'].substring(0, 6).toUpperCase()}';
+          photoUrl = data['photoUrl'];
+
+          // Stats dari controller
+          monthlySales = stats['monthlySales'] ?? 0;
+          totalRevenue = stats['totalRevenue'] ?? 0.0;
 
           isLoading = false;
         });
@@ -56,6 +64,8 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(context),
@@ -73,14 +83,14 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
                   const SizedBox(height: 32),
                   _buildStatsCard(
                     icon: Icons.inventory_2_outlined,
-                    title: 'Total Supply',
-                    value: totalSupply.toString(),
+                    title: 'Monthly Sales',
+                    value: '$monthlySales Units',
                   ),
                   const SizedBox(height: 16),
                   _buildStatsCard(
                     icon: Icons.account_balance_wallet_outlined,
                     title: 'Total Revenue',
-                    value: 'Rp $totalRevenue',
+                    value: currencyFormat.format(totalRevenue),
                   ),
                   const SizedBox(height: 40),
                   _buildLogoutButton(context),
@@ -237,6 +247,24 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
     return Center(
       child: Column(
         children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF458833), width: 2),
+            ),
+            child: CircleAvatar(
+              radius: 44,
+              backgroundColor: const Color(0xFFE8F5E9),
+              backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
+                  ? NetworkImage(photoUrl!)
+                  : null,
+              child: photoUrl == null || photoUrl!.isEmpty
+                  ? const Icon(Icons.storefront_outlined, size: 40, color: Color(0xFF458833))
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
             adminName,
             style: const TextStyle(
@@ -257,15 +285,6 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF458833),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
-              ),
-              const SizedBox(width: 12),
               ElevatedButton(
                 onPressed: () async {
                   final result = await Navigator.push(

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/retailer.dart';
+import '../models/user.dart';
 
 class LoginController extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseAuth get _auth => FirebaseAuth.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -36,7 +36,7 @@ class LoginController extends ChangeNotifier {
 
   // ==================== LOGIN WITH FIREBASE ====================
 
-  Future<Retailer?> login({
+  Future<BaseUser?> login({
     required String email,
     required String password,
   }) async {
@@ -62,20 +62,11 @@ class LoginController extends ChangeNotifier {
 
       final data = docSnapshot.data()!;
       
-      // 3. Buat objek Retailer dari data Firestore
-      final retailer = Retailer(
-        id: userCredential.user!.uid,
-        fullName: data['fullName'] ?? '',
-        email: data['email'] ?? '',
-        password: '', 
-        phoneNumber: data['phoneNumber'] ?? '',
-        address: data['address'] ?? '',
-        role: data['role'] ?? 'retailer',
-        createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      );
+      // 3. Buat objek User yang tepat (Admin/CS/Retailer) dari tipe role menggunakan BaseUser Factory
+      final user = BaseUser.fromMap(userCredential.user!.uid, data);
 
       _setLoading(false);
-      return retailer;
+      return user;
     } on FirebaseAuthException catch (e) {
       String message;
       switch (e.code) {
@@ -136,4 +127,4 @@ class LoginController extends ChangeNotifier {
     _isDisposed = true;
     super.dispose();
   }
-}
+} 

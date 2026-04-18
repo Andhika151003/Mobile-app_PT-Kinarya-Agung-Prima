@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../features/dashboard/views/dashboard_user_view.dart';
 import '../../features/authentication/views/profile_user_view.dart';
+import '../product/views/product_user_view.dart';
+import '../order/views/order_user_view.dart';
 
 class MainNavigationUser extends StatefulWidget {
   const MainNavigationUser({super.key});
@@ -14,18 +16,17 @@ class _MainNavigationUserState extends State<MainNavigationUser> {
 
   final List<Widget> _pages = [
     const DashboardUserView(),
-    const Center(child: Text('Halaman Orders')),  
-    const Center(child: Text('Halaman Products')),
+    const OrderUserView(),
+    const ProductUserView(),
     const ProfileUserView(),
   ];
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // BODY INI YANG AKAN BERGANTI-GANTI TANPA ANIMASI
       body: _pages[_selectedIndex], 
       
-      // NAVBAR INI AKAN DIAM SELAMANYA DI BAWAH
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF458833),

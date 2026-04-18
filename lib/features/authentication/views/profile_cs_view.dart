@@ -239,6 +239,19 @@ class _ProfileCsViewState extends State<ProfileCsView> {
     return Center(
       child: Column(
         children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF458833), width: 2),
+            ),
+            child: const CircleAvatar(
+              radius: 44,
+              backgroundColor: Color(0xFFE8F5E9),
+              child: Icon(Icons.support_agent, size: 40, color: Color(0xFF458833)),
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
             csName,
             style: const TextStyle(
@@ -256,20 +269,6 @@ class _ProfileCsViewState extends State<ProfileCsView> {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF458833),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
-              ),
-              const SizedBox(width: 12),
-            ],
-          ),
         ],
       ),
     );

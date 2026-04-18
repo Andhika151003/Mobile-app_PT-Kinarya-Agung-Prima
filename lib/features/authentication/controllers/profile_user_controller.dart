@@ -1,9 +1,15 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../supabase_storage_service.dart';
 
 class RetailProfileController {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
+  RetailProfileController({FirebaseAuth? auth, FirebaseFirestore? firestore})
+      : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   Future<Map<String, dynamic>?> getRetailProfile() async {
     try {
@@ -28,16 +34,31 @@ class RetailProfileController {
     required String location,
     required String contact,
     required String businessType,
+    File? profileImage,
   }) async {
     try {
       final user = _auth.currentUser;
       if (user != null) {
-        await _firestore.collection('users').doc(user.uid).update({
+        String? uploadedImageUrl;
+
+        if (profileImage != null) {
+          final storageService = SupabaseStorageService();
+          final fileName = 'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          uploadedImageUrl = await storageService.uploadProductImage(profileImage, fileName);
+        }
+
+        final updateData = {
           'fullName': storeName,
           'address': location,
           'phoneNumber': contact,
           'businessType': businessType,
-        });
+        };
+
+        if (uploadedImageUrl != null) {
+          updateData['photoUrl'] = uploadedImageUrl;
+        }
+
+        await _firestore.collection('users').doc(user.uid).update(updateData);
       }
     } catch (e) {
       throw Exception("Gagal update profil Retail: $e");
@@ -55,6 +76,40 @@ class RetailProfileController {
       }
     } catch (e) {
       throw Exception("Gagal mengubah status toko: $e");
+    }
+  }
+
+  /// Get Retailer Stats (Total Orders & Total Spent)
+  Future<Map<String, dynamic>> getRetailStats() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception("User not authenticated");
+
+      // 1. Get all orders for this user
+      final ordersSnapshot = await _firestore
+          .collection('orders')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      double totalSpent = 0;
+      int totalOrders = ordersSnapshot.docs.length;
+
+      for (var doc in ordersSnapshot.docs) {
+        final data = doc.data();
+        final status = data['status']?.toString() ?? '';
+
+        // Hanya hitung spent untuk order yang sudah dibayar/selesai
+        if (['Paid', 'Shipped', 'Delivered'].contains(status)) {
+          totalSpent += (data['total'] as num?)?.toDouble() ?? 0.0;
+        }
+      }
+
+      return {
+        'totalOrders': totalOrders,
+        'totalSpent': totalSpent,
+      };
+    } catch (e) {
+      throw Exception("Gagal memuat statistik Retail: $e");
     }
   }
 }
