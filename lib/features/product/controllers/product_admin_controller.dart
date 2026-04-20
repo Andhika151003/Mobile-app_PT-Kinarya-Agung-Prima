@@ -71,7 +71,6 @@ class AdminProductController {
     required String category,
     required String brand,
     required String regularPrice,
-    required String wholesalePrice,
     required String moq,
     required String stock,
     required String lowStock,
@@ -109,8 +108,6 @@ class AdminProductController {
       category: category,
       brand: brand.trim(),
       price: int.tryParse(regularPrice.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-      wholesalePrice:
-          int.tryParse(wholesalePrice.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
       moq: int.tryParse(moq) ?? 1,
       stock: int.tryParse(stock.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
       lowStockAlert: int.tryParse(lowStock) ?? 0,

@@ -22,8 +22,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
   final TextEditingController _skuController = TextEditingController();
   final TextEditingController _brandController = TextEditingController();
   final TextEditingController _regularPriceController = TextEditingController();
-  final TextEditingController _wholesalePriceController =
-      TextEditingController();
+
   final TextEditingController _moqController = TextEditingController();
   final TextEditingController _stockController = TextEditingController();
   final TextEditingController _lowStockController = TextEditingController();
@@ -71,7 +70,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
     _skuController.dispose();
     _brandController.dispose();
     _regularPriceController.dispose();
-    _wholesalePriceController.dispose();
+
     _moqController.dispose();
     _stockController.dispose();
     _lowStockController.dispose();
@@ -123,7 +122,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
         category: _selectedCategory!,
         brand: _brandController.text,
         regularPrice: _regularPriceController.text,
-        wholesalePrice: _wholesalePriceController.text,
+
         moq: _moqController.text,
         stock: _stockController.text,
         lowStock: _lowStockController.text,
@@ -218,14 +217,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
                 isNumber: true,
                 hint: '85000',
               ),
-              _buildTextFieldLabel('Wholesale Price'),
-              _buildTextField(
-                controller: _wholesalePriceController,
-                prefixText: 'Rp ',
-                isNumber: true,
-                hint: '49000',
-                isRequired: false,
-              ),
+
               _buildTextFieldLabel('Minimum Order Quantity'),
               _buildTextField(
                 controller: _moqController,

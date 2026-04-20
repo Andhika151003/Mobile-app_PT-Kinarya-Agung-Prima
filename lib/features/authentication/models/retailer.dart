@@ -1,22 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'user.dart';
 
-class RetailerUser extends BaseUser {
+class RetailerUser {
+  final String? id;
+  final String username;
+  final String email;
+  final String password;
+  final String role;
+  final String phoneNumber;
+  final DateTime createdAt;
   final String address;
   final String? storeName;
 
   RetailerUser({
-    super.id,
-    required super.username,
-    required super.email,
-    required super.password,
-    required super.phoneNumber,
-    required super.createdAt,
+    this.id,
+    required this.username,
+    required this.email,
+    required this.password,
+    required this.phoneNumber,
+    required this.createdAt,
     required this.address,
+    this.role = 'retailer',
     this.storeName,
-  }) : super(role: 'retailer');
+  });
 
-  @override
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -51,7 +57,6 @@ class RetailerUser extends BaseUser {
     );
   }
 
-  @override
   RetailerUser copyWith({
     String? id,
     String? username,
@@ -73,4 +78,4 @@ class RetailerUser extends BaseUser {
       storeName: storeName ?? this.storeName,
     );
   }
-}
+}

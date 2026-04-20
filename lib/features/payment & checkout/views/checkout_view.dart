@@ -271,88 +271,111 @@ class _CheckoutViewState extends State<CheckoutView> {
                       itemBuilder: (ctx, i) {
                         final p = promos[i];
                         final isSelected = _appliedPromo?.id == p.id;
+                        
+                        bool isEligible = true;
+                        if (p.productIds.isNotEmpty) {
+                          final cartProductIds = _cartController.items.map((item) => item.id).toSet();
+                          if (p.discountType == 'bundle') {
+                            isEligible = p.productIds.every((id) => cartProductIds.contains(id));
+                          } else {
+                            isEligible = p.productIds.any((id) => cartProductIds.contains(id));
+                          }
+                        }
+
                         return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _appliedPromo = p;
-                              promoCode = p.sku;
-                            });
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
+                          onTap: isEligible
+                              ? () {
+                                  setState(() {
+                                    _appliedPromo = p;
+                                    promoCode = p.sku;
+                                  });
+                                  Navigator.pop(context);
+                                }
+                              : () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Promo tidak berlaku untuk produk di keranjang Anda.'),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                },
+                          child: Opacity(
+                            opacity: isEligible ? 1.0 : 0.5,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF458833)
+                                      : Colors.grey.shade200,
+                                  width: isSelected ? 1.5 : 1,
+                                ),
                                 color: isSelected
-                                    ? const Color(0xFF458833)
-                                    : Colors.grey.shade200,
-                                width: isSelected ? 1.5 : 1,
+                                    ? const Color(0xFFE8F5E9)
+                                    : Colors.white,
                               ),
-                              color: isSelected
-                                  ? const Color(0xFFE8F5E9)
-                                  : Colors.white,
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: p.imageUrl != null
-                                      ? ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: p.imageUrl != null
+                                        ? ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            child: Image.network(
+                                              p.imageUrl!,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.local_offer,
+                                            color: Color(0xFF458833),
                                           ),
-                                          child: Image.network(
-                                            p.imageUrl!,
-                                            fit: BoxFit.cover,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          p.title,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
                                           ),
-                                        )
-                                      : const Icon(
-                                          Icons.local_offer,
-                                          color: Color(0xFF458833),
                                         ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        p.title,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
+                                        Text(
+                                          p.discountText,
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 12,
+                                          ),
                                         ),
-                                      ),
-                                      Text(
-                                        p.discountText,
-                                        style: TextStyle(
-                                          color: Colors.grey.shade600,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                if (isSelected)
-                                  const Icon(
-                                    Icons.check_circle,
-                                    color: Color(0xFF458833),
-                                  )
-                                else
-                                  const Icon(
-                                    Icons.arrow_forward_ios,
-                                    size: 14,
-                                    color: Colors.grey,
-                                  ),
-                              ],
+                                  if (isSelected)
+                                    const Icon(
+                                      Icons.check_circle,
+                                      color: Color(0xFF458833),
+                                    )
+                                  else
+                                    const Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 14,
+                                      color: Colors.grey,
+                                    ),
+                                ],
+                              ),
                             ),
                           ),
                         );

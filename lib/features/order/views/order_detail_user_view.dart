@@ -198,7 +198,8 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
 
   Widget _buildHeaderCard(String orderId, DateTime? date, double total, String status, NumberFormat currency) {
     bool isDelivered = status == 'Delivered';
-    bool isPaid = status != 'Ordered' && status != 'Expired';
+    bool isCancelledOrExpired = status == 'Cancelled' || status == 'Expired';
+    bool isPaid = status != 'Ordered' && !isCancelledOrExpired;
     
     return Container(
       padding: const EdgeInsets.all(16),
@@ -213,14 +214,14 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isDelivered ? const Color(0xFFE6F4EA) : const Color(0xFFFEF7E0),
+                  color: isCancelledOrExpired ? const Color(0xFFFCE8E8) : (isDelivered ? const Color(0xFFE6F4EA) : const Color(0xFFFEF7E0)),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
-                    Icon(isDelivered ? Icons.check : Icons.access_time, size: 12, color: isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00)),
+                    Icon(isCancelledOrExpired ? Icons.close : (isDelivered ? Icons.check : Icons.access_time), size: 12, color: isCancelledOrExpired ? Colors.red : (isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00))),
                     const SizedBox(width: 4),
-                    Text(isDelivered ? 'Delivered' : status, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00))),
+                    Text(status, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isCancelledOrExpired ? Colors.red : (isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00)))),
                   ],
                 ),
               )
@@ -250,9 +251,9 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Container(width: 8, height: 8, decoration: BoxDecoration(color: isPaid ? _primaryColor : Colors.orange, shape: BoxShape.circle)),
+                        Container(width: 8, height: 8, decoration: BoxDecoration(color: isCancelledOrExpired ? Colors.red : (isPaid ? _primaryColor : Colors.orange), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Text(isPaid ? 'Paid' : 'Unpaid', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Flexible(child: Text(isCancelledOrExpired ? 'Expired / Canceled' : (isPaid ? 'Paid' : 'Unpaid'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isCancelledOrExpired ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                   ],
@@ -291,15 +292,15 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             children: [
               Row(
                 children: [
-                  Expanded(child: Container(height: 3, color: index == 0 ? Colors.transparent : (isCompleted ? _primaryColor : Colors.grey.shade300))),
+                  Expanded(child: Container(height: 3, color: index == 0 ? Colors.transparent : (isCompleted ? ((currentStatus == 'Cancelled' || currentStatus == 'Expired') ? Colors.red : _primaryColor) : Colors.grey.shade300))),
                   Container(
                     width: 24, height: 24,
                     decoration: BoxDecoration(
-                      color: isCompleted ? _primaryColor : Colors.white,
+                      color: isCompleted ? ((currentStatus == 'Cancelled' || currentStatus == 'Expired') ? Colors.red : _primaryColor) : Colors.white,
                       shape: BoxShape.circle,
-                      border: Border.all(color: isCompleted ? _primaryColor : Colors.grey.shade300),
+                      border: Border.all(color: isCompleted ? ((currentStatus == 'Cancelled' || currentStatus == 'Expired') ? Colors.red : _primaryColor) : Colors.grey.shade300),
                     ),
-                    child: Icon(Icons.check, size: 14, color: isCompleted ? Colors.white : Colors.grey.shade300),
+                    child: Icon((currentStatus == 'Cancelled' || currentStatus == 'Expired') && index == currentIndex ? Icons.close : Icons.check, size: 14, color: isCompleted ? Colors.white : Colors.grey.shade300),
                   ),
                   Expanded(child: Container(height: 3, color: index == steps.length - 1 ? Colors.transparent : (isCompleted && index < currentIndex ? _primaryColor : Colors.grey.shade300))),
                 ],

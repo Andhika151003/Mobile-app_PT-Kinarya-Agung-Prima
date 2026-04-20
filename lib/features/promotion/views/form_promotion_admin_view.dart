@@ -135,10 +135,15 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   }
 
   Future<void> _selectDate(bool isStart) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final initialDate = isStart ? _startDate : _endDate;
+    final firstDate = initialDate.isBefore(today) ? initialDate : today;
+
     final picked = await showDatePicker(
       context: context,
-      initialDate: isStart ? _startDate : _endDate,
-      firstDate: DateTime(2024),
+      initialDate: initialDate,
+      firstDate: firstDate,
       lastDate: DateTime(2030),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(

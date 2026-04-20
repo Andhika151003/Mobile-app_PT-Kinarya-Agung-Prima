@@ -318,17 +318,8 @@ class _ProductUserViewState extends State<ProductUserView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (product.wholesalePrice != null && product.wholesalePrice! > 0)
-                                Text(
-                                  'Rp ${product.price}',
-                                  style: TextStyle(
-                                    decoration: TextDecoration.lineThrough,
-                                    color: Colors.grey.shade400,
-                                    fontSize: 10,
-                                  ),
-                                ),
                               Text(
-                                'Rp ${product.wholesalePrice != null && product.wholesalePrice! > 0 ? product.wholesalePrice : product.price}',
+                                'Rp ${product.price}',
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -369,9 +360,7 @@ class _ProductUserViewState extends State<ProductUserView> {
                               return;
                             }
 
-                            double finalPrice = (product.wholesalePrice != null && product.wholesalePrice! > 0) 
-                                ? product.wholesalePrice!.toDouble() 
-                                : product.price.toDouble();
+                            double finalPrice = product.price.toDouble();
 
                             _cartController.addToCart(
                               id: product.id!,

@@ -48,8 +48,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                   ),
                   const SizedBox(height: 24),
                   
-                  _buildInfoRow('Wholesale Price', 'Rp ${_currentProduct.wholesalePrice ?? 0}'), 
-                  const SizedBox(height: 16),
+
                   _buildInfoRow('Regular Price', 'Rp ${_currentProduct.price}'),
                   const SizedBox(height: 16),
                   _buildInfoRow('MOQ (Min. Order)', '${_currentProduct.moq ?? 1} units'),

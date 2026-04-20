@@ -334,9 +334,9 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Container(width: 8, height: 8, decoration: BoxDecoration(color: status == 'Ordered' ? Colors.orange : _primaryColor, shape: BoxShape.circle)),
+                        Container(width: 8, height: 8, decoration: BoxDecoration(color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : (status == 'Ordered' ? Colors.orange : _primaryColor), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Text(status == 'Ordered' ? 'Unpaid' : 'Paid', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Flexible(child: Text((status == 'Cancelled' || status == 'Expired') ? 'Expired / Canceled' : (status == 'Ordered' ? 'Unpaid' : 'Paid'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                   ],
