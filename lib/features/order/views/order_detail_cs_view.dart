@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../controllers/order_cs_controller.dart';
 import '../models/order.dart';
+import '../../shared/services/pdf_service.dart';
 
 class OrderDetailCsView extends StatefulWidget {
   final OrderModel order;
@@ -183,8 +184,6 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
 
   @override
   Widget build(BuildContext context) {
-    final digits = _order.orderId.replaceAll(RegExp(r'[^0-9]'), '');
-    final shortId = '#ORD-${digits.length >= 4 ? digits.substring(digits.length - 4) : digits}';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -208,7 +207,9 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
         actions: [
           IconButton(
             icon: const Icon(Icons.print_outlined, color: Colors.black),
-            onPressed: () {},
+            onPressed: () {
+              PdfService.generateAndOpenInvoice(_order);
+            },
           ),
         ],
       ),
@@ -217,7 +218,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildOrderInfoCard(shortId),
+            _buildOrderInfoCard(),
             const SizedBox(height: 16),
             _buildOrderStatusTracker(),
             const SizedBox(height: 16),
@@ -272,7 +273,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
   }
 
   // ─── Order Info Card ─────────────────────────────────────────────
-  Widget _buildOrderInfoCard(String shortId) {
+  Widget _buildOrderInfoCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -287,7 +288,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                shortId,
+                _order.orderId,
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -395,29 +396,6 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('Order Type',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF6B7280),
-                            fontFamily: 'Inter')),
-                    SizedBox(height: 2),
-                    Text('Wholesale',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Inter')),
                   ],
                 ),
               ),
@@ -788,6 +766,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
             ],
           ),
           const SizedBox(height: 10),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -816,14 +795,14 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Invoice Number',
+                    const Text('Invoice ID',
                         style: TextStyle(
                             fontSize: 11,
                             color: Color(0xFF6B7280),
                             fontFamily: 'Inter')),
                     const SizedBox(height: 4),
                     Text(
-                      'INV-KNY-${_order.orderId.replaceAll(RegExp(r'[^0-9]'), '')}',
+                      'KNY-${_order.orderId.replaceAll(RegExp(r'[^0-9]'), '')}',
                       style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -845,12 +824,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Download invoice sedang diproses...'),
-              backgroundColor: Color(0xFF2E7D32),
-            ),
-          );
+          PdfService.generateAndOpenInvoice(_order);
         },
         icon: const Icon(Icons.download_outlined,
             color: Color(0xFF374151), size: 18),

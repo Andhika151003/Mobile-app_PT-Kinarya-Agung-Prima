@@ -4,6 +4,7 @@ import '../models/order.dart';
 import '../controllers/order_user_controller.dart';
 import '../../payment & checkout/views/payment_status_view.dart';
 import '../../payment & checkout/views/payment_webview.dart';
+import '../../shared/services/pdf_service.dart';
 
 class OrderDetailUserView extends StatefulWidget {
   final String orderId;
@@ -42,12 +43,6 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
     }
   }
 
-  String get _shortId {
-    final digits = widget.orderId.replaceAll(RegExp(r'[^0-9]'), '');
-    final suffix = digits.length >= 4 ? digits.substring(digits.length - 4) : digits;
-    return '#ORD-$suffix';
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading || _order == null) {
@@ -60,8 +55,9 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
     final order = _order!;
     final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
-    final txnId = order.orderId.replaceAll(RegExp(r'[^0-9]'), '');
-    final invoiceNo = 'INV-${order.createdAt != null ? DateFormat('yyyy').format(order.createdAt!) : '2026'}-${txnId.isNotEmpty && txnId.length >= 4 ? txnId.substring(0, 4) : '0000'}';
+    final txnDigits = order.orderId.replaceAll(RegExp(r'[^0-9]'), '');
+    final invoiceId = 'KNY-${txnDigits.isNotEmpty ? txnDigits : '0000'}';
+    final transactionId = 'TXN-${txnDigits.isNotEmpty ? txnDigits : '0000'}';
 
     return Scaffold(
       backgroundColor: _bgColor,
@@ -88,7 +84,11 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
               child: const Icon(Icons.print_outlined, size: 16, color: Colors.black87),
             ),
-            onPressed: () {},
+            onPressed: () {
+              if (_order != null) {
+                PdfService.generateAndOpenInvoice(_order!);
+              }
+            },
           ),
         ],
       ),
@@ -98,7 +98,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Header Card
-            _buildHeaderCard(_shortId, order.createdAt, order.total, order.status, currency),
+            _buildHeaderCard(order.orderId, order.createdAt, order.total, order.status, currency),
             const SizedBox(height: 20),
 
             // 2. Order Status Stepper
@@ -185,7 +185,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               ],
             ),
             const SizedBox(height: 8),
-            _buildPaymentInfoCard(order.paymentMethod, order.createdAt, txnId, invoiceNo),
+            _buildPaymentInfoCard(order.paymentMethod, order.createdAt, transactionId, invoiceId),
           ],
         ),
       ),
@@ -438,7 +438,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
     );
   }
 
-  Widget _buildPaymentInfoCard(String paymentMethod, DateTime? date, String transactionId, String invoiceNo) {
+  Widget _buildPaymentInfoCard(String paymentMethod, DateTime? date, String transactionId, String invoiceId) {
     String txnDisplay = transactionId.isEmpty ? '0000' : transactionId;
     return Container(
       width: double.infinity,
@@ -493,9 +493,9 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Invoice Number', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text('Invoice ID', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     const SizedBox(height: 4),
-                    Text(invoiceNo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black)),
+                    Text(invoiceId, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black)),
                   ],
                 ),
               ),
@@ -505,7 +505,11 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                if (_order != null) {
+                  PdfService.generateAndOpenInvoice(_order!);
+                }
+              },
               icon: const Icon(Icons.download_outlined, size: 18),
               label: const Text('Download Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(

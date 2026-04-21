@@ -13,6 +13,7 @@ class ProductDetailAdminView extends StatefulWidget {
 }
 
 class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
+  final AdminProductController _productController = AdminProductController();
   late ProductModel _currentProduct;
   int _currentImageIndex = 0;
 
@@ -136,7 +137,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                       Expanded(
                         child: _buildStatCard(
                           title: 'Revenue',
-                          value: _formatRevenue(_currentProduct.revenue ?? 0),
+                          value: _productController.formatRevenue(_currentProduct.revenue ?? 0),
                           // Mengambil nilai tren dari model, default 0.0 jika null
                           percentage: _currentProduct.revenueTrend ?? 0.0, 
                           titleColor: Colors.purple.shade400,
@@ -347,19 +348,6 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
     );
   }
 
-  // --- FUNGSI FORMAT REVENUE ---
-  String _formatRevenue(int revenue) {
-    if (revenue == 0) return 'Rp 0';
-    if (revenue >= 1000000) {
-      double inMillions = revenue / 1000000;
-      return 'Rp ${inMillions.toStringAsFixed(1)}M'; 
-    } else if (revenue >= 1000) {
-      double inThousands = revenue / 1000;
-      return 'Rp ${inThousands.toStringAsFixed(1)}K';
-    }
-    return 'Rp $revenue';
-  }
-
   void _showDeleteDialog(BuildContext context) {
     final Color primaryGreen = const Color(0xFF4C7D3E); 
 
@@ -427,7 +415,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                   Navigator.pop(dialogContext);
                   
                   try {
-                    await AdminProductController().deleteSupplyProduct(_currentProduct);
+                    await _productController.deleteSupplyProduct(_currentProduct);
                     
                     if (context.mounted) {
                       Navigator.pop(context);

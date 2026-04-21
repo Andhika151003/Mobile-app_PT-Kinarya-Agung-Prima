@@ -243,7 +243,7 @@ class _OrderCsViewState extends State<OrderCsView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '#ORD-${order.orderId.replaceAll(RegExp(r'[^0-9]'), '').length >= 4 ? order.orderId.replaceAll(RegExp(r'[^0-9]'), '').substring(order.orderId.replaceAll(RegExp(r'[^0-9]'), '').length - 4) : order.orderId.replaceAll(RegExp(r'[^0-9]'), '')}',
+                  order.orderId,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,

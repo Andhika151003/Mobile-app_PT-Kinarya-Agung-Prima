@@ -67,38 +67,16 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
   }
 
   void _filterItems() {
-    final now = DateTime.now();
-    List<OrderModel> results = List.from(_allOrders);
-
-    // 1. Time Filter
-    if (_selectedFilter == 'Today') {
-      results = results.where((order) {
-        if (order.createdAt == null) return false;
-        return order.createdAt!.year == now.year &&
-               order.createdAt!.month == now.month &&
-               order.createdAt!.day == now.day;
-      }).toList();
-    } else if (_selectedFilter == 'This Week') {
-      final weekAgo = now.subtract(const Duration(days: 7));
-      results = results.where((order) {
-        if (order.createdAt == null) return false;
-        return order.createdAt!.isAfter(weekAgo);
-      }).toList();
-    }
-
-    // 2. Search Filter
-    if (_searchQuery.isNotEmpty) {
-      results = results.where((order) {
-        final q = _searchQuery.toLowerCase();
-        final matchesId = order.orderId.toLowerCase().contains(q);
-        final matchesName = order.fullName.toLowerCase().contains(q);
-        final matchesAddress = order.shippingAddress.toLowerCase().contains(q);
-        final matchesItems = order.items.any((item) => item.title.toLowerCase().contains(q));
-        return matchesId || matchesName || matchesAddress || matchesItems;
-      }).toList();
-    }
-
-    _filteredOrders = results;
+    final MapList = _allOrders.map((e) => e.toMap()).toList();
+    final filteredMaps = _adminController.filterAndSearchOrders(
+      MapList, 
+      _selectedFilter == 'All Transactions' ? 'All' : _selectedFilter, 
+      _searchQuery
+    );
+    
+    setState(() {
+      _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
+    });
   }
 
   @override
@@ -260,8 +238,7 @@ class _TransactionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currencyFmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-    final digits = order.orderId.replaceAll(RegExp(r'[^0-9]'), '');
-    final shortId = '#ORD-${digits.length >= 4 ? digits.substring(digits.length - 4) : digits}';
+
 
     return GestureDetector(
       onTap: () async {
@@ -292,7 +269,7 @@ class _TransactionCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  shortId,
+                  order.orderId,
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
                 _buildStatusBadge(order.status),

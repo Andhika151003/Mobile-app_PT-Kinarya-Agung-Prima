@@ -12,7 +12,6 @@ class ProductModel {
   
   // --- PRICING ---
   int price; // Regular Price
-  int? wholesalePrice; 
   int? moq; 
   
   // --- INVENTORY ---
@@ -47,7 +46,6 @@ class ProductModel {
     required this.category,
     this.brand,
     required this.price,
-    this.wholesalePrice,
     this.moq,
     required this.stock,
     this.lowStockAlert,
@@ -73,7 +71,6 @@ class ProductModel {
       'category': category,
       'brand': brand ?? '',
       'price': price,
-      'wholesalePrice': wholesalePrice ?? 0,
       'moq': moq ?? 1,
       'stock': stock,
       'lowStockAlert': lowStockAlert ?? 0,
@@ -102,7 +99,6 @@ class ProductModel {
       category: map['category'] ?? 'Uncategorized',
       brand: map['brand'],
       price: map['price']?.toInt() ?? 0,
-      wholesalePrice: map['wholesalePrice']?.toInt(),
       moq: map['moq']?.toInt(),
       stock: map['stock']?.toInt() ?? 0,
       lowStockAlert: map['lowStockAlert']?.toInt(),

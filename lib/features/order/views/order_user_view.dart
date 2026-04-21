@@ -229,7 +229,7 @@ class _OrderCard extends StatelessWidget {
     final String itemUnit = firstItem?.variant ?? 'pack';
     final String? imageUrl = firstItem?.imageUrl;
 
-    final String shortId = _shortOrderId(order.orderId);
+
 
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -259,7 +259,7 @@ class _OrderCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  shortId,
+                  order.orderId,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -350,12 +350,7 @@ class _OrderCard extends StatelessWidget {
     );
   }
 
-  String _shortOrderId(String orderId) {
-    final digits = orderId.replaceAll(RegExp(r'[^0-9]'), '');
-    final suffix =
-        digits.length >= 4 ? digits.substring(digits.length - 4) : digits;
-    return '#ORD-$suffix';
-  }
+
 }
 
 class _StatusBadge extends StatelessWidget {
