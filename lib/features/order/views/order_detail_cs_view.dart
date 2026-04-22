@@ -64,37 +64,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
     return months[m];
   }
 
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'Ordered': return const Color(0xFFD97706);
-      case 'Processing': return const Color(0xFF2563EB);
-      case 'Shipped': return const Color(0xFF7C3AED);
-      case 'Delivered': return const Color(0xFF16A34A);
-      case 'Cancelled': return const Color(0xFFDC2626);
-      default: return Colors.grey;
-    }
-  }
-
-  Color _statusBgColor(String status) {
-    switch (status) {
-      case 'Ordered': return const Color(0xFFFEF7E0);
-      case 'Paid': return const Color(0xFFE8EAF6);
-      case 'Shipped': return const Color(0xFFF5F3FF);
-      case 'Delivered': return const Color(0xFFE6F4EA);
-      case 'Cancelled': return const Color(0xFFFCE8E6);
-      default: return Colors.grey.shade100;
-    }
-  }
-
-  String _statusLabel(String status) {
-    switch (status) {
-      case 'Ordered': return 'Ordered';
-      case 'Paid': return 'Paid';
-      case 'Delivered': return 'Delivered';
-      case 'Cancelled': return 'Cancelled';
-      default: return status;
-    }
-  }
+  // Status colors removed in favor of _buildStatusBadge
 
   Future<void> _fetchOrder() async {
     final updated = await _controller.getOrderById(_order.orderId);
@@ -295,41 +265,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                   fontFamily: 'Inter',
                 ),
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: _statusBgColor(_order.status),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_order.status == 'Delivered')
-                      const Icon(Icons.check_circle,
-                          size: 13, color: Color(0xFF16A34A)),
-                    if (_order.status == 'Ordered')
-                      const Icon(Icons.access_time,
-                          size: 13, color: Color(0xFFD97706)),
-                    if (_order.status == 'Processing')
-                      const Icon(Icons.access_time,
-                          size: 13, color: Color(0xFF2563EB)),
-                    if (_order.status == 'Cancelled')
-                      const Icon(Icons.cancel,
-                          size: 13, color: Color(0xFFDC2626)),
-                    const SizedBox(width: 4),
-                    Text(
-                      _statusLabel(_order.status),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Inter',
-                        color: _order.status == 'Cancelled' ? Colors.red : ( _order.status == 'Delivered' ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildStatusBadge(_order.status),
             ],
           ),
           const SizedBox(height: 6),
@@ -690,6 +626,37 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
             style:
                 const TextStyle(fontSize: 13, fontFamily: 'Inter')),
       ],
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color bg; Color fg; IconData icon; String label;
+
+    if (status == 'Delivered') {
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+    } else if (status == 'Expired' || status == 'Cancelled') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Ordered') {
+      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+    } else if (status == 'Shipped') {
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+    } else if (status == 'Paid') {
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
+    } else {
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
+        ],
+      ),
     );
   }
 

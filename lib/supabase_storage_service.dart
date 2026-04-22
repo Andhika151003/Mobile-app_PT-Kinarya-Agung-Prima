@@ -9,7 +9,6 @@ class SupabaseStorageService {
     try {
       final path = 'products/$fileName';
 
-      // Upload the file to the 'products' bucket
       await _supabase.storage
           .from('products')
           .upload(
@@ -18,7 +17,6 @@ class SupabaseStorageService {
             fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
           );
 
-      // Get the public URL for the uploaded image
       final publicUrl = _supabase.storage.from('products').getPublicUrl(path);
       return publicUrl;
     } catch (e) {
@@ -29,7 +27,6 @@ class SupabaseStorageService {
   Future<void> deleteImages(List<String> fileUrls) async {
     try {
       final paths = fileUrls.map((url) {
-        // Asumsi URL berakhir dengan .../products/namafile.jpg
         return 'products/${url.split('/products/').last}';
       }).toList();
       
@@ -38,6 +35,26 @@ class SupabaseStorageService {
       }
     } catch (e) {
       debugPrint('Error deleting images from Supabase: $e');
+    }
+  }
+
+  Future<String?> uploadComplaintImage(File file, String fileName) async {
+    try {
+      final path = 'complaints/$fileName';
+
+      await _supabase.storage
+          .from('complaints')
+          .upload(
+            path,
+            file,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+          );
+
+      final publicUrl = _supabase.storage.from('complaints').getPublicUrl(path);
+      return publicUrl;
+    } catch (e) {
+      debugPrint('Supabase Upload Error: $e');
+      throw Exception('Failed to upload complaint image: $e');
     }
   }
 }
