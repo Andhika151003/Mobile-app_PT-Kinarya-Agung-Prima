@@ -4,6 +4,7 @@ import '../models/order.dart';
 import '../controllers/order_user_controller.dart';
 import '../../payment & checkout/views/payment_status_view.dart';
 import '../../payment & checkout/views/payment_webview.dart';
+import '../../shared/services/pdf_service.dart';
 
 class OrderDetailUserView extends StatefulWidget {
   final String orderId;
@@ -42,12 +43,6 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
     }
   }
 
-  String get _shortId {
-    final digits = widget.orderId.replaceAll(RegExp(r'[^0-9]'), '');
-    final suffix = digits.length >= 4 ? digits.substring(digits.length - 4) : digits;
-    return '#ORD-$suffix';
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading || _order == null) {
@@ -60,8 +55,9 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
     final order = _order!;
     final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
-    final txnId = order.orderId.replaceAll(RegExp(r'[^0-9]'), '');
-    final invoiceNo = 'INV-${order.createdAt != null ? DateFormat('yyyy').format(order.createdAt!) : '2026'}-${txnId.isNotEmpty && txnId.length >= 4 ? txnId.substring(0, 4) : '0000'}';
+    final txnDigits = order.orderId.replaceAll(RegExp(r'[^0-9]'), '');
+    final invoiceId = 'KNY-${txnDigits.isNotEmpty ? txnDigits : '0000'}';
+    final transactionId = 'TXN-${txnDigits.isNotEmpty ? txnDigits : '0000'}';
 
     return Scaffold(
       backgroundColor: _bgColor,
@@ -88,7 +84,11 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
               child: const Icon(Icons.print_outlined, size: 16, color: Colors.black87),
             ),
-            onPressed: () {},
+            onPressed: () {
+              if (_order != null) {
+                PdfService.generateAndOpenInvoice(_order!);
+              }
+            },
           ),
         ],
       ),
@@ -98,7 +98,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Header Card
-            _buildHeaderCard(_shortId, order.createdAt, order.total, order.status, currency),
+            _buildHeaderCard(order.orderId, order.createdAt, order.total, order.status, currency),
             const SizedBox(height: 20),
 
             // 2. Order Status Stepper
@@ -185,7 +185,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               ],
             ),
             const SizedBox(height: 8),
-            _buildPaymentInfoCard(order.paymentMethod, order.createdAt, txnId, invoiceNo),
+            _buildPaymentInfoCard(order.paymentMethod, order.createdAt, transactionId, invoiceId),
           ],
         ),
       ),
@@ -197,8 +197,8 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   Widget _buildHeaderCard(String orderId, DateTime? date, double total, String status, NumberFormat currency) {
-    bool isDelivered = status == 'Delivered';
-    bool isPaid = status != 'Ordered' && status != 'Expired';
+    bool isCancelledOrExpired = status == 'Cancelled' || status == 'Expired';
+    bool isPaid = status != 'Ordered' && !isCancelledOrExpired;
     
     return Container(
       padding: const EdgeInsets.all(16),
@@ -210,20 +210,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(orderId, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDelivered ? const Color(0xFFE6F4EA) : const Color(0xFFFEF7E0),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Icon(isDelivered ? Icons.check : Icons.access_time, size: 12, color: isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00)),
-                    const SizedBox(width: 4),
-                    Text(isDelivered ? 'Delivered' : status, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00))),
-                  ],
-                ),
-              )
+              _buildStatusBadge(status)
             ],
           ),
           const SizedBox(height: 4),
@@ -250,9 +237,9 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Container(width: 8, height: 8, decoration: BoxDecoration(color: isPaid ? _primaryColor : Colors.orange, shape: BoxShape.circle)),
+                        Container(width: 8, height: 8, decoration: BoxDecoration(color: isCancelledOrExpired ? Colors.red : (isPaid ? _primaryColor : Colors.orange), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Text(isPaid ? 'Paid' : 'Unpaid', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Flexible(child: Text(isCancelledOrExpired ? 'Expired / Canceled' : (isPaid ? 'Paid' : 'Unpaid'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isCancelledOrExpired ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                   ],
@@ -291,15 +278,15 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             children: [
               Row(
                 children: [
-                  Expanded(child: Container(height: 3, color: index == 0 ? Colors.transparent : (isCompleted ? _primaryColor : Colors.grey.shade300))),
+                  Expanded(child: Container(height: 3, color: index == 0 ? Colors.transparent : (isCompleted ? ((currentStatus == 'Cancelled' || currentStatus == 'Expired') ? Colors.red : _primaryColor) : Colors.grey.shade300))),
                   Container(
                     width: 24, height: 24,
                     decoration: BoxDecoration(
-                      color: isCompleted ? _primaryColor : Colors.white,
+                      color: isCompleted ? ((currentStatus == 'Cancelled' || currentStatus == 'Expired') ? Colors.red : _primaryColor) : Colors.white,
                       shape: BoxShape.circle,
-                      border: Border.all(color: isCompleted ? _primaryColor : Colors.grey.shade300),
+                      border: Border.all(color: isCompleted ? ((currentStatus == 'Cancelled' || currentStatus == 'Expired') ? Colors.red : _primaryColor) : Colors.grey.shade300),
                     ),
-                    child: Icon(Icons.check, size: 14, color: isCompleted ? Colors.white : Colors.grey.shade300),
+                    child: Icon((currentStatus == 'Cancelled' || currentStatus == 'Expired') && index == currentIndex ? Icons.close : Icons.check, size: 14, color: isCompleted ? Colors.white : Colors.grey.shade300),
                   ),
                   Expanded(child: Container(height: 3, color: index == steps.length - 1 ? Colors.transparent : (isCompleted && index < currentIndex ? _primaryColor : Colors.grey.shade300))),
                 ],
@@ -437,7 +424,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
     );
   }
 
-  Widget _buildPaymentInfoCard(String paymentMethod, DateTime? date, String transactionId, String invoiceNo) {
+  Widget _buildPaymentInfoCard(String paymentMethod, DateTime? date, String transactionId, String invoiceId) {
     String txnDisplay = transactionId.isEmpty ? '0000' : transactionId;
     return Container(
       width: double.infinity,
@@ -492,9 +479,9 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Invoice Number', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text('Invoice ID', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     const SizedBox(height: 4),
-                    Text(invoiceNo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black)),
+                    Text(invoiceId, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black)),
                   ],
                 ),
               ),
@@ -504,7 +491,11 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                if (_order != null) {
+                  PdfService.generateAndOpenInvoice(_order!);
+                }
+              },
               icon: const Icon(Icons.download_outlined, size: 18),
               label: const Text('Download Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
@@ -516,6 +507,37 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color bg; Color fg; IconData icon; String label;
+
+    if (status == 'Delivered') {
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+    } else if (status == 'Expired' || status == 'Cancelled') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Ordered') {
+      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+    } else if (status == 'Shipped') {
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+    } else if (status == 'Paid') {
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
+    } else {
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
         ],
       ),
     );

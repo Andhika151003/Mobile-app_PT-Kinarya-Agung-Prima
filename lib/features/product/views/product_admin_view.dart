@@ -468,10 +468,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
   Future<void> _saveStock() async {
     setState(() => _isLoading = true);
     try {
-      ProductModel updatedProduct = widget.product;
-      updatedProduct.stock = updatedProduct.stock + _quantity;
-
-      await AdminProductController().updateSupplyProduct(updatedProduct);
+      await AdminProductController().addStock(widget.product, _quantity);
 
       if (mounted) {
         Navigator.pop(context); 

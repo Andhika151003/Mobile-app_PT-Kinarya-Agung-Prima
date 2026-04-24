@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'order_stats_helper.dart';
@@ -41,7 +42,7 @@ class OrderUserController {
       }
       return false; 
     } catch (e) {
-      print('Error sync payment: $e');
+      debugPrint('Error sync payment: $e');
       return false; 
     }
   }

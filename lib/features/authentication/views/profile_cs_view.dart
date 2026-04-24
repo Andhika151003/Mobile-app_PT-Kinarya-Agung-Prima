@@ -36,7 +36,6 @@ class _ProfileCsViewState extends State<ProfileCsView> {
           location = data['address'] ?? 'No Location';
           contact = data['phoneNumber'] ?? 'No Contact';
           csId = '#CS${data['uid'].substring(0, 6).toUpperCase()}';
-          totalTickets = 5642;
 
           isLoading = false;
         });
@@ -70,10 +69,16 @@ class _ProfileCsViewState extends State<ProfileCsView> {
                   const SizedBox(height: 40),
                   _buildBusinessDetails(),
                   const SizedBox(height: 32),
-                  _buildStatsCard(
-                    icon: Icons.inventory_2_outlined,
-                    title: 'Total Tickets',
-                    value: totalTickets.toString(),
+                  StreamBuilder<int>(
+                    stream: _csController.getResolvedCountStream(),
+                    builder: (context, snapshot) {
+                      final count = snapshot.data ?? 0;
+                      return _buildStatsCard(
+                        icon: Icons.inventory_2_outlined,
+                        title: 'Total Tickets',
+                        value: count.toString(),
+                      );
+                    }
                   ),
                   const SizedBox(height: 16),
                   _buildLogoutButton(context),

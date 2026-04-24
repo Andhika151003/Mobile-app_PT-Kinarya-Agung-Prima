@@ -11,7 +11,6 @@ void main() {
         sku: 'KP-01',
         category: 'Pakaian',
         price: 50000,
-        wholesalePrice: 45000,
         moq: 12,
         stock: 100,
         lowStockAlert: 10,
@@ -34,7 +33,7 @@ void main() {
         'name': 'Celana Jeans',
         'sku': 'CJ-01',
         'category': 'Pakaian',
-        'price': 150000.0, // test double parsing to int
+        'price': 150000.0,
         'stock': 50,
         'description': '',
         'imageUrl': 'url',

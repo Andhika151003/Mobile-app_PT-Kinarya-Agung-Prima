@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/order.dart';
 import '../controllers/order_admin_controller.dart';
+import '../../shared/services/pdf_service.dart';
 
 class OrderDetailAdminView extends StatefulWidget {
   final String orderId;
@@ -134,8 +135,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
     final order = _order!;
     final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
-    final digits = order.orderId.replaceAll(RegExp(r'[^0-9]'), '');
-    final shortId = '#ORD-${digits.length >= 4 ? digits.substring(digits.length - 4) : digits}';
+
 
     return Scaffold(
       backgroundColor: _bgColor,
@@ -153,6 +153,18 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         ),
         title: const Text('Order Details', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
         actions: [
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
+              child: const Icon(Icons.print_outlined, size: 16, color: Colors.black87),
+            ),
+            onPressed: () {
+              if (_order != null) {
+                PdfService.generateAndOpenInvoice(_order!);
+              }
+            },
+          ),
           if (_isUpdating) const Padding(padding: EdgeInsets.only(right: 16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: _primaryColor, strokeWidth: 2))),
         ],
       ),
@@ -162,7 +174,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Header Card
-            _buildHeaderCard(shortId, order.createdAt, order.total, order.status, currency),
+            _buildHeaderCard(order.orderId, order.createdAt, order.total, order.status, currency),
             const SizedBox(height: 20),
 
             // 2. Order Status Stepper
@@ -261,7 +273,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
             // 5. Payment Information
             const Text('Payment Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 8),
-            _buildPaymentInfoCard(order.paymentMethod, order.createdAt, order.orderId),
+            _buildPaymentInfoCard(order.paymentMethod, order.createdAt, order.orderId, order.orderId),
           ],
         ),
       ),
@@ -271,7 +283,6 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   // --- Helper Widgets ---
 
   Widget _buildHeaderCard(String orderId, DateTime? date, double total, String status, NumberFormat currency) {
-    bool isDelivered = status == 'Delivered';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
@@ -282,33 +293,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(orderId, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: status == 'Cancelled' 
-                    ? const Color(0xFFFDE8E8) 
-                    : (isDelivered ? const Color(0xFFE6F4EA) : const Color(0xFFFEF7E0)), 
-                  borderRadius: BorderRadius.circular(20)
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      status == 'Cancelled' ? Icons.close : (isDelivered ? Icons.check : Icons.access_time), 
-                      size: 12, 
-                      color: status == 'Cancelled' ? Colors.red : (isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00))
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      status == 'Cancelled' ? 'Cancelled' : (isDelivered ? 'Delivered' : status), 
-                      style: TextStyle(
-                        fontSize: 12, 
-                        fontWeight: FontWeight.bold, 
-                        color: status == 'Cancelled' ? Colors.red : (isDelivered ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00))
-                      )
-                    ),
-                  ],
-                ),
-              )
+              _buildStatusBadge(status)
             ],
           ),
           const SizedBox(height: 4),
@@ -334,9 +319,9 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Container(width: 8, height: 8, decoration: BoxDecoration(color: status == 'Ordered' ? Colors.orange : _primaryColor, shape: BoxShape.circle)),
+                        Container(width: 8, height: 8, decoration: BoxDecoration(color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : (status == 'Ordered' ? Colors.orange : _primaryColor), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Text(status == 'Ordered' ? 'Unpaid' : 'Paid', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Flexible(child: Text((status == 'Cancelled' || status == 'Expired') ? 'Expired / Canceled' : (status == 'Ordered' ? 'Unpaid' : 'Paid'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                   ],
@@ -453,8 +438,12 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
     );
   }
 
-  Widget _buildPaymentInfoCard(String paymentMethod, DateTime? date, String transactionId) {
+  Widget _buildPaymentInfoCard(String paymentMethod, DateTime? date, String transactionId, String orderId) {
+    final invoiceId = orderId;
+    
     final digits = transactionId.replaceAll(RegExp(r'[^0-9]'), '');
+    final shortTxn = digits.length >= 4 ? digits.substring(digits.length - 4) : digits;
+
     return Column(
       children: [
         Row(
@@ -481,7 +470,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                 children: [
                   Text('Transaction ID', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                   const SizedBox(height: 4),
-                  Text('TXN-$digits', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text('TXN-$shortTxn', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
@@ -504,15 +493,66 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Invoice Number', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  Text('Invoice ID', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                   const SizedBox(height: 4),
-                  Text('INV-KNY-$digits', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(invoiceId, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
           ],
         ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              if (_order != null) {
+                PdfService.generateAndOpenInvoice(_order!);
+              }
+            },
+            icon: const Icon(Icons.download_outlined, size: 18),
+            label: const Text('Download Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey.shade100,
+              foregroundColor: Colors.black87,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color bg; Color fg; IconData icon; String label;
+
+    if (status == 'Delivered') {
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+    } else if (status == 'Expired' || status == 'Cancelled') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Ordered') {
+      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+    } else if (status == 'Shipped') {
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+    } else if (status == 'Paid') {
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
+    } else {
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
+        ],
+      ),
     );
   }
 }

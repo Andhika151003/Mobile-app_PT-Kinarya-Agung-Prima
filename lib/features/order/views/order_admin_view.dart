@@ -45,7 +45,7 @@ class _OrderAdminViewState extends State<OrderAdminView> {
       if (mounted) {
         setState(() {
           _allOrders = docs.map((e) => OrderModel.fromMap(e)).toList();
-          _applySearch(_searchQuery);
+          _filteredOrders = List.from(_allOrders);
           _isLoading = false;
         });
       }
@@ -60,18 +60,13 @@ class _OrderAdminViewState extends State<OrderAdminView> {
   }
 
   void _applySearch(String query) {
-    _searchQuery = query;
-    if (query.isEmpty) {
-      _filteredOrders = List.from(_allOrders);
-    } else {
-      final q = query.toLowerCase();
-      _filteredOrders = _allOrders.where((order) {
-        return order.orderId.toLowerCase().contains(q) || 
-               order.shippingAddress.toLowerCase().contains(q) ||
-               order.fullName.toLowerCase().contains(q);
-      }).toList();
-    }
-    _currentPage = 1;
+    setState(() {
+      _searchQuery = query;
+      final MapList = _allOrders.map((e) => e.toMap()).toList();
+      final filteredMaps = _adminController.filterAndSearchOrders(MapList, 'All Transactions', query);
+      _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
+      _currentPage = 1;
+    });
   }
 
   int get _totalPages => (_filteredOrders.length / _pageSize).ceil().clamp(1, 999);
@@ -194,8 +189,7 @@ class _OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final currencyFmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
-    final digits = order.orderId.replaceAll(RegExp(r'[^0-9]'), '');
-    final shortId = '#ORD-${digits.length >= 4 ? digits.substring(digits.length - 4) : digits}';
+
     final paymentLabel = order.status == 'Ordered' ? 'Unpaid' : 'Paid';
 
     return GestureDetector(
@@ -220,7 +214,7 @@ class _OrderCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(shortId, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text(order.orderId, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                 _StatusBadge(status: order.status),
               ],
             ),
@@ -281,13 +275,17 @@ class _StatusBadge extends StatelessWidget {
     Color bg, fg; IconData icon; String label;
 
     if (status == 'Delivered') {
-      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check; label = 'Delivered';
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
     } else if (status == 'Expired' || status == 'Cancelled') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.close; label = 'Cancelled';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
     } else if (status == 'Ordered') {
       bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+    } else if (status == 'Shipped') {
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+    } else if (status == 'Paid') {
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
     } else {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.local_shipping_outlined; label = status;
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
     }
 
     return Container(

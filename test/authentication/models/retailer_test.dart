@@ -20,7 +20,7 @@ void main() {
 
       expect(map['id'], 'retailer-123');
       expect(map['username'], 'Amirul');
-      expect(map['fullName'], 'Amirul'); // Alias ada
+      expect(map['fullName'], 'Amirul');
       expect(map['email'], 'amirul@mail.com');
       expect(map['phoneNumber'], '08123456789');
       expect(map['address'], 'Surabaya');
@@ -31,7 +31,7 @@ void main() {
 
     test('fromMap harus membuat object RetailerUser dari data Map Firebase', () {
       final mapFromFirebase = {
-        'fullName': 'Toko Maju', // di firebase ada fullName bukan username
+        'fullName': 'Toko Maju',
         'email': 'maju@mail.com',
         'phoneNumber': '08987654321',
         'address': 'Jakarta',

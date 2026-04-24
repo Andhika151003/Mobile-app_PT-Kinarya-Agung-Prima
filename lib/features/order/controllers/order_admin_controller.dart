@@ -72,13 +72,11 @@ class OrderAdminController {
 
       if (currentStatus == 'Cancelled') throw Exception('Pesanan sudah dibatalkan sebelumnya');
 
-      // 1. Update status pesanan
       transaction.update(orderRef, {
         'status': 'Cancelled',
         'cancelledAt': FieldValue.serverTimestamp(),
       });
 
-      // 2. Kembalikan Stok (Restock)
       for (var itemMap in itemsData) {
         final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
         final int quantity = (itemMap['quantity'] as num?)?.toInt() ?? 0;
@@ -89,7 +87,6 @@ class OrderAdminController {
             'stock': FieldValue.increment(quantity),
           });
 
-          // 3. Batalkan Statistik (jika sudah tercatat)
           if (statsRecorded) {
             final int price = (itemMap['price'] as num?)?.toInt() ?? 0;
             final int revenue = price * quantity;
@@ -102,5 +99,51 @@ class OrderAdminController {
         }
       }
     });
+  }
+
+  List<Map<String, dynamic>> filterAndSearchOrders(
+    List<Map<String, dynamic>> allOrders,
+    String selectedFilter,
+    String searchQuery,
+  ) {
+    final now = DateTime.now();
+    List<Map<String, dynamic>> results = List.from(allOrders);
+
+    if (selectedFilter == 'Today') {
+      results = results.where((order) {
+        final createdAt = (order['createdAt'] as Timestamp?)?.toDate();
+        if (createdAt == null) return false;
+        return createdAt.year == now.year &&
+            createdAt.month == now.month &&
+            createdAt.day == now.day;
+      }).toList();
+    } else if (selectedFilter == 'This Week') {
+      final weekAgo = now.subtract(const Duration(days: 7));
+      results = results.where((order) {
+        final createdAt = (order['createdAt'] as Timestamp?)?.toDate();
+        if (createdAt == null) return false;
+        return createdAt.isAfter(weekAgo);
+      }).toList();
+    }
+
+    if (searchQuery.isNotEmpty) {
+      final q = searchQuery.toLowerCase();
+      results = results.where((order) {
+        final orderId = (order['orderId'] ?? '').toString().toLowerCase();
+        final fullName = (order['fullName'] ?? '').toString().toLowerCase();
+        final address = (order['shippingAddress'] ?? '').toString().toLowerCase();
+        final items = (order['items'] as List<dynamic>? ?? []);
+        
+        final matchesId = orderId.contains(q);
+        final matchesName = fullName.contains(q);
+        final matchesAddress = address.contains(q);
+        final matchesItems = items.any((item) => 
+          (item['title'] ?? '').toString().toLowerCase().contains(q));
+          
+        return matchesId || matchesName || matchesAddress || matchesItems;
+      }).toList();
+    }
+
+    return results;
   }
 }

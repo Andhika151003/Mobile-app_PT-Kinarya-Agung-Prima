@@ -229,7 +229,7 @@ class _OrderCard extends StatelessWidget {
     final String itemUnit = firstItem?.variant ?? 'pack';
     final String? imageUrl = firstItem?.imageUrl;
 
-    final String shortId = _shortOrderId(order.orderId);
+
 
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -259,7 +259,7 @@ class _OrderCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  shortId,
+                  order.orderId,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -350,12 +350,7 @@ class _OrderCard extends StatelessWidget {
     );
   }
 
-  String _shortOrderId(String orderId) {
-    final digits = orderId.replaceAll(RegExp(r'[^0-9]'), '');
-    final suffix =
-        digits.length >= 4 ? digits.substring(digits.length - 4) : digits;
-    return '#ORD-$suffix';
-  }
+
 }
 
 class _StatusBadge extends StatelessWidget {
@@ -367,13 +362,17 @@ class _StatusBadge extends StatelessWidget {
     Color bg; Color fg; IconData icon; String label;
 
     if (status == 'Delivered') {
-      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check; label = 'Delivered';
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
     } else if (status == 'Expired' || status == 'Cancelled') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.close; label = 'Cancelled';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
     } else if (status == 'Ordered') {
-      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Pending';
+      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+    } else if (status == 'Shipped') {
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+    } else if (status == 'Paid') {
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
     } else {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.access_time; label = 'Process'; 
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
     }
 
     return Container(

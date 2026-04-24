@@ -1,20 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'user.dart';
 
-class AdminUser extends BaseUser {
+class AdminUser {
+  final String? id;
+  final String username;
+  final String email;
+  final String password;
+  final String role;
+  final String phoneNumber;
+  final DateTime createdAt;
   final int accessLevel;
 
   AdminUser({
-    super.id,
-    required super.username,
-    required super.email,
-    required super.password,
-    required super.phoneNumber,
-    required super.createdAt,
+    this.id,
+    required this.username,
+    required this.email,
+    required this.password,
+    required this.phoneNumber,
+    required this.createdAt,
+    this.role = 'admin',
     this.accessLevel = 1,
-  }) : super(role: 'admin');
+  });
 
-  @override
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -47,7 +53,6 @@ class AdminUser extends BaseUser {
     );
   }
 
-  @override
   AdminUser copyWith({
     String? id,
     String? username,

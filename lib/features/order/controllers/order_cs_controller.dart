@@ -26,20 +26,20 @@ class OrderCsController extends ChangeNotifier {
     _clearError();
 
     try {
-      print('Fetching orders from Firestore...');
+      debugPrint('Fetching orders from Firestore...');
       
       final snapshot = await _firestore
           .collection('orders')
           .get(); 
 
-      print('Jumlah dokumen di Firestore: ${snapshot.docs.length}');
+      debugPrint('Jumlah dokumen di Firestore: ${snapshot.docs.length}');
 
       if (snapshot.docs.isEmpty) {
-        print('Tidak ada data order di Firestore');
+        debugPrint('Tidak ada data order di Firestore');
         _orders = [];
       } else {
         for (var doc in snapshot.docs) {
-          print('Order ID: ${doc.data()['orderId']}');
+          debugPrint('Order ID: ${doc.data()['orderId']}');
         }
         
         _orders = snapshot.docs.map((doc) {
@@ -56,13 +56,13 @@ class OrderCsController extends ChangeNotifier {
           return bTs.compareTo(aTs);
         });
         
-        print('Total orders loaded: ${_orders.length}');
+        debugPrint('Total orders loaded: ${_orders.length}');
       }
 
       _applyFilters();
       _setLoading(false);
     } catch (e) {
-      print('Error fetching orders: $e');
+      debugPrint('Error fetching orders: $e');
       _setError('Gagal mengambil data pesanan');
       _setLoading(false);
     }
