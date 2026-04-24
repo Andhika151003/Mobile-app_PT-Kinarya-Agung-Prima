@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../controllers/order_cs_controller.dart';
 import '../models/order.dart';
+import '../../shared/services/pdf_service.dart';
 
 class OrderDetailCsView extends StatefulWidget {
   final OrderModel order;
@@ -18,7 +19,10 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
       NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
   // Status step index
-  static const _statusSteps = ['Ordered', 'Processing', 'Shipped', 'Delivered'];
+  static const _statusSteps = ['Ordered', 'Paid', 'Shipped', 'Delivered'];
+
+  bool _isUpdating = false;
+  final OrderCsController _controller = OrderCsController();
 
   @override
   void initState() {
@@ -35,10 +39,8 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
     switch (status) {
       case 'Ordered':
         return _order.createdAt;
-      case 'Processing':
-        return _order.createdAt != null
-            ? _order.createdAt!.add(const Duration(hours: 2))
-            : null;
+      case 'Paid':
+        return _order.paidAt;
       case 'Shipped':
         return _order.shippedAt;
       case 'Delivered':
@@ -56,8 +58,8 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
 
   String _monthAbbr(int m) {
     const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
     ];
     return months[m];
   }
@@ -75,27 +77,114 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
 
   Color _statusBgColor(String status) {
     switch (status) {
-      case 'Ordered': return const Color(0xFFFEF3C7);
-      case 'Processing': return const Color(0xFFEFF6FF);
+      case 'Ordered': return const Color(0xFFFEF7E0);
+      case 'Paid': return const Color(0xFFE8EAF6);
       case 'Shipped': return const Color(0xFFF5F3FF);
-      case 'Delivered': return const Color(0xFFDCFCE7);
-      case 'Cancelled': return const Color(0xFFFEE2E2);
+      case 'Delivered': return const Color(0xFFE6F4EA);
+      case 'Cancelled': return const Color(0xFFFCE8E6);
       default: return Colors.grey.shade100;
     }
   }
 
   String _statusLabel(String status) {
     switch (status) {
-      case 'Ordered': return 'Pending';
-      case 'Processing': return 'Process';
+      case 'Ordered': return 'Ordered';
+      case 'Paid': return 'Paid';
       case 'Delivered': return 'Delivered';
       case 'Cancelled': return 'Cancelled';
       default: return status;
     }
   }
 
+  Future<void> _fetchOrder() async {
+    final updated = await _controller.getOrderById(_order.orderId);
+    if (updated != null && mounted) {
+      setState(() {
+        _order = updated;
+      });
+    }
+  }
+
+  Future<void> _updateStatus() async {
+    final currentStatus = _order.status;
+    String newStatus = '';
+    String actionLabel = '';
+
+    if (currentStatus == 'Ordered') {
+      newStatus = 'Paid'; actionLabel = 'Tandai sudah dibayar (Paid)';
+    } else if (currentStatus == 'Paid') {
+      newStatus = 'Shipped'; actionLabel = 'Kirim Pesanan (Shipped)';
+    } else if (currentStatus == 'Shipped') {
+      newStatus = 'Delivered'; actionLabel = 'Pesanan Selesai (Delivered)';
+    } else {
+      return; 
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text('Update Status Pesanan?'),
+        content: Text('Melanjutkan pesanan ke tahap: $actionLabel?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32), elevation: 0),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Konfirmasi', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isUpdating = true);
+    try {
+      await _controller.updateOrderStatus(_order.orderId, newStatus);
+      await _fetchOrder();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal update: $e'), backgroundColor: Colors.red));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _cancelOrder() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text('Batalkan Pesanan?'),
+        content: const Text('Tindakan ini akan mengembalikan stok produk dan membatalkan pesanan secara permanen.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tutup', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, elevation: 0),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Batalkan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isUpdating = true);
+    try {
+      await _controller.cancelOrder(_order.orderId);
+      await _fetchOrder();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pesanan berhasil dibatalkan dan stok dikembalikan'), backgroundColor: Colors.orange));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal pembatalan: $e'), backgroundColor: Colors.red));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
@@ -118,7 +207,9 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
         actions: [
           IconButton(
             icon: const Icon(Icons.print_outlined, color: Colors.black),
-            onPressed: () {},
+            onPressed: () {
+              PdfService.generateAndOpenInvoice(_order);
+            },
           ),
         ],
       ),
@@ -131,6 +222,42 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
             const SizedBox(height: 16),
             _buildOrderStatusTracker(),
             const SizedBox(height: 16),
+            if (_order.status != 'Delivered' && _order.status != 'Cancelled' && _order.status != 'Expired')
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isUpdating ? null : _updateStatus,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2E7D32),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          elevation: 0
+                        ),
+                        child: _isUpdating 
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Update Status', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: _isUpdating ? null : _cancelOrder,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text('Batalkan Pesanan', style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             _buildShippingInfo(),
             const SizedBox(height: 16),
             _buildOrderItems(),
@@ -161,7 +288,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '#${_order.orderId}',
+                _order.orderId,
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -195,9 +322,9 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                       _statusLabel(_order.status),
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.bold,
                         fontFamily: 'Inter',
-                        color: _statusColor(_order.status),
+                        color: _order.status == 'Cancelled' ? Colors.red : ( _order.status == 'Delivered' ? const Color(0xFF1E8E3E) : const Color(0xFFF9AB00)),
                       ),
                     ),
                   ],
@@ -274,29 +401,6 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('Order Type',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF6B7280),
-                            fontFamily: 'Inter')),
-                    SizedBox(height: 2),
-                    Text('Wholesale',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Inter')),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -346,7 +450,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              isDone ? Icons.check : Icons.circle,
+                              isDone ? Icons.check : (i == _currentStep + 1 && _order.status != 'Cancelled' ? Icons.access_time : Icons.circle),
                               color: isDone
                                   ? Colors.white
                                   : const Color(0xFFD1D5DB),
@@ -546,7 +650,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
           _summaryRow('Subtotal', currencyFormatter.format(_order.subtotal)),
           const SizedBox(height: 4),
           _summaryRow(
-              'Tax (1.5%)', currencyFormatter.format(_order.tax)),
+              'Pajak (11%)', currencyFormatter.format(_order.tax)),
           const SizedBox(height: 4),
           _summaryRow('Shipping', currencyFormatter.format(_order.shippingCost)),
           const Divider(color: Color(0xFFE5E7EB), height: 20),
@@ -650,7 +754,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                             fontFamily: 'Inter')),
                     const SizedBox(height: 4),
                     Text(
-                      _order.paymentMethodCode ?? '-',
+                      'TXN-${_order.orderId.replaceAll(RegExp(r'[^0-9]'), '')}',
                       style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -661,6 +765,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
               ),
             ],
           ),
+          const SizedBox(height: 10),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -690,14 +795,14 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Invoice Number',
+                    const Text('Invoice ID',
                         style: TextStyle(
                             fontSize: 11,
                             color: Color(0xFF6B7280),
                             fontFamily: 'Inter')),
                     const SizedBox(height: 4),
                     Text(
-                      'INV-${DateTime.now().year}-${_order.orderId.replaceAll(RegExp(r'[^0-9]'), '')}',
+                      'KNY-${_order.orderId.replaceAll(RegExp(r'[^0-9]'), '')}',
                       style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -719,12 +824,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Download invoice sedang diproses...'),
-              backgroundColor: Color(0xFF2E7D32),
-            ),
-          );
+          PdfService.generateAndOpenInvoice(_order);
         },
         icon: const Icon(Icons.download_outlined,
             color: Color(0xFF374151), size: 18),

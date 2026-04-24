@@ -1,9 +1,6 @@
 import '../models/product.dart';
 
 class ProductUserController {
-  // =========================================================
-  // LOGIC & FILTERING UNTUK USER/RETAILER UI
-  // =========================================================
 
   List<ProductModel> filterAndSortProducts(
     List<ProductModel> allProducts, 
@@ -28,13 +25,8 @@ class ProductUserController {
 
     return displayProducts;
   }
-
-  // =========================================================
-  // TODO: FUNGSI CART (Nantinya dipanggil dari Detail Produk)
-  // =========================================================
   
   Future<void> addToCart(ProductModel product, int quantity) async {
-    // Fungsi ini akan disambungkan dengan Firebase Cart user nanti
     await Future.delayed(const Duration(milliseconds: 500));
   }
 }

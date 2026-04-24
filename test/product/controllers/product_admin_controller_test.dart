@@ -28,11 +28,11 @@ void main() {
     test('filterAndSortProducts sorts and filters correctly', () {
       final p1 = ProductModel(
         id: '1', retailerId: 'admin123', name: 'Zebra', sku: 'Z-1', category: 'Cat1', brand: 'B1', 
-        price: 15000, wholesalePrice: 14000, moq: 1, stock: 10, imageUrl: '', isAvailable: true, monthlySales: 5, lowStockAlert: 5, description: ''
+        price: 15000, moq: 1, stock: 10, imageUrl: '', isAvailable: true, monthlySales: 5, lowStockAlert: 5, description: ''
       );
       final p2 = ProductModel(
         id: '2', retailerId: 'admin123', name: 'Alpha', sku: 'A-1', category: 'Cat2', brand: 'B2', 
-        price: 10000, wholesalePrice: 9000, moq: 1, stock: 2, imageUrl: '', isAvailable: true, monthlySales: 15, lowStockAlert: 5, description: ''
+        price: 10000, moq: 1, stock: 2, imageUrl: '', isAvailable: true, monthlySales: 15, lowStockAlert: 5, description: ''
       );
 
       final List<ProductModel> list = [p1, p2];

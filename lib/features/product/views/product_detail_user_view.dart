@@ -71,11 +71,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
         (widget.product.sku != null && widget.product.sku!.isNotEmpty)
         ? widget.product.sku!
         : 'N/A';
-    int displayPrice =
-        widget.product.wholesalePrice != null &&
-            widget.product.wholesalePrice! > 0
-        ? widget.product.wholesalePrice!
-        : widget.product.price;
+    int displayPrice = widget.product.price;
 
     int currentStock = widget.product.stock;
     int moq = widget.product.moq ?? 1;
@@ -115,11 +111,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                       return;
                     }
 
-                    double finalPrice =
-                        (widget.product.wholesalePrice != null &&
-                            widget.product.wholesalePrice! > 0)
-                        ? widget.product.wholesalePrice!.toDouble()
-                        : widget.product.price.toDouble();
+                    double finalPrice = widget.product.price.toDouble();
 
                     _cartController.addToCart(
                       id: widget.product.id!,
@@ -194,18 +186,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (widget.product.wholesalePrice != null &&
-                        widget.product.wholesalePrice! > 0) ...[
-                      Text(
-                        'Retail: ${currencyFormatter.format(widget.product.price)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade500,
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                    ],
+
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -219,10 +200,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          widget.product.wholesalePrice != null &&
-                                  widget.product.wholesalePrice! > 0
-                              ? 'Wholesale'
-                              : 'per item',
+                          'per item',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade500,

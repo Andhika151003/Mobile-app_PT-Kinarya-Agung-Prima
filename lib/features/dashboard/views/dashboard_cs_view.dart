@@ -113,17 +113,19 @@ class _DashboardCsViewState extends State<DashboardCsView> {
                         ),
                       )
                     else
-                      ...recentComplaints.map((complaint) => Column(
-                            children: [
-                              _buildComplaintCard(
-                                timeAgo: complaint['timeAgo'],
-                                title: complaint['title'],
-                                description: complaint['description'],
-                                storeName: complaint['storeName'],
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                          )),
+                      ...recentComplaints.map(
+                        (complaint) => Column(
+                          children: [
+                            _buildComplaintCard(
+                              timeAgo: complaint['timeAgo'],
+                              title: complaint['title'],
+                              description: complaint['description'],
+                              storeName: complaint['storeName'],
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -199,10 +201,7 @@ class _DashboardCsViewState extends State<DashboardCsView> {
             alignment: Alignment.topRight,
             child: Text(
               timeAgo,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
             ),
           ),
           const SizedBox(height: 4),

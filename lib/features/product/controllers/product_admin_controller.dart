@@ -71,7 +71,6 @@ class AdminProductController {
     required String category,
     required String brand,
     required String regularPrice,
-    required String wholesalePrice,
     required String moq,
     required String stock,
     required String lowStock,
@@ -109,8 +108,6 @@ class AdminProductController {
       category: category,
       brand: brand.trim(),
       price: int.tryParse(regularPrice.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-      wholesalePrice:
-          int.tryParse(wholesalePrice.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
       moq: int.tryParse(moq) ?? 1,
       stock: int.tryParse(stock.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
       lowStockAlert: int.tryParse(lowStock) ?? 0,
@@ -133,7 +130,6 @@ class AdminProductController {
     required String category,
     required String brand,
     required String regularPrice,
-    required String wholesalePrice,
     required String moq,
     required String stock,
     required String lowStock,
@@ -169,8 +165,6 @@ class AdminProductController {
       category: category,
       brand: brand.trim(),
       price: int.tryParse(regularPrice.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-      wholesalePrice:
-          int.tryParse(wholesalePrice.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
       moq: int.tryParse(moq) ?? 1,
       stock: int.tryParse(stock.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
       lowStockAlert: int.tryParse(lowStock) ?? 0,
@@ -225,5 +219,23 @@ class AdminProductController {
     }
 
     return products;
+  }
+
+  String formatRevenue(int revenue) {
+    if (revenue == 0) return 'Rp 0';
+    if (revenue >= 1000000) {
+      double inMillions = revenue / 1000000;
+      return 'Rp ${inMillions.toStringAsFixed(1)}M';
+    } else if (revenue >= 1000) {
+      double inThousands = revenue / 1000;
+      return 'Rp ${inThousands.toStringAsFixed(1)}K';
+    }
+    return 'Rp $revenue';
+  }
+
+  Future<void> addStock(ProductModel product, int quantity) async {
+    ProductModel updatedProduct = product;
+    updatedProduct.stock = updatedProduct.stock + quantity;
+    await updateSupplyProduct(updatedProduct);
   }
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/user.dart';
+import '../models/admin.dart';
+import '../models/cs.dart';
+import '../models/retailer.dart';
 
 class LoginController extends ChangeNotifier {
   FirebaseAuth get _auth => FirebaseAuth.instance;
@@ -36,7 +38,7 @@ class LoginController extends ChangeNotifier {
 
   // ==================== LOGIN WITH FIREBASE ====================
 
-  Future<BaseUser?> login({
+  Future<dynamic> login({
     required String email,
     required String password,
   }) async {
@@ -62,8 +64,16 @@ class LoginController extends ChangeNotifier {
 
       final data = docSnapshot.data()!;
       
-      // 3. Buat objek User yang tepat (Admin/CS/Retailer) dari tipe role menggunakan BaseUser Factory
-      final user = BaseUser.fromMap(userCredential.user!.uid, data);
+      final String role = data['role']?.toString().toLowerCase() ?? 'retailer';
+      dynamic user;
+
+      if (role == 'admin') {
+        user = AdminUser.fromMap(userCredential.user!.uid, data);
+      } else if (role == 'cs') {
+        user = CsUser.fromMap(userCredential.user!.uid, data);
+      } else {
+        user = RetailerUser.fromMap(userCredential.user!.uid, data);
+      }
 
       _setLoading(false);
       return user;

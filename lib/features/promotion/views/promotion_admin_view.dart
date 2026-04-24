@@ -14,17 +14,25 @@ class PromotionAdminView extends StatefulWidget {
 
 class _PromotionAdminViewState extends State<PromotionAdminView> {
   final TextEditingController _searchController = TextEditingController();
+  late final PromotionAdminController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PromotionAdminController()..fetchAllPromotions();
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => PromotionAdminController()..fetchAllPromotions(),
+    return ChangeNotifierProvider.value(
+      value: _controller,
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
 
@@ -52,6 +60,12 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
 
             return Column(
               children: [
+                if (controller.isLoading && controller.promotions.isNotEmpty)
+                  const LinearProgressIndicator(
+                    color: Color(0xFF2E7D32),
+                    backgroundColor: Color(0xFFE8F5E9),
+                    minHeight: 3,
+                  ),
                 // ── Search Bar ──────────────────────────────────────
                 Container(
                   color: Colors.white,
@@ -140,24 +154,22 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
         ),
 
         // ── FAB ──────────────────────────────────────────────────
-        floatingActionButton: Consumer<PromotionAdminController>(
-          builder: (context, controller, _) => FloatingActionButton(
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const FormPromotionAdminView(),
-                ),
-              );
-              controller.fetchAllPromotions();
-            },
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const FormPromotionAdminView(),
+              ),
+            );
+            _controller.fetchAllPromotions();
+          },
             backgroundColor: const Color(0xFF2E7D32),
             shape: const CircleBorder(),
             elevation: 4,
             child:
                 const Icon(Icons.add, color: Colors.white, size: 28),
           ),
-        ),
       ),
     );
   }
@@ -220,7 +232,7 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
                 PromotionDetailAdminView(promotion: promo),
           ),
         );
-        controller.fetchAllPromotions();
+        _controller.fetchAllPromotions();
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),

@@ -45,7 +45,7 @@ class _OrderAdminViewState extends State<OrderAdminView> {
       if (mounted) {
         setState(() {
           _allOrders = docs.map((e) => OrderModel.fromMap(e)).toList();
-          _applySearch(_searchQuery);
+          _filteredOrders = List.from(_allOrders);
           _isLoading = false;
         });
       }
@@ -60,18 +60,13 @@ class _OrderAdminViewState extends State<OrderAdminView> {
   }
 
   void _applySearch(String query) {
-    _searchQuery = query;
-    if (query.isEmpty) {
-      _filteredOrders = List.from(_allOrders);
-    } else {
-      final q = query.toLowerCase();
-      _filteredOrders = _allOrders.where((order) {
-        return order.orderId.toLowerCase().contains(q) || 
-               order.shippingAddress.toLowerCase().contains(q) ||
-               order.fullName.toLowerCase().contains(q);
-      }).toList();
-    }
-    _currentPage = 1;
+    setState(() {
+      _searchQuery = query;
+      final MapList = _allOrders.map((e) => e.toMap()).toList();
+      final filteredMaps = _adminController.filterAndSearchOrders(MapList, 'All Transactions', query);
+      _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
+      _currentPage = 1;
+    });
   }
 
   int get _totalPages => (_filteredOrders.length / _pageSize).ceil().clamp(1, 999);
@@ -194,8 +189,7 @@ class _OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final currencyFmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
-    final digits = order.orderId.replaceAll(RegExp(r'[^0-9]'), '');
-    final shortId = '#ORD-${digits.length >= 4 ? digits.substring(digits.length - 4) : digits}';
+
     final paymentLabel = order.status == 'Ordered' ? 'Unpaid' : 'Paid';
 
     return GestureDetector(
@@ -220,7 +214,7 @@ class _OrderCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(shortId, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                Text(order.orderId, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                 _StatusBadge(status: order.status),
               ],
             ),

@@ -88,14 +88,15 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                       _buildSectionHeader(
                         'Active Promotions',
                         '+ New Promo',
-                        onAction: () {
-                          Navigator.push(
+                        onAction: () async {
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
                                   const FormPromotionAdminView(),
                             ),
                           );
+                          _loadDashboardData();
                         },
                       ),
                       const SizedBox(height: 15),
@@ -414,16 +415,17 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               ),
               const SizedBox(height: 10),
               GestureDetector(
-                onTap: () {
+                onTap: () async {
                   if (promotionId != null) {
                     // Navigasi ke form edit promo dengan data ASLI dari model
-                    Navigator.push(
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
                             FormPromotionAdminView(promotion: promotionModel),
                       ),
                     );
+                    _loadDashboardData();
                   }
                 },
                 child: const Text(
