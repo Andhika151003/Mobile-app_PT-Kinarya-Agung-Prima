@@ -338,7 +338,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isLoading ? 'Welcome Back!' : 'Welcome Back, $userName!',
+          isLoading ? 'Selamat Datang' : 'Selamat Datang, $userName!',
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -354,9 +354,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
     );
   }
 
-  // ── PROMO BANNER (DYNAMIC FROM FIREBASE) ─────────────────
   Widget _buildPromoBanner() {
-    // Kalau belum ada data promo, tampilkan shimmer/placeholder
     if (_activePromos.isEmpty) {
       return Container(
         height: 130,
@@ -390,7 +388,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
           ),
         ),
 
-        // Dot indicator (kalau promo > 1)
         if (_activePromos.length > 1) ...[
           const SizedBox(height: 10),
           Row(
@@ -417,7 +414,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
   }
 
   Widget _buildSingleBanner(PromotionModel promo) {
-    // Warna backup jika tidak ada gambar (berdasarkan discount type)
     Color bannerColor;
     switch (promo.discountType) {
       case 'bogo':
@@ -557,7 +553,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
     );
   }
 
-  // ── QUICK ACTIONS ─────────────────────────────────────────
   Widget _buildQuickActions() {
     return Column(
       children: [
@@ -595,7 +590,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
     );
   }
 
-  // ── RECENT ORDERS ─────────────────────────────────────────
   Widget _buildRecentOrders() {
     return Column(
       children: [
@@ -738,7 +732,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
     );
   }
 
-  // ── RECOMMENDED PRODUCTS ──────────────────────────────────
   Widget _buildRecommendedProducts() {
     return Column(
       children: [
