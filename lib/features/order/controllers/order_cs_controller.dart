@@ -46,7 +46,6 @@ class OrderCsController extends ChangeNotifier {
           return OrderModel.fromMap(doc.data());
         }).toList();
 
-        // Sort by createdAt descending
         _orders.sort((a, b) {
           final aTs = a.createdAt;
           final bTs = b.createdAt;
@@ -113,10 +112,8 @@ class OrderCsController extends ChangeNotifier {
         await _firestore.collection('orders').doc(orderId).update(updateData);
       }
 
-      // Update local state
       final index = _orders.indexWhere((o) => o.orderId == orderId);
       if (index != -1) {
-        // Fetch the updated doc to get fresh data (including paidAt etc)
         final updatedDoc = await _firestore.collection('orders').doc(orderId).get();
         if (updatedDoc.exists) {
           _orders[index] = OrderModel.fromMap(updatedDoc.data()!);
@@ -152,13 +149,11 @@ class OrderCsController extends ChangeNotifier {
 
         if (currentStatus == 'Cancelled') throw Exception('Pesanan sudah dibatalkan sebelumnya');
 
-        // 1. Update status pesanan
         transaction.update(orderRef, {
           'status': 'Cancelled',
           'cancelledAt': FieldValue.serverTimestamp(),
         });
 
-        // 2. Kembalikan Stok (Restock)
         for (var itemMap in itemsData) {
           final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
           final int quantity = (itemMap['quantity'] as num?)?.toInt() ?? 0;
@@ -169,7 +164,6 @@ class OrderCsController extends ChangeNotifier {
               'stock': FieldValue.increment(quantity),
             });
 
-            // 3. Batalkan Statistik (jika sudah tercatat)
             if (statsRecorded) {
               final int price = (itemMap['price'] as num?)?.toInt() ?? 0;
               final int revenue = price * quantity;
@@ -183,7 +177,6 @@ class OrderCsController extends ChangeNotifier {
         }
       });
 
-      // Update local state
       final index = _orders.indexWhere((o) => o.orderId == orderId);
       if (index != -1) {
         final updatedDoc = await _firestore.collection('orders').doc(orderId).get();

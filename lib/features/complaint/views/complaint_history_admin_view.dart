@@ -13,19 +13,60 @@ class AdminComplaintHistoryView extends StatefulWidget {
 
 class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
   final DashboardAdminController _controller = DashboardAdminController();
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text(
-          'History Complaint',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.black, fontSize: 18),
+                decoration: const InputDecoration(
+                  hintText: 'Search order ID, issue...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.grey),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.toLowerCase();
+                  });
+                },
+              )
+            : const Text(
+                'History Complaint',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0.5,
+        actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search,
+                color: Colors.black87, size: 24),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchController.clear();
+                  _searchQuery = '';
+                }
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: StreamBuilder<List<ComplaintModel>>(
         stream: _controller.getAllComplaints(),
@@ -36,16 +77,25 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
-          final complaints = snapshot.data ?? [];
-          if (complaints.isEmpty) {
+          
+          final allComplaints = snapshot.data ?? [];
+          
+          final filteredBySearch = allComplaints.where((c) {
+            final searchLower = _searchQuery.toLowerCase();
+            return c.orderId.toLowerCase().contains(searchLower) ||
+                c.issueType.toLowerCase().contains(searchLower) ||
+                c.description.toLowerCase().contains(searchLower);
+          }).toList();
+
+          if (filteredBySearch.isEmpty) {
             return _buildEmptyState();
           }
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: complaints.length,
+            itemCount: filteredBySearch.length,
             itemBuilder: (context, index) {
-              final complaint = complaints[index];
+              final complaint = filteredBySearch[index];
               return _buildComplaintCard(complaint);
             },
           );
@@ -59,10 +109,14 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history_outlined, size: 80, color: Colors.grey[300]),
+          Icon(
+            _isSearching ? Icons.search_off_rounded : Icons.history_outlined,
+            size: 80,
+            color: Colors.grey[300],
+          ),
           const SizedBox(height: 16),
           Text(
-            'No complaint history found',
+            _isSearching ? 'No results found' : 'No complaint history found',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
@@ -73,6 +127,7 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
       ),
     );
   }
+
 
   Widget _buildComplaintCard(ComplaintModel complaint) {
     return Container(

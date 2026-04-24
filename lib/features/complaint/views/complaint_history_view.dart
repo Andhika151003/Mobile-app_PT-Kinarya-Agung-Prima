@@ -3,8 +3,23 @@ import 'package:intl/intl.dart';
 import '../models/complaint.dart';
 import '../controllers/complaint_retail_controller.dart';
 
-class ComplaintHistoryView extends StatelessWidget {
+class ComplaintHistoryView extends StatefulWidget {
   const ComplaintHistoryView({super.key});
+
+  @override
+  State<ComplaintHistoryView> createState() => _ComplaintHistoryViewState();
+}
+
+class _ComplaintHistoryViewState extends State<ComplaintHistoryView> {
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,13 +28,45 @@ class ComplaintHistoryView extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text(
-          'Complaint History',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.black, fontSize: 18),
+                decoration: const InputDecoration(
+                  hintText: 'Search order ID, issue...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.grey),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.toLowerCase();
+                  });
+                },
+              )
+            : const Text(
+                'Complaint History',
+                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
+        actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search,
+                color: Colors.black87, size: 24),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchController.clear();
+                  _searchQuery = '';
+                }
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: StreamBuilder<List<ComplaintModel>>(
         stream: controller.getUserComplaints(),
@@ -32,18 +79,29 @@ class ComplaintHistoryView extends StatelessWidget {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          final complaints = snapshot.data ?? [];
+          final allComplaints = snapshot.data ?? [];
+          
+          final complaints = allComplaints.where((c) {
+            final searchLower = _searchQuery.toLowerCase();
+            return c.orderId.toLowerCase().contains(searchLower) ||
+                c.issueType.toLowerCase().contains(searchLower) ||
+                c.description.toLowerCase().contains(searchLower);
+          }).toList();
 
           if (complaints.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.assignment_outlined, size: 80, color: Colors.grey[300]),
+                  Icon(
+                    _isSearching ? Icons.search_off_rounded : Icons.assignment_outlined,
+                    size: 80,
+                    color: Colors.grey[300],
+                  ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'No complaint history found',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                  Text(
+                    _isSearching ? 'No results found' : 'No complaint history found',
+                    style: const TextStyle(color: Colors.grey, fontSize: 16),
                   ),
                 ],
               ),
@@ -182,3 +240,4 @@ class ComplaintHistoryView extends StatelessWidget {
     );
   }
 }
+
