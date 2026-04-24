@@ -32,7 +32,7 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
   String? _currentOrderId;
   String? _currentOrderDate;
   String? _currentProductName;
-  List<Map<String, dynamic>> _purchasedProducts = [];
+  final List<Map<String, dynamic>> _purchasedProducts = [];
   static const _primaryColor = Color(0xFF4A7D3C);
   static const _bgColor = Color(0xFFF8F9FA);
 
@@ -230,7 +230,7 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -547,7 +547,7 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -4),
                 ),
@@ -581,7 +581,6 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
     );
   }
 
-  // Helper Widget for Cards
   Widget _buildFormCard({required String title, required Widget child}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -609,7 +608,6 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
     );
   }
 
-  // Helper Widget for Order Info Chips
   Widget _buildOrderInfoChip(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),

@@ -84,7 +84,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                       const SizedBox(height: 15),
                       _buildOverviewCards(),
                       const SizedBox(height: 30),
-                      // ========== ACTIVE PROMOTIONS ==========
                       _buildSectionHeader(
                         'Active Promotions',
                         '+ New Promo',
@@ -102,7 +101,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                       const SizedBox(height: 15),
                       _buildPromoList(),
                       const SizedBox(height: 30),
-                      // ========== MY RETAILERS ==========
                       _buildSectionHeader(
                         'My Retailers',
                         'View All',
@@ -126,7 +124,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET HEADER ---
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -153,7 +150,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET OVERVIEW CARDS ---
   Widget _buildOverviewCards() {
     return Column(
       children: [
@@ -252,7 +248,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET SECTION HEADER (DENGAN CALLBACK) ---
   Widget _buildSectionHeader(
     String title,
     String actionText, {
@@ -280,7 +275,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET ACTIVE PROMOTIONS ---
   Widget _buildPromoList() {
     if (promotions.isEmpty) {
       return const Center(
@@ -291,7 +285,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       );
     }
 
-    // FILTER & TAKE 3 (Hanya tampilkan Active atau Upcoming, maks 3 item)
     final filteredPromos = promotions.map((promoMap) {
       return PromotionModel.fromMap(promoMap['id'] ?? '', promoMap);
     }).where((promoModel) {
@@ -317,7 +310,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
           Color badgeColor;
           Color badgeTextColor;
 
-          // Status Expired dihapus karena sudah difilter di atas
           if (promoModel.isUpcoming) {
             badgeText = 'UPCOMING';
             badgeColor = Colors.cyan.shade50;
@@ -417,7 +409,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               GestureDetector(
                 onTap: () async {
                   if (promotionId != null) {
-                    // Navigasi ke form edit promo dengan data ASLI dari model
                     await Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -444,7 +435,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET MY RETAILERS ---
   Widget _buildRetailerList() {
     if (retailers.isEmpty) {
       return const Center(

@@ -8,7 +8,6 @@ import '../../../supabase_storage_service.dart';
 class ComplaintUserController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
   final SupabaseStorageService _storageService = SupabaseStorageService();
 
   Future<bool> submitComplaint({
@@ -21,6 +20,9 @@ class ComplaintUserController {
     try {
       final user = _auth.currentUser;
       if (user == null) throw Exception('User belum login');
+
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final customerName = userDoc.data()?['fullName'] ?? user.displayName ?? 'Retailer';
 
       List<String> uploadedImageUrls = [];
 
@@ -41,8 +43,11 @@ class ComplaintUserController {
         }
       }
 
+      final String imgUrl = uploadedImageUrls.isNotEmpty ? uploadedImageUrls[0] : '';
+
       final complaint = ComplaintModel(
         userId: user.uid,
+        imgUrl: imgUrl,
         orderId: orderId,
         productName: productName,
         issueType: issueType,

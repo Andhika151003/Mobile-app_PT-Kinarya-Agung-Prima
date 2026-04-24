@@ -8,6 +8,7 @@ import '../../promotion/models/promotion.dart';
 import '../../product/models/product.dart';
 import '../../product/views/product_detail_user_view.dart';
 import '../../complaint/views/complaint_form_view.dart';
+import '../../complaint/views/complaint_form_view.dart';
 
 class DashboardUserView extends StatefulWidget {
   const DashboardUserView({super.key});
@@ -315,11 +316,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                       color: Colors.black87),
                   onPressed: () {},
                 ),
-              IconButton(
-                icon: const Icon(Icons.chat_bubble_outline,
-                    color: Colors.black87),
-                onPressed: () {},
-              ),
+
             ],
           ),
         ],

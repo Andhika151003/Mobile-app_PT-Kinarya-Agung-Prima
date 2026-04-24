@@ -1,20 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ComplaintModel {
-  final String? id; // ID Dokumen Firestore
+  final String? id;
   final String userId;
+  final String imgUrl;
   final String orderId;
   final String? productName;
   final String issueType;
   final String description;
   final List<String> imageUrls;
-  final String status; // Contoh: 'pending', 'investigating', 'resolved', 'rejected'
+  final String status;
   final DateTime createdAt;
   final DateTime? resolvedAt;
 
   ComplaintModel({
     this.id,
     required this.userId,
+    required this.imgUrl,
     required this.orderId,
     this.productName,
     required this.issueType,
@@ -25,11 +27,11 @@ class ComplaintModel {
     this.resolvedAt,
   });
 
-  // Konversi dari Firestore ke Objek Dart
   factory ComplaintModel.fromMap(String docId, Map<String, dynamic> map) {
     return ComplaintModel(
       id: docId,
       userId: map['userId']?.toString() ?? '',
+      imgUrl: map['imgUrl']?.toString() ?? '',
       orderId: map['orderId']?.toString() ?? '',
       productName: map['productName']?.toString(),
       issueType: map['issueType']?.toString() ?? '',
@@ -43,10 +45,10 @@ class ComplaintModel {
     );
   }
 
-  // Konversi dari Objek Dart ke Firestore
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
+      'imgUrl': imgUrl,
       'orderId': orderId,
       if (productName != null) 'productName': productName,
       'issueType': issueType,

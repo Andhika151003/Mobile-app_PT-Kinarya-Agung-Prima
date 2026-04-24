@@ -45,8 +45,6 @@ void main() {
     });
 
     test('updateRetailProfile updates firestore data correctly without image', () async {
-      // Setup initial document to avoid error on update if it doesn't exist 
-      // (Firestore update fails if doc doesn't exist, though typically the user doc exists in production)
       await fakeFirestore.collection('users').doc('retail123').set({
         'fullName': 'Old Name',
       });
@@ -56,7 +54,7 @@ void main() {
         location: 'New Location',
         contact: '08123456789',
         businessType: 'Retail',
-        profileImage: null, // Kita test tanpa gambar supaya tidak tembus ke Supabase
+        profileImage: null, 
       );
 
       final doc = await fakeFirestore.collection('users').doc('retail123').get();
