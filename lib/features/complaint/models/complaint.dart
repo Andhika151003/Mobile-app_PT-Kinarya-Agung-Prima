@@ -12,6 +12,8 @@ class ComplaintModel {
   final String status;
   final DateTime createdAt;
   final DateTime? resolvedAt;
+  final String? resolvedBy;
+  final String? resolvedByName;
 
   ComplaintModel({
     this.id,
@@ -25,6 +27,8 @@ class ComplaintModel {
     this.status = 'pending',
     required this.createdAt,
     this.resolvedAt,
+    this.resolvedBy,
+    this.resolvedByName,
   });
 
   factory ComplaintModel.fromMap(String docId, Map<String, dynamic> map) {
@@ -42,6 +46,8 @@ class ComplaintModel {
       resolvedAt: map['resolvedAt'] != null 
           ? (map['resolvedAt'] as Timestamp).toDate() 
           : null,
+      resolvedBy: map['resolvedBy']?.toString(),
+      resolvedByName: map['resolvedByName']?.toString(),
     );
   }
 
@@ -57,6 +63,8 @@ class ComplaintModel {
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
       'resolvedAt': resolvedAt != null ? Timestamp.fromDate(resolvedAt!) : null,
+      'resolvedBy': resolvedBy,
+      'resolvedByName': resolvedByName,
     };
   }
 }

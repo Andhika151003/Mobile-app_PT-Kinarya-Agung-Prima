@@ -8,7 +8,7 @@ import '../../promotion/models/promotion.dart';
 import '../../product/models/product.dart';
 import '../../product/views/product_detail_user_view.dart';
 import '../../complaint/views/complaint_form_view.dart';
-import '../../complaint/views/complaint_form_view.dart';
+import '../../complaint/views/complaint_history_view.dart';
 
 class DashboardUserView extends StatefulWidget {
   const DashboardUserView({super.key});
@@ -113,7 +113,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                         width: 90,
                         height: 90,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                           image: promo.imageUrl != null && promo.imageUrl!.isNotEmpty
                               ? DecorationImage(
@@ -149,7 +149,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                         promo.description,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha:0.9),
                           fontSize: 13,
                           height: 1.4,
                         ),
@@ -163,10 +163,10 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha:0.2),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: Colors.white.withOpacity(0.5)),
+                              color: Colors.white.withValues(alpha:0.5)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -191,7 +191,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                       Text(
                         'Valid until ${_formatDate(promo.endDate)}',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha:0.8),
                           fontSize: 11,
                         ),
                       ),
@@ -233,7 +233,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.25),
+                      color: Colors.white.withValues(alpha:0.25),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.close,
@@ -287,6 +287,15 @@ class _DashboardUserViewState extends State<DashboardUserView> {
               height: 40, fit: BoxFit.contain),
           Row(
             children: [
+              IconButton(
+                icon: const Icon(Icons.history, color: Colors.black87),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ComplaintHistoryView()),
+                  );
+                },
+              ),
               // Notification bell icon (bisa ditambah badge promo)
               if (_activePromos.isNotEmpty)
                 Stack(
@@ -316,7 +325,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                       color: Colors.black87),
                   onPressed: () {},
                 ),
-
             ],
           ),
         ],
@@ -449,8 +457,8 @@ class _DashboardUserViewState extends State<DashboardUserView> {
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
               colors: [
-                Colors.black.withOpacity(0.6),
-                Colors.black.withOpacity(0.2),
+                Colors.black.withValues(alpha:0.6),
+                Colors.black.withValues(alpha:0.2),
                 Colors.transparent,
               ],
             ),
@@ -470,7 +478,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
+                          color: Colors.white.withValues(alpha:0.25),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
@@ -554,20 +562,17 @@ class _DashboardUserViewState extends State<DashboardUserView> {
     return Column(
       children: [
         GestureDetector(
-          // --- TAMBAHKAN ONTAP DI SINI ---
           onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const ComplaintFormView(
-                  // Karena dari dashboard tidak ada pesanan spesifik, kita isi dengan string default
                   orderId: 'Bantuan Umum', 
                   orderDate: '-',
                 ),
               ),
             );
           },
-          // -------------------------------
           child: Column(
             children: [
               Container(
@@ -671,7 +676,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha:0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -815,7 +820,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha:0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

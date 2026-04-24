@@ -105,10 +105,15 @@ class DashboardCsController {
       final user = _auth.currentUser;
       if (user == null) throw Exception("User not authenticated");
 
+      // Get CS Name
+      final csDoc = await _firestore.collection('users').doc(user.uid).get();
+      final csName = csDoc.data()?['fullName'] ?? 'Customer Service';
+
       await _firestore.collection('complaints').doc(complaintId).update({
         'status': 'resolved',
         'resolvedAt': Timestamp.now(),
         'resolvedBy': user.uid,
+        'resolvedByName': csName,
       });
 
       return true;
@@ -122,10 +127,15 @@ class DashboardCsController {
       final user = _auth.currentUser;
       if (user == null) throw Exception("User not authenticated");
 
+      // Get CS Name
+      final csDoc = await _firestore.collection('users').doc(user.uid).get();
+      final csName = csDoc.data()?['fullName'] ?? 'Customer Service';
+
       await _firestore.collection('complaints').doc(complaintId).update({
         'status': 'rejected',
         'resolvedAt': Timestamp.now(),
         'resolvedBy': user.uid,
+        'resolvedByName': csName,
       });
 
       return true;

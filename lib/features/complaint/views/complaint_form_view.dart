@@ -7,6 +7,7 @@ import '../../order/controllers/order_user_controller.dart';
 import '../../order/models/order.dart';
 import '../controllers/complaint_retail_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../views/complaint_history_view.dart';
 
 class ComplaintFormView extends StatefulWidget {
   final String orderId;
@@ -155,7 +156,10 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
           backgroundColor: _primaryColor,
         ),
       );
-      Navigator.pop(context);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const ComplaintHistoryView()),
+      );
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -6,8 +6,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 class ComplaintDetailCsView extends StatefulWidget {
   final ComplaintModel complaint;
+  final bool readOnly;
 
-  const ComplaintDetailCsView({super.key, required this.complaint});
+  const ComplaintDetailCsView({
+    super.key, 
+    required this.complaint,
+    this.readOnly = false,
+  });
 
   @override
   State<ComplaintDetailCsView> createState() => _ComplaintDetailCsViewState();
@@ -249,6 +254,15 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
                     const Divider(height: 24),
                     _buildDetailRow('Product', widget.complaint.productName!),
                   ],
+                  if (widget.complaint.status != 'pending' && widget.complaint.resolvedByName != null) ...[
+                    const Divider(height: 24),
+                    _buildDetailRow('Handled By', widget.complaint.resolvedByName!),
+                    const Divider(height: 24),
+                    _buildDetailRow(
+                      'Handled At', 
+                      DateFormat('dd MMM yyyy, HH:mm').format(widget.complaint.resolvedAt ?? DateTime.now())
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -286,7 +300,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
               const SizedBox(height: 32),
             ],
 
-            if (widget.complaint.status == 'pending')
+            if (widget.complaint.status == 'pending' && !widget.readOnly)
               Row(
                 children: [
                   Expanded(

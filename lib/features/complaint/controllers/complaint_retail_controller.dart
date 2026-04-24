@@ -73,10 +73,13 @@ class ComplaintUserController {
     return _firestore
         .collection('complaints')
         .where('userId', isEqualTo: user.uid)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ComplaintModel.fromMap(doc.id, doc.data()))
-            .toList());
+        .map((snapshot) {
+          final complaints = snapshot.docs
+              .map((doc) => ComplaintModel.fromMap(doc.id, doc.data()))
+              .toList();
+          complaints.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return complaints;
+        });
   }
 }
