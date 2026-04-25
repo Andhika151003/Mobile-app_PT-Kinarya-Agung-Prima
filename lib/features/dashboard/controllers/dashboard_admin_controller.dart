@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../complaint/models/complaint.dart';
 
 class DashboardAdminController {
   final FirebaseAuth _auth;
@@ -109,5 +110,18 @@ class DashboardAdminController {
     } catch (e) {
       throw Exception("Error fetching admin info: $e");
     }
+  }
+
+  Stream<List<ComplaintModel>> getAllComplaints() {
+    return _firestore
+        .collection('complaints')
+        .snapshots()
+        .map((snapshot) {
+          final complaints = snapshot.docs
+              .map((doc) => ComplaintModel.fromMap(doc.id, doc.data()))
+              .toList();
+          complaints.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return complaints;
+        });
   }
 }

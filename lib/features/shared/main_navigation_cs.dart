@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../features/dashboard/views/dashboard_cs_view.dart';
 import '../../features/order/views/order_cs_view.dart'; 
 import '../../features/authentication/views/profile_cs_view.dart';
+import '../../features/complaint/views/complaint_list_cs_view.dart';
 
 class MainNavigationCs extends StatefulWidget {
   const MainNavigationCs({super.key});
@@ -16,7 +17,7 @@ class _MainNavigationCsState extends State<MainNavigationCs> {
   final List<Widget> _pages = [
     const DashboardCsView(),
     const OrderCsView(), 
-    const Center(child: Text('Halaman Support')),
+    const ComplaintListCsView(),
     const ProfileCsView(),
   ];
 
@@ -36,9 +37,9 @@ class _MainNavigationCsState extends State<MainNavigationCs> {
           });
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Orders'),
-          BottomNavigationBarItem(icon: Icon(Icons.support_agent_outlined), label: 'Support'),
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_basket_outlined), label: 'Orders'),
+          BottomNavigationBarItem(icon: Icon(Icons.support_agent), label: 'Supports'),
           BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
       ),

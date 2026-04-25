@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../promotion/models/promotion.dart';
 import '../../product/models/product.dart';
 import '../../product/views/product_detail_user_view.dart';
+import '../../complaint/views/complaint_form_view.dart';
+import '../../complaint/views/complaint_history_view.dart';
 
 class DashboardUserView extends StatefulWidget {
   const DashboardUserView({super.key});
@@ -147,7 +149,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                         promo.description,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: Colors.white.withValues(alpha:0.9),
                           fontSize: 13,
                           height: 1.4,
                         ),
@@ -161,10 +163,10 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
+                          color: Colors.white.withValues(alpha:0.2),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.5)),
+                              color: Colors.white.withValues(alpha:0.5)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -189,7 +191,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                       Text(
                         'Valid until ${_formatDate(promo.endDate)}',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.8),
+                          color: Colors.white.withValues(alpha:0.8),
                           fontSize: 11,
                         ),
                       ),
@@ -231,7 +233,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
+                      color: Colors.white.withValues(alpha:0.25),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.close,
@@ -285,6 +287,15 @@ class _DashboardUserViewState extends State<DashboardUserView> {
               height: 40, fit: BoxFit.contain),
           Row(
             children: [
+              IconButton(
+                icon: const Icon(Icons.history, color: Colors.black87),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ComplaintHistoryView()),
+                  );
+                },
+              ),
               // Notification bell icon (bisa ditambah badge promo)
               if (_activePromos.isNotEmpty)
                 Stack(
@@ -314,11 +325,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                       color: Colors.black87),
                   onPressed: () {},
                 ),
-              IconButton(
-                icon: const Icon(Icons.chat_bubble_outline,
-                    color: Colors.black87),
-                onPressed: () {},
-              ),
             ],
           ),
         ],
@@ -332,7 +338,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isLoading ? 'Welcome Back!' : 'Welcome Back, $userName!',
+          isLoading ? 'Selamat Datang' : 'Selamat Datang, $userName!',
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -348,9 +354,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
     );
   }
 
-  // ── PROMO BANNER (DYNAMIC FROM FIREBASE) ─────────────────
   Widget _buildPromoBanner() {
-    // Kalau belum ada data promo, tampilkan shimmer/placeholder
     if (_activePromos.isEmpty) {
       return Container(
         height: 130,
@@ -384,7 +388,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
           ),
         ),
 
-        // Dot indicator (kalau promo > 1)
         if (_activePromos.length > 1) ...[
           const SizedBox(height: 10),
           Row(
@@ -411,7 +414,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
   }
 
   Widget _buildSingleBanner(PromotionModel promo) {
-    // Warna backup jika tidak ada gambar (berdasarkan discount type)
     Color bannerColor;
     switch (promo.discountType) {
       case 'bogo':
@@ -451,8 +453,8 @@ class _DashboardUserViewState extends State<DashboardUserView> {
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
               colors: [
-                Colors.black.withValues(alpha: 0.6),
-                Colors.black.withValues(alpha: 0.2),
+                Colors.black.withValues(alpha:0.6),
+                Colors.black.withValues(alpha:0.2),
                 Colors.transparent,
               ],
             ),
@@ -472,7 +474,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.25),
+                          color: Colors.white.withValues(alpha:0.25),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
@@ -551,11 +553,21 @@ class _DashboardUserViewState extends State<DashboardUserView> {
     );
   }
 
-  // ── QUICK ACTIONS ─────────────────────────────────────────
   Widget _buildQuickActions() {
     return Column(
       children: [
         GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ComplaintFormView(
+                  orderId: 'Bantuan Umum', 
+                  orderDate: '-',
+                ),
+              ),
+            );
+          },
           child: Column(
             children: [
               Container(
@@ -564,14 +576,12 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                   color: Colors.purple.shade50,
                   shape: BoxShape.circle,
                 ),
-                child:
-                    Icon(Icons.support_agent, color: Colors.purple.shade300),
+                child: Icon(Icons.support_agent, color: Colors.purple.shade300),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Support',
-                style:
-                    TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -580,7 +590,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
     );
   }
 
-  // ── RECENT ORDERS ─────────────────────────────────────────
   Widget _buildRecentOrders() {
     return Column(
       children: [
@@ -636,40 +645,13 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                     ? DateFormat('MMM dd, yyyy').format(date)
                     : '-';
 
-                // Logika Warna Status
-                Color statusColor;
-                switch (status.toLowerCase()) {
-                  case 'paid':
-                  case 'delivered':
-                    statusColor = Colors.green;
-                    break;
-                  case 'shipped':
-                  case 'processing':
-                    statusColor = Colors.blue;
-                    break;
-                  case 'ordered':
-                  case 'pending':
-                    statusColor = Colors.orange;
-                    break;
-                  case 'cancelled':
-                    statusColor = Colors.red;
-                    break;
-                  default:
-                    statusColor = Colors.grey;
-                }
-
                 final orderIdRaw = order['orderId'] ?? order['id'] ?? '-';
-                // Format ID menjadi #ORD-XXXX (ambil 4 angka terakhir)
-                final digits = orderIdRaw.toString().replaceAll(RegExp(r'[^0-9]'), '');
-                final suffix = digits.length >= 4 ? digits.substring(digits.length - 4) : digits;
-                final formattedShortId = '#ORD-$suffix';
 
                 return _buildOrderItem(
-                  formattedShortId,
+                  orderIdRaw.toString(),
                   status,
                   NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(amount),
                   dateStr,
-                  statusColor,
                 );
               },
             );
@@ -680,7 +662,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
   }
 
   Widget _buildOrderItem(String orderId, String status, String total,
-      String date, Color statusColor) {
+      String date) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -688,7 +670,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha:0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -701,18 +683,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
             children: [
               Text(orderId,
                   style: const TextStyle(fontWeight: FontWeight.bold)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                      color: statusColor, fontWeight: FontWeight.bold, fontSize: 11),
-                ),
-              ),
+              _buildStatusBadge(status),
             ],
           ),
           const SizedBox(height: 12),
@@ -730,7 +701,37 @@ class _DashboardUserViewState extends State<DashboardUserView> {
     );
   }
 
-  // ── RECOMMENDED PRODUCTS ──────────────────────────────────
+  Widget _buildStatusBadge(String status) {
+    Color bg; Color fg; IconData icon; String label;
+
+    if (status == 'Delivered') {
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+    } else if (status == 'Expired' || status == 'Cancelled') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Ordered') {
+      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+    } else if (status == 'Shipped') {
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+    } else if (status == 'Paid') {
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
+    } else {
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRecommendedProducts() {
     return Column(
       children: [
@@ -812,7 +813,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha:0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

@@ -324,43 +324,31 @@ class _TransactionCard extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(String status) {
-    Color bg; Color fg; String label;
+    Color bg; Color fg; IconData icon; String label;
 
-    if (status == 'Ordered' || status == 'Pending Payment') {
-      bg = const Color(0xFFFFF3CD); 
-      fg = const Color(0xFFD69E2E); 
-      label = 'Pending';
-    } else if (status == 'Paid' || status == 'Shipped' || status == 'Delivered' || status == 'Settled') {
-      bg = const Color(0xFFD1E7DD); 
-      fg = const Color(0xFF0F5132); 
-      label = status == 'Delivered' ? 'Delivered' : 'Verified';
+    if (status == 'Delivered') {
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+    } else if (status == 'Expired' || status == 'Cancelled') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Ordered') {
+      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+    } else if (status == 'Shipped') {
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+    } else if (status == 'Paid') {
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
     } else {
-      bg = const Color(0xFFF8D7DA); 
-      fg = const Color(0xFF842029); 
-      label = 'Cancelled';
-    }
-
-    IconData? icon;
-    if (label == 'Verified' || label == 'Delivered') {
-      icon = Icons.check_circle_outline;
-    } else if (label == 'Cancelled') {
-      icon = Icons.cancel_outlined;
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            Icon(icon, size: 12, color: fg),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            label,
-            style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.bold),
-          ),
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
         ],
       ),
     );

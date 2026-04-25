@@ -5,6 +5,8 @@ import '../controllers/dashboard_admin_controller.dart';
 import '../../admin/view/admin_master_view.dart';
 import '../../promotion/views/form_promotion_admin_view.dart';
 import '../../promotion/models/promotion.dart';
+import '../../complaint/views/complaint_history_admin_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DashboardAdminView extends StatefulWidget {
   const DashboardAdminView({super.key});
@@ -84,7 +86,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                       const SizedBox(height: 15),
                       _buildOverviewCards(),
                       const SizedBox(height: 30),
-                      // ========== ACTIVE PROMOTIONS ==========
                       _buildSectionHeader(
                         'Active Promotions',
                         '+ New Promo',
@@ -102,7 +103,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                       const SizedBox(height: 15),
                       _buildPromoList(),
                       const SizedBox(height: 30),
-                      // ========== MY RETAILERS ==========
                       _buildSectionHeader(
                         'My Retailers',
                         'View All',
@@ -126,7 +126,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET HEADER ---
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -134,8 +133,18 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
         Image.asset('assets/images/logo.png', height: 35),
         Row(
           children: [
-            const Icon(Icons.chat_bubble_outline, color: Colors.black87),
-            const SizedBox(width: 10),
+            IconButton(
+              icon: const Icon(Icons.history, color: Colors.black87),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdminComplaintHistoryView(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 5),
             IconButton(
               icon: const Icon(Icons.person_outline, color: Colors.black87),
               onPressed: () {
@@ -153,7 +162,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET OVERVIEW CARDS ---
   Widget _buildOverviewCards() {
     return Column(
       children: [
@@ -252,7 +260,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET SECTION HEADER (DENGAN CALLBACK) ---
   Widget _buildSectionHeader(
     String title,
     String actionText, {
@@ -280,7 +287,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET ACTIVE PROMOTIONS ---
   Widget _buildPromoList() {
     if (promotions.isEmpty) {
       return const Center(
@@ -291,7 +297,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       );
     }
 
-    // FILTER & TAKE 3 (Hanya tampilkan Active atau Upcoming, maks 3 item)
     final filteredPromos = promotions.map((promoMap) {
       return PromotionModel.fromMap(promoMap['id'] ?? '', promoMap);
     }).where((promoModel) {
@@ -317,7 +322,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
           Color badgeColor;
           Color badgeTextColor;
 
-          // Status Expired dihapus karena sudah difilter di atas
           if (promoModel.isUpcoming) {
             badgeText = 'UPCOMING';
             badgeColor = Colors.cyan.shade50;
@@ -417,7 +421,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               GestureDetector(
                 onTap: () async {
                   if (promotionId != null) {
-                    // Navigasi ke form edit promo dengan data ASLI dari model
                     await Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -444,7 +447,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  // --- WIDGET MY RETAILERS ---
   Widget _buildRetailerList() {
     if (retailers.isEmpty) {
       return const Center(
@@ -468,6 +470,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               _buildRetailerItem(
                 title: retailer['fullName'] ?? 'Retailer',
                 location: retailer['address'] ?? 'No location',
+                phoneNumber: retailer['phoneNumber'] ?? '',
               ),
               if (!isLast) ...[
                 const SizedBox(height: 5),
@@ -482,7 +485,11 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     );
   }
 
-  Widget _buildRetailerItem({required String title, required String location}) {
+  Widget _buildRetailerItem({
+    required String title, 
+    required String location,
+    required String phoneNumber,
+  }) {
     return Row(
       children: [
         const Icon(Icons.storefront, color: Colors.grey, size: 28),
@@ -506,19 +513,58 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
             ],
           ),
         ),
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.chat_bubble,
-            color: Colors.blueAccent,
-            size: 18,
+        GestureDetector(
+          onTap: () => _launchWhatsApp(phoneNumber, title),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF25D366).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.chat_bubble,
+              color: Color(0xFF25D366),
+              size: 18,
+            ),
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _launchWhatsApp(String phoneNumber, String name) async {
+    if (phoneNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nomor telepon tidak ditemukan')),
+      );
+      return;
+    }
+
+    String cleanNumber = phoneNumber.replaceAll(RegExp(r'\D'), '');
+    if (cleanNumber.startsWith('0')) {
+      cleanNumber = '62${cleanNumber.substring(1)}';
+    }
+
+    final String message = 'Halo $name,\n\nSaya Admin dari PT Kinarya Agung Prima.';
+    final Uri whatsappUri = Uri.parse(
+      'whatsapp://send?phone=$cleanNumber&text=${Uri.encodeComponent(message)}'
+    );
+
+    try {
+      if (await canLaunchUrl(whatsappUri)) {
+        await launchUrl(whatsappUri);
+      } else {
+        final Uri webUri = Uri.parse(
+          'https://wa.me/$cleanNumber?text=${Uri.encodeComponent(message)}'
+        );
+        await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal membuka WhatsApp: $e')),
+        );
+      }
+    }
   }
 }

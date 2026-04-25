@@ -172,42 +172,18 @@ class _OrderCsViewState extends State<OrderCsView> {
     IconData? statusIcon;
     String statusLabel;
 
-    switch (order.status) {
-      case 'Ordered':
-        statusColor = const Color(0xFFD97706);
-        statusBgColor = const Color(0xFFFEF3C7);
-        statusIcon = Icons.access_time;
-        statusLabel = 'Pending';
-        break;
-      case 'Paid':
-        statusColor = const Color(0xFF2563EB);
-        statusBgColor = const Color(0xFFEFF6FF);
-        statusIcon = Icons.access_time;
-        statusLabel = 'Paid';
-        break;
-      case 'Shipped':
-        statusColor = const Color(0xFF7C3AED);
-        statusBgColor = const Color(0xFFF5F3FF);
-        statusIcon = Icons.local_shipping_outlined;
-        statusLabel = 'Shipped';
-        break;
-      case 'Delivered':
-        statusColor = const Color(0xFF16A34A);
-        statusBgColor = const Color(0xFFDCFCE7);
-        statusIcon = Icons.check_circle_outline;
-        statusLabel = 'Delivered';
-        break;
-      case 'Cancelled':
-        statusColor = const Color(0xFFDC2626);
-        statusBgColor = const Color(0xFFFEE2E2);
-        statusIcon = Icons.cancel_outlined;
-        statusLabel = 'Cancelled';
-        break;
-      default:
-        statusColor = Colors.grey;
-        statusBgColor = Colors.grey.shade100;
-        statusIcon = null;
-        statusLabel = order.status;
+    if (order.status == 'Delivered') {
+      statusBgColor = const Color(0xFFE6F4EA); statusColor = const Color(0xFF1E8E3E); statusIcon = Icons.check_circle_outline; statusLabel = 'Delivered';
+    } else if (order.status == 'Expired' || order.status == 'Cancelled') {
+      statusBgColor = const Color(0xFFFCE8E6); statusColor = const Color(0xFFD93025); statusIcon = Icons.cancel_outlined; statusLabel = 'Cancelled';
+    } else if (order.status == 'Ordered') {
+      statusBgColor = const Color(0xFFFEF7E0); statusColor = const Color(0xFFF9AB00); statusIcon = Icons.access_time; statusLabel = 'Ordered';
+    } else if (order.status == 'Shipped') {
+      statusBgColor = const Color(0xFFE3F2FD); statusColor = const Color(0xFF1976D2); statusIcon = Icons.local_shipping_outlined; statusLabel = 'Shipped';
+    } else if (order.status == 'Paid') {
+      statusBgColor = const Color(0xFFE8EAF6); statusColor = const Color(0xFF3949AB); statusIcon = Icons.payment; statusLabel = 'Paid';
+    } else {
+      statusBgColor = const Color(0xFFE8EAF6); statusColor = const Color(0xFF3949AB); statusIcon = Icons.info_outline; statusLabel = order.status; 
     }
 
     final paymentStatus = order.paidAt != null

@@ -22,7 +22,19 @@ class ProfileCsController {
       }
       return null;
     } catch (e) {
-      throw Exception("Gagal memuat profil Retail: $e");
+      throw Exception("Gagal memuat profil CS: $e");
     }
+  }
+
+  Stream<int> getResolvedCountStream() {
+    final user = _auth.currentUser;
+    if (user == null) return Stream.value(0);
+
+    return _firestore
+        .collection('complaints')
+        .where('resolvedBy', isEqualTo: user.uid)
+        .where('status', isEqualTo: 'resolved')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
   }
 }

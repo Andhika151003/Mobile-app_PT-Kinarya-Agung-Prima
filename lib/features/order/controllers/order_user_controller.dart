@@ -1,11 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'order_stats_helper.dart';
 
 class OrderUserController {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String _duitkuBackendUrl = 'https://backend-payment-kinarya.vercel.app';
+  final FirebaseFirestore _firestore;
+  final http.Client _client;
+  final String _duitkuBackendUrl;
+
+  OrderUserController({
+    FirebaseFirestore? firestore,
+    http.Client? client,
+    String? backendUrl,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _client = client ?? http.Client(),
+        _duitkuBackendUrl = backendUrl ?? dotenv.get('BACKEND_URL');
 
   Stream<QuerySnapshot<Map<String, dynamic>>> getUserOrdersStream(String userId) {
     return _firestore
@@ -19,30 +30,32 @@ class OrderUserController {
       final doc = await _firestore.collection('orders').doc(orderId).get();
       return doc.exists ? doc.data() : null;
     } catch (e) {
-      throw Exception('Gagal mengambil detail pesanan: $e');
+      throw Exception("Error fetching order detail: $e");
     }
   }
 
   Future<bool> syncDuitkuPayment(String orderId) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('$_duitkuBackendUrl/check-status'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'orderId': orderId}),
       ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        
-        if (body['statusCode'] == '00') { 
-          await OrderStatsHelper.markOrderAsPaid(orderId);
-          return true; 
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['status'] == 'Paid') {
+          await _firestore.collection('orders').doc(orderId).update({
+            'status': 'Paid',
+            'paidAt': FieldValue.serverTimestamp(),
+          });
+          return true;
         }
       }
-      return false; 
+      return false;
     } catch (e) {
-      print('Error sync payment: $e');
-      return false; 
+      debugPrint("Error syncing Duitku: $e");
+      return false;
     }
   }
 }
