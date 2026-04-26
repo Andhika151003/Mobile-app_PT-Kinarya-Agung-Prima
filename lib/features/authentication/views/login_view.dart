@@ -134,12 +134,15 @@ class _LoginViewState extends State<LoginView> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: _inputDecoration('Enter your email'),
-                      validator: controller.validateEmailInput,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                    Semantics(
+                      label: 'input_login_email',
+                      child: TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: _inputDecoration('Enter your email'),
+                        validator: controller.validateEmailInput,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                      ),
                     ),
 
                     if (controller.errorMessage == 'Email not found')
@@ -173,24 +176,30 @@ class _LoginViewState extends State<LoginView> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: _inputDecoration('Enter your password').copyWith(
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                            color: Colors.grey[400],
+                    Semantics(
+                      label: 'input_login_password',
+                      child: TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        decoration: _inputDecoration('Enter your password').copyWith(
+                          suffixIcon: IconButton(
+                          icon: Semantics(
+                            label: 'btn_login_password_visibility',
+                            child: Icon(
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                              color: Colors.grey[400],
+                            ),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
                         ),
+                        validator: controller.validatePassword,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
-                      validator: controller.validatePassword,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
                     ),
 
                     if (controller.errorMessage == 'Incorrect password')
@@ -216,24 +225,27 @@ class _LoginViewState extends State<LoginView> {
                     // Forgot Password
                     Align(
                       alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Fitur forgot password akan segera hadir'),
-                              duration: Duration(seconds: 2),
+                      child: Semantics(
+                        label: 'btn_login_forgot_password',
+                        child: TextButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Fitur forgot password akan segera hadir'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF2E7D32),
+                          ),
+                          child: const Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Inter',
                             ),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF2E7D32),
-                        ),
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Inter',
                           ),
                         ),
                       ),
@@ -244,35 +256,38 @@ class _LoginViewState extends State<LoginView> {
                     SizedBox(
                       width: double.infinity,
                       height: 52,
-                      child: ElevatedButton(
-                        onPressed: controller.isLoading
-                            ? null
-                            : () => _handleLogin(controller),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2E7D32),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: Semantics(
+                        label: 'btn_login_submit',
+                        child: ElevatedButton(
+                          onPressed: controller.isLoading
+                              ? null
+                              : () => _handleLogin(controller),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2E7D32),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
                           ),
-                          elevation: 0,
+                          child: controller.isLoading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Log In',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
                         ),
-                        child: controller.isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Log In',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Inter',
-                                ),
-                              ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -291,22 +306,31 @@ class _LoginViewState extends State<LoginView> {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterView(), 
+                        Semantics(
+                          label: 'btn_login_to_register',
+                          button: true,
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const RegisterView(),
+                                ),
+                              );
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Inter',
+                                color: Color(0xFF2E7D32),
                               ),
-                            );
-                          },
-                          child: const Text(
-                            'Sign Up',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Inter',
-                              color: Color(0xFF2E7D32),
                             ),
                           ),
                         ),

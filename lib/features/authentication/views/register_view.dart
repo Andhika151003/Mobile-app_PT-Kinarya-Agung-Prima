@@ -83,12 +83,15 @@ class _RegisterViewState extends State<RegisterView> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Inter',
+                  child: Semantics(
+                    label: 'btn_register_success_login',
+                    child: const Text(
+                      'Login',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Inter',
+                      ),
                     ),
                   ),
                 ),
@@ -195,12 +198,15 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: _inputDecoration('Enter your email'),
-                      validator: controller.validateEmail,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                    Semantics(
+                      label: 'input_register_email',
+                      child: TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: _inputDecoration('Enter your email'),
+                        validator: controller.validateEmail,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                      ),
                     ),
                     const SizedBox(height: 20),
 
@@ -215,11 +221,14 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _fullNameController,
-                      decoration: _inputDecoration('Enter your full name'),
-                      validator: controller.validateFullName,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                    Semantics(
+                      label: 'input_register_fullname',
+                      child: TextFormField(
+                        controller: _fullNameController,
+                        decoration: _inputDecoration('Enter your full name'),
+                        validator: controller.validateFullName,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                      ),
                     ),
                     const SizedBox(height: 20),
 
@@ -234,12 +243,15 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: _inputDecoration('Enter your phone number'),
-                      validator: controller.validatePhoneNumber,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                    Semantics(
+                      label: 'input_register_phone',
+                      child: TextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: _inputDecoration('Enter your phone number'),
+                        validator: controller.validatePhoneNumber,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                      ),
                     ),
                     const SizedBox(height: 20),
 
@@ -254,12 +266,15 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _addressController,
-                      maxLines: 2,
-                      decoration: _inputDecoration('Enter your address'),
-                      validator: controller.validateAddress,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                    Semantics(
+                      label: 'input_register_address',
+                      child: TextFormField(
+                        controller: _addressController,
+                        maxLines: 2,
+                        decoration: _inputDecoration('Enter your address'),
+                        validator: controller.validateAddress,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                      ),
                     ),
                     const SizedBox(height: 20),
 
@@ -274,24 +289,30 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: _inputDecoration('Create a password').copyWith(
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                            color: Colors.grey[400],
+                    Semantics(
+                      label: 'input_register_password',
+                      child: TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        decoration: _inputDecoration('Create a password').copyWith(
+                          suffixIcon: IconButton(
+                          icon: Semantics(
+                            label: 'btn_register_password_visibility',
+                            child: Icon(
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                              color: Colors.grey[400],
+                            ),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
                         ),
+                        validator: (value) => controller.validatePassword(value),
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
-                      validator: (value) => controller.validatePassword(value),
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
                     ),
                     const SizedBox(height: 20),
 
@@ -306,27 +327,33 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: _obscureConfirmPassword,
-                      decoration: _inputDecoration('Confirm your password').copyWith(
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                            color: Colors.grey[400],
+                    Semantics(
+                      label: 'input_register_confirm_password',
+                      child: TextFormField(
+                        controller: _confirmPasswordController,
+                        obscureText: _obscureConfirmPassword,
+                        decoration: _inputDecoration('Confirm your password').copyWith(
+                          suffixIcon: IconButton(
+                          icon: Semantics(
+                            label: 'btn_register_confirm_password_visibility',
+                            child: Icon(
+                              _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                              color: Colors.grey[400],
+                            ),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
-                            });
-                          },
+                            onPressed: () {
+                              setState(() {
+                                _obscureConfirmPassword = !_obscureConfirmPassword;
+                              });
+                            },
+                          ),
                         ),
+                        validator: (value) => controller.validateConfirmPassword(
+                          value,
+                          _passwordController.text,
+                        ),
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
-                      validator: (value) => controller.validateConfirmPassword(
-                        value,
-                        _passwordController.text,
-                      ),
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
                     ),
                     const SizedBox(height: 32),
 
@@ -334,35 +361,38 @@ class _RegisterViewState extends State<RegisterView> {
                     SizedBox(
                       width: double.infinity,
                       height: 52,
-                      child: ElevatedButton(
-                        onPressed: controller.isLoading
-                            ? null
-                            : () => _handleRegister(controller),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2E7D32),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: Semantics(
+                        label: 'btn_register_submit',
+                        child: ElevatedButton(
+                          onPressed: controller.isLoading
+                              ? null
+                              : () => _handleRegister(controller),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2E7D32),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
                           ),
-                          elevation: 0,
+                          child: controller.isLoading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Create Account',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
                         ),
-                        child: controller.isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Create Account',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Inter',
-                                ),
-                              ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -381,22 +411,31 @@ class _RegisterViewState extends State<RegisterView> {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginView(),
+                        Semantics(
+                          label: 'btn_register_to_login',
+                          button: true,
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginView(),
+                                ),
+                              );
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text(
+                              'Login',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Inter',
+                                color: Color(0xFF2E7D32),
                               ),
-                            );
-                          },
-                          child: const Text(
-                            'Login',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Inter',
-                              color: Color(0xFF2E7D32),
                             ),
                           ),
                         ),

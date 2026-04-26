@@ -66,11 +66,17 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         title: const Text('Update Status Pesanan?'),
         content: Text('Melanjutkan pesanan ke tahap: $actionLabel?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, elevation: 0),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Konfirmasi', style: TextStyle(color: Colors.white)),
+          Semantics(
+            label: 'btn_confirm_cancel',
+            child: TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
+          ),
+          Semantics(
+            label: 'btn_confirm_ok',
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, elevation: 0),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Konfirmasi', style: TextStyle(color: Colors.white)),
+            ),
           ),
         ],
       ),
@@ -99,11 +105,17 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         title: const Text('Batalkan Pesanan?'),
         content: const Text('Tindakan ini akan mengembalikan stok produk dan membatalkan pesanan secara permanen.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tutup', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, elevation: 0),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Ya, Batalkan', style: TextStyle(color: Colors.white)),
+          Semantics(
+            label: 'btn_cancel_dialog_close',
+            child: TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tutup', style: TextStyle(color: Colors.grey))),
+          ),
+          Semantics(
+            label: 'btn_cancel_dialog_confirm',
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, elevation: 0),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Ya, Batalkan', style: TextStyle(color: Colors.white)),
+            ),
           ),
         ],
       ),
@@ -144,20 +156,26 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
-            child: const Icon(Icons.arrow_back_ios_new, size: 14, color: Colors.black87),
+          icon: Semantics(
+            label: 'btn_back',
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
+              child: const Icon(Icons.arrow_back_ios_new, size: 14, color: Colors.black87),
+            ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Order Details', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
-              child: const Icon(Icons.print_outlined, size: 16, color: Colors.black87),
+            icon: Semantics(
+              label: 'btn_print_invoice_header',
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
+                child: const Icon(Icons.print_outlined, size: 16, color: Colors.black87),
+              ),
             ),
             onPressed: () {
               if (_order != null) {
@@ -189,23 +207,29 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                   children: [
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _updateStatus,
-                        style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
-                        child: const Text('Update Status', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                      child: Semantics(
+                        label: 'btn_update_status',
+                        child: ElevatedButton(
+                          onPressed: _updateStatus,
+                          style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
+                          child: const Text('Update Status', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: _cancelOrder,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.red),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      child: Semantics(
+                        label: 'btn_cancel_order',
+                        child: OutlinedButton(
+                          onPressed: _cancelOrder,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.red),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('Batalkan Pesanan', style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.bold)),
                         ),
-                        child: const Text('Batalkan Pesanan', style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -504,20 +528,23 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () {
-              if (_order != null) {
-                PdfService.generateAndOpenInvoice(_order!);
-              }
-            },
-            icon: const Icon(Icons.download_outlined, size: 18),
-            label: const Text('Download Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey.shade100,
-              foregroundColor: Colors.black87,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: Semantics(
+            label: 'btn_download_invoice',
+            child: ElevatedButton.icon(
+              onPressed: () {
+                if (_order != null) {
+                  PdfService.generateAndOpenInvoice(_order!);
+                }
+              },
+              icon: const Icon(Icons.download_outlined, size: 18),
+              label: const Text('Download Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey.shade100,
+                foregroundColor: Colors.black87,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
           ),
         ),

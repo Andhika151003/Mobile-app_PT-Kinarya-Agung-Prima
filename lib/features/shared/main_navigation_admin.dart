@@ -27,40 +27,43 @@ class _MainNavigationAdminState extends State<MainNavigationAdmin> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        items: [
-          BottomNavigationBarItem(
-            icon: _buildNavIcon(Icons.home, 0),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: _buildNavIcon(Icons.shopping_basket_outlined, 1),
-            label: 'Orders',
-          ),
-          BottomNavigationBarItem(
-            icon: _buildNavIcon(Icons.storefront_outlined, 2),
-            label: 'Products',
-          ),
-          BottomNavigationBarItem(
-            icon: _buildNavIcon(Icons.bar_chart_outlined, 3),
-            label: 'Analytics',
-          ),
-          BottomNavigationBarItem(
-            icon: _buildNavIcon(Icons.card_giftcard_outlined, 4),
-            label: 'Promotions',
-          ),
-        ],
+      bottomNavigationBar: Semantics(
+        label: 'main_navigation_bar',
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.black,
+          unselectedItemColor: Colors.grey,
+          selectedFontSize: 11,
+          unselectedFontSize: 11,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          items: [
+            BottomNavigationBarItem(
+              icon: _buildNavIcon(Icons.home, 0),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildNavIcon(Icons.shopping_basket_outlined, 1),
+              label: 'Orders',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildNavIcon(Icons.storefront_outlined, 2),
+              label: 'Products',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildNavIcon(Icons.bar_chart_outlined, 3),
+              label: 'Analytics',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildNavIcon(Icons.card_giftcard_outlined, 4),
+              label: 'Promotions',
+            ),
+          ],
+        ),
       ),
     );
   }
