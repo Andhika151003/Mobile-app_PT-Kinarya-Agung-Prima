@@ -136,7 +136,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                     
                     _buildTextField('Business Name', 'Enter Your Name', _nameController),
                     _buildTextField('Business Type', 'Enter Your Business Type', _typeController),
-                    _buildTextField('Location', 'Enter Your Location', _locationController),
+                    _buildTextField('Location', 'Enter Your Location', _locationController, maxLines: 3),
                     _buildTextField('Contact', 'Enter Your Number', _contactController, isNumber: true),
                     
                     const SizedBox(height: 32),
@@ -231,7 +231,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
     );
   }
 
-  Widget _buildTextField(String label, String hintText, TextEditingController controller, {bool isNumber = false}) {
+  Widget _buildTextField(String label, String hintText, TextEditingController controller, {bool isNumber = false, int maxLines = 1}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -248,7 +248,8 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
           const SizedBox(height: 8),
           TextFormField(
             controller: controller,
-            keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+            keyboardType: isNumber ? TextInputType.number : (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
+            maxLines: maxLines,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return '* $label is required';
@@ -285,6 +286,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
       ),
     );
   }
+
 
   Widget _buildActionButtons(BuildContext context, Color primaryGreen) {
     return Row(

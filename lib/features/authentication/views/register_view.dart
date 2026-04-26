@@ -270,7 +270,7 @@ class _RegisterViewState extends State<RegisterView> {
                       label: 'input_register_address',
                       child: TextFormField(
                         controller: _addressController,
-                        maxLines: 2,
+                        maxLines: 3,
                         decoration: _inputDecoration('Enter your address'),
                         validator: controller.validateAddress,
                         autovalidateMode: AutovalidateMode.onUserInteraction,

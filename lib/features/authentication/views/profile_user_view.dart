@@ -318,15 +318,23 @@ class _ProfileUserViewState extends State<ProfileUserView> {
 
   Widget _buildDetailRow(String label, String value) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
         ),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       ],
     );
