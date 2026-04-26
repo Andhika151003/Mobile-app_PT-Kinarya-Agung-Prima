@@ -200,21 +200,24 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                       // Claim button
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF1B8A3A),
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            'Claim Offer Now',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 15),
+                        child: Semantics(
+                          label: 'btn_promo_claim',
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFF1B8A3A),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'Claim Offer Now',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 15),
+                            ),
                           ),
                         ),
                       ),
@@ -227,17 +230,20 @@ class _DashboardUserViewState extends State<DashboardUserView> {
               Positioned(
                 top: 10,
                 right: 10,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(ctx),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha:0.25),
-                      shape: BoxShape.circle,
+                child: Semantics(
+                  label: 'btn_promo_close',
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha:0.25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close,
+                          color: Colors.white, size: 16),
                     ),
-                    child: const Icon(Icons.close,
-                        color: Colors.white, size: 16),
                   ),
                 ),
               ),
@@ -288,7 +294,10 @@ class _DashboardUserViewState extends State<DashboardUserView> {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.history, color: Colors.black87),
+                icon: Semantics(
+                  label: 'btn_dashboard_history',
+                  child: const Icon(Icons.history, color: Colors.black87),
+                ),
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -321,8 +330,11 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                 )
               else
                 IconButton(
-                  icon: const Icon(Icons.notifications_outlined,
-                      color: Colors.black87),
+                  icon: Semantics(
+                    label: 'btn_dashboard_notifications',
+                    child: const Icon(Icons.notifications_outlined,
+                        color: Colors.black87),
+                  ),
                   onPressed: () {},
                 ),
             ],
@@ -556,34 +568,37 @@ class _DashboardUserViewState extends State<DashboardUserView> {
   Widget _buildQuickActions() {
     return Column(
       children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ComplaintFormView(
-                  orderId: 'Bantuan Umum', 
-                  orderDate: '-',
+        Semantics(
+          label: 'btn_dashboard_support',
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ComplaintFormView(
+                    orderId: 'Bantuan Umum', 
+                    orderDate: '-',
+                  ),
                 ),
-              ),
-            );
-          },
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.purple.shade50,
-                  shape: BoxShape.circle,
+              );
+            },
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.support_agent, color: Colors.purple.shade300),
                 ),
-                child: Icon(Icons.support_agent, color: Colors.purple.shade300),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Support',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-              ),
-            ],
+                const SizedBox(height: 8),
+                const Text(
+                  'Support',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -743,12 +758,15 @@ class _DashboardUserViewState extends State<DashboardUserView> {
               style:
                   TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            TextButton(
-              onPressed: () {},
-              child: const Text(
-                'See All',
-                style: TextStyle(
-                    color: Colors.green, fontWeight: FontWeight.bold),
+            Semantics(
+              label: 'btn_dashboard_see_all_recommended',
+              child: TextButton(
+                onPressed: () {},
+                child: const Text(
+                  'See All',
+                  style: TextStyle(
+                      color: Colors.green, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],

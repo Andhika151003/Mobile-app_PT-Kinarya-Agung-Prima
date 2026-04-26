@@ -131,89 +131,92 @@ class _CheckoutViewState extends State<CheckoutView> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              ...(_paymentMethods.map((m) {
+              ..._paymentMethods.map((m) {
                 final isSelected = _paymentMethodCode == m['code'];
-                return InkWell(
-                  onTap: () {
-                    setState(() {
-                      paymentMethod = m['name']!;
-                      _paymentMethodCode = m['code']!;
-                    });
-                    Navigator.pop(context);
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFFE8F5E9)
-                          : Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected
-                            ? const Color(0xFF458833)
-                            : Colors.grey.shade200,
-                        width: isSelected ? 1.5 : 1,
+                return Semantics(
+                  label: 'btn_payment_method_${m['code']}',
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        paymentMethod = m['name']!;
+                        _paymentMethodCode = m['code']!;
+                      });
+                      Navigator.pop(context);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade200),
-                          ),
-                          child: Icon(
-                            m['icon'] == 'qr'
-                                ? Icons.qr_code
-                                : m['icon'] == 'wallet'
-                                ? Icons.account_balance_wallet_outlined
-                                : Icons.account_balance_outlined,
-                            color: const Color(0xFF458833),
-                            size: 20,
-                          ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFFE8F5E9)
+                            : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF458833)
+                              : Colors.grey.shade200,
+                          width: isSelected ? 1.5 : 1,
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                m['name']!,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              Text(
-                                m['desc']!,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade500,
-                                ),
-                              ),
-                            ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Icon(
+                              m['icon'] == 'qr'
+                                  ? Icons.qr_code
+                                  : m['icon'] == 'wallet'
+                                  ? Icons.account_balance_wallet_outlined
+                                  : Icons.account_balance_outlined,
+                              color: const Color(0xFF458833),
+                              size: 20,
+                            ),
                           ),
-                        ),
-                        if (isSelected)
-                          const Icon(
-                            Icons.check_circle,
-                            color: Color(0xFF458833),
-                            size: 20,
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  m['name']!,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                Text(
+                                  m['desc']!,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                      ],
+                          if (isSelected)
+                            const Icon(
+                              Icons.check_circle,
+                              color: Color(0xFF458833),
+                              size: 20,
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 );
-              })),
+              }),
             ],
           ),
         );
@@ -271,110 +274,120 @@ class _CheckoutViewState extends State<CheckoutView> {
                       itemBuilder: (ctx, i) {
                         final p = promos[i];
                         final isSelected = _appliedPromo?.id == p.id;
-                        
+
                         bool isEligible = true;
                         if (p.productIds.isNotEmpty) {
-                          final cartProductIds = _cartController.items.map((item) => item.id).toSet();
+                          final cartProductIds = _cartController.items
+                              .map((item) => item.id)
+                              .toSet();
                           if (p.discountType == 'bundle') {
-                            isEligible = p.productIds.every((id) => cartProductIds.contains(id));
+                            isEligible = p.productIds.every(
+                              (id) => cartProductIds.contains(id),
+                            );
                           } else {
-                            isEligible = p.productIds.any((id) => cartProductIds.contains(id));
+                            isEligible = p.productIds.any(
+                              (id) => cartProductIds.contains(id),
+                            );
                           }
                         }
 
-                        return InkWell(
-                          onTap: isEligible
-                              ? () {
-                                  setState(() {
-                                    _appliedPromo = p;
-                                    promoCode = p.sku;
-                                  });
-                                  Navigator.pop(context);
-                                }
-                              : () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Promo tidak berlaku untuk produk di keranjang Anda.'),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
-                                },
-                          child: Opacity(
-                            opacity: isEligible ? 1.0 : 0.5,
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
+                        return Semantics(
+                          label: 'btn_promo_item_${p.sku}',
+                          child: InkWell(
+                            onTap: isEligible
+                                ? () {
+                                    setState(() {
+                                      _appliedPromo = p;
+                                      promoCode = p.sku;
+                                    });
+                                    Navigator.pop(context);
+                                  }
+                                : () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Promo tidak berlaku untuk produk di keranjang Anda.',
+                                        ),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                  },
+                            child: Opacity(
+                              opacity: isEligible ? 1.0 : 0.5,
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? const Color(0xFF458833)
+                                        : Colors.grey.shade200,
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
                                   color: isSelected
-                                      ? const Color(0xFF458833)
-                                      : Colors.grey.shade200,
-                                  width: isSelected ? 1.5 : 1,
+                                      ? const Color(0xFFE8F5E9)
+                                      : Colors.white,
                                 ),
-                                color: isSelected
-                                    ? const Color(0xFFE8F5E9)
-                                    : Colors.white,
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 50,
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: p.imageUrl != null
-                                        ? ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 50,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: p.imageUrl != null
+                                          ? ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              child: Image.network(
+                                                p.imageUrl!,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            )
+                                          : const Icon(
+                                              Icons.local_offer,
+                                              color: Color(0xFF458833),
                                             ),
-                                            child: Image.network(
-                                              p.imageUrl!,
-                                              fit: BoxFit.cover,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            p.title,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
                                             ),
-                                          )
-                                        : const Icon(
-                                            Icons.local_offer,
-                                            color: Color(0xFF458833),
                                           ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          p.title,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
+                                          Text(
+                                            p.discountText,
+                                            style: TextStyle(
+                                              color: Colors.grey.shade600,
+                                              fontSize: 12,
+                                            ),
                                           ),
-                                        ),
-                                        Text(
-                                          p.discountText,
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  if (isSelected)
-                                    const Icon(
-                                      Icons.check_circle,
-                                      color: Color(0xFF458833),
-                                    )
-                                  else
-                                    const Icon(
-                                      Icons.arrow_forward_ios,
-                                      size: 14,
-                                      color: Colors.grey,
-                                    ),
-                                ],
+                                    if (isSelected)
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: Color(0xFF458833),
+                                      )
+                                    else
+                                      const Icon(
+                                        Icons.arrow_forward_ios,
+                                        size: 14,
+                                        color: Colors.grey,
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -396,11 +409,14 @@ class _CheckoutViewState extends State<CheckoutView> {
                       });
                       Navigator.pop(context);
                     },
-                    child: const Text(
-                      'Remove Promo',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
+                    child: Semantics(
+                      label: 'btn_promo_remove',
+                      child: const Text(
+                        'Remove Promo',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -453,11 +469,13 @@ class _CheckoutViewState extends State<CheckoutView> {
         // --- LOGIKA BUNDLE BARU ---
         if (hasSpecificProducts) {
           // Ambil semua ID produk yang ada di keranjang
-          final cartProductIds = _cartController.items.map((item) => item.id).toSet();
-          
+          final cartProductIds = _cartController.items
+              .map((item) => item.id)
+              .toSet();
+
           // Cek apakah semua productId dari syarat promo tersedia di keranjang
           bool allProductsPresent = _appliedPromo!.productIds.every(
-            (id) => cartProductIds.contains(id)
+            (id) => cartProductIds.contains(id),
           );
 
           if (allProductsPresent) {
@@ -505,10 +523,13 @@ class _CheckoutViewState extends State<CheckoutView> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            size: 18,
-            color: Colors.black87,
+          icon: Semantics(
+            label: 'btn_checkout_back',
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: Colors.black87,
+            ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -540,6 +561,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                           paymentMethod,
                           true,
                           onTap: _showPaymentMethodSheet,
+                          semanticsLabel: 'btn_checkout_select_payment',
                         ),
                         const Divider(height: 1, color: Colors.black12),
                         _buildActionRow(
@@ -547,6 +569,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                           promoCode,
                           true,
                           onTap: _showPromoSelectionSheet,
+                          semanticsLabel: 'btn_checkout_select_promo',
                         ),
                       ],
                     ),
@@ -773,134 +796,139 @@ class _CheckoutViewState extends State<CheckoutView> {
           border: Border(top: BorderSide(color: Colors.black12, width: 1)),
         ),
         child: SafeArea(
-          child: ElevatedButton(
-            onPressed: _isProcessing
-                ? null
-                : () async {
-                    if (_cartController.items.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Keranjang Anda kosong!')),
-                      );
-                      return;
-                    }
-
-                    if (paymentMethod == 'Pilih Metode Pembayaran') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Pilih metode pembayaran terlebih dahulu',
+          child: Semantics(
+            label: 'btn_checkout_confirm',
+            child: ElevatedButton(
+              onPressed: _isProcessing
+                  ? null
+                  : () async {
+                      if (_cartController.items.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Keranjang Anda kosong!'),
                           ),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                      return;
-                    }
+                        );
+                        return;
+                      }
 
-                    if (shippingAddress.contains('belum diatur') ||
-                        shippingAddress.contains('Gagal memuat')) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Harap atur alamat pengiriman Anda terlebih dahulu.',
+                      if (paymentMethod == 'Pilih Metode Pembayaran') {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Pilih metode pembayaran terlebih dahulu',
+                            ),
+                            backgroundColor: Colors.orange,
                           ),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                      return;
-                    }
+                        );
+                        return;
+                      }
 
-                    setState(() => _isProcessing = true);
-
-                    List<Map<String, dynamic>> orderItems = _cartController
-                        .items
-                        .map((item) {
-                          return {
-                            'productId': item.id,
-                            'title': item.title,
-                            'variant': item.variant,
-                            'quantity': item.quantity,
-                            'price': item.price,
-                            'imageUrl': item.imageUrl,
-                          };
-                        })
-                        .toList();
-
-                    final result = await _checkoutController.processCheckout(
-                      fullName: fullname,
-                      shippingAddress: shippingAddress,
-                      paymentMethod: paymentMethod,
-                      paymentMethodCode: _paymentMethodCode,
-                      promoCode: promoCode,
-                      subtotal: _cartController.subtotal,
-                      shippingCost: _cartController.shippingCost,
-                      tax: tax,
-                      total: finalTotal,
-                      items: orderItems,
-                      discountAmount: discountAmount,
-                    );
-
-                    if (!mounted) return;
-                    setState(() => _isProcessing = false);
-
-                    final navigator = Navigator.of(context);
-                    final messenger = ScaffoldMessenger.of(context);
-
-                    if (result.containsKey('error')) {
-                      if (!context.mounted) return;
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(result['error']!),
-                          backgroundColor: Colors.red,
-                          duration: const Duration(seconds: 5),
-                        ),
-                      );
-                    } else {
-                      if (!context.mounted) return;
-                      await navigator.push<bool>(
-                        MaterialPageRoute(
-                          builder: (_) => PaymentWebView(
-                            paymentUrl: result['paymentUrl']!,
-                            orderId: result['orderId']!,
+                      if (shippingAddress.contains('belum diatur') ||
+                          shippingAddress.contains('Gagal memuat')) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Harap atur alamat pengiriman Anda terlebih dahulu.',
+                            ),
+                            backgroundColor: Colors.orange,
                           ),
-                        ),
+                        );
+                        return;
+                      }
+
+                      setState(() => _isProcessing = true);
+
+                      List<Map<String, dynamic>> orderItems = _cartController
+                          .items
+                          .map((item) {
+                            return {
+                              'productId': item.id,
+                              'title': item.title,
+                              'variant': item.variant,
+                              'quantity': item.quantity,
+                              'price': item.price,
+                              'imageUrl': item.imageUrl,
+                            };
+                          })
+                          .toList();
+
+                      final result = await _checkoutController.processCheckout(
+                        fullName: fullname,
+                        shippingAddress: shippingAddress,
+                        paymentMethod: paymentMethod,
+                        paymentMethodCode: _paymentMethodCode,
+                        promoCode: promoCode,
+                        subtotal: _cartController.subtotal,
+                        shippingCost: _cartController.shippingCost,
+                        tax: tax,
+                        total: finalTotal,
+                        items: orderItems,
+                        discountAmount: discountAmount,
                       );
 
-                      if (!context.mounted) return;
-                      _cartController.clearCart();
-                      navigator.pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              PaymentStatusView(orderId: result['orderId']!),
-                        ),
-                      );
-                    }
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF458833),
-              disabledBackgroundColor: Colors.grey.shade400,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                      if (!mounted) return;
+                      setState(() => _isProcessing = false);
+
+                      final navigator = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(context);
+
+                      if (result.containsKey('error')) {
+                        if (!context.mounted) return;
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(result['error']!),
+                            backgroundColor: Colors.red,
+                            duration: const Duration(seconds: 5),
+                          ),
+                        );
+                      } else {
+                        if (!context.mounted) return;
+                        await navigator.push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => PaymentWebView(
+                              paymentUrl: result['paymentUrl']!,
+                              orderId: result['orderId']!,
+                            ),
+                          ),
+                        );
+
+                        if (!context.mounted) return;
+                        _cartController.clearCart();
+                        navigator.pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                PaymentStatusView(orderId: result['orderId']!),
+                          ),
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF458833),
+                disabledBackgroundColor: Colors.grey.shade400,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
               ),
-              elevation: 0,
+              child: _isProcessing
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Place order',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
-            child: _isProcessing
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Text(
-                    'Place order',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
           ),
         ),
       ),
@@ -912,44 +940,48 @@ class _CheckoutViewState extends State<CheckoutView> {
     String value,
     bool showChevron, {
     VoidCallback? onTap,
+    String? semanticsLabel,
   }) {
     final bool isPlaceholder =
         value.contains('Add') ||
         value.contains('Apply') ||
         value.contains('Pilih');
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 100,
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+    return Semantics(
+      label: semanticsLabel,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 100,
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
-            ),
-            Expanded(
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isPlaceholder ? Colors.grey : Colors.black87,
+              Expanded(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isPlaceholder ? Colors.grey : Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            if (showChevron)
-              const Icon(Icons.chevron_right, color: Colors.grey, size: 20)
-            else
-              const SizedBox(width: 20),
-          ],
+              if (showChevron)
+                const Icon(Icons.chevron_right, color: Colors.grey, size: 20)
+              else
+                const SizedBox(width: 20),
+            ],
+          ),
         ),
       ),
     );

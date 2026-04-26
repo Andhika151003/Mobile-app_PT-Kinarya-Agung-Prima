@@ -84,70 +84,73 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: ElevatedButton(
-            onPressed: isOutOfStock
-                ? null
-                : () {
-                    int qtyInCart = 0;
-                    try {
-                      final existingItem = _cartController.items.firstWhere(
-                        (item) => item.id == widget.product.id,
-                      );
-                      qtyInCart = existingItem.quantity;
-                    } catch (e) {
-                      qtyInCart = 0;
-                    }
+          child: Semantics(
+            label: 'btn_product_detail_add_to_cart',
+            child: ElevatedButton(
+              onPressed: isOutOfStock
+                  ? null
+                  : () {
+                      int qtyInCart = 0;
+                      try {
+                        final existingItem = _cartController.items.firstWhere(
+                          (item) => item.id == widget.product.id,
+                        );
+                        qtyInCart = existingItem.quantity;
+                      } catch (e) {
+                        qtyInCart = 0;
+                      }
 
-                    if ((qtyInCart + _quantity) > currentStock) {
+                      if ((qtyInCart + _quantity) > currentStock) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Stok terbatas! Anda sudah memiliki $qtyInCart di keranjang (Sisa stok gudang: $currentStock)',
+                            ),
+                            backgroundColor: Colors.orange.shade700,
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                        return;
+                      }
+
+                      double finalPrice = widget.product.price.toDouble();
+
+                      _cartController.addToCart(
+                        id: widget.product.id!,
+                        title: widget.product.name,
+                        variant: 'Default',
+                        price: finalPrice,
+                        imageUrl: widget.product.imageUrl,
+                        quantity: _quantity,
+                        minOrder: widget.product.moq ?? 1,
+                        stockLimit: currentStock,
+                      );
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'Stok terbatas! Anda sudah memiliki $qtyInCart di keranjang (Sisa stok gudang: $currentStock)',
+                            '$_quantity ${widget.product.name} added to cart!',
                           ),
-                          backgroundColor: Colors.orange.shade700,
-                          duration: const Duration(seconds: 3),
+                          backgroundColor: primaryGreen,
                         ),
                       );
-                      return;
-                    }
-
-                    double finalPrice = widget.product.price.toDouble();
-
-                    _cartController.addToCart(
-                      id: widget.product.id!,
-                      title: widget.product.name,
-                      variant: 'Default',
-                      price: finalPrice,
-                      imageUrl: widget.product.imageUrl,
-                      quantity: _quantity,
-                      minOrder: widget.product.moq ?? 1,
-                      stockLimit: currentStock,
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          '$_quantity ${widget.product.name} added to cart!',
-                        ),
-                        backgroundColor: primaryGreen,
-                      ),
-                    );
-                    Navigator.pop(context);
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryGreen,
-              disabledBackgroundColor: Colors.grey.shade300,
-              elevation: 0,
-              minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                      Navigator.pop(context);
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryGreen,
+                disabledBackgroundColor: Colors.grey.shade300,
+                elevation: 0,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-            ),
-            child: Text(
-              isOutOfStock ? 'Out of Stock' : 'Add to Cart',
-              style: TextStyle(
-                color: isOutOfStock ? Colors.grey.shade600 : Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+              child: Text(
+                isOutOfStock ? 'Out of Stock' : 'Add to Cart',
+                style: TextStyle(
+                  color: isOutOfStock ? Colors.grey.shade600 : Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -186,7 +189,6 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -308,11 +310,21 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                 color: Colors.grey.shade100,
                 shape: BoxShape.circle,
               ),
-              child: IconButton(
-                icon: const Icon(Icons.close, size: 20, color: Colors.black54),
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                padding: EdgeInsets.zero,
-                onPressed: () => Navigator.pop(context),
+              child: Semantics(
+                label: 'btn_product_detail_back',
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.close,
+                    size: 20,
+                    color: Colors.black54,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                  padding: EdgeInsets.zero,
+                  onPressed: () => Navigator.pop(context),
+                ),
               ),
             ),
           ),
@@ -404,14 +416,17 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          InkWell(
-            onTap: _decrement,
-            child: Container(
-              width: 32,
-              alignment: Alignment.center,
-              child: const Text(
-                '-',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          Semantics(
+            label: 'btn_product_detail_qty_minus',
+            child: InkWell(
+              onTap: _decrement,
+              child: Container(
+                width: 32,
+                alignment: Alignment.center,
+                child: const Text(
+                  '-',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
               ),
             ),
           ),
@@ -425,14 +440,17 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             ),
           ),
           VerticalDivider(width: 1, thickness: 1, color: Colors.grey.shade400),
-          InkWell(
-            onTap: _increment,
-            child: Container(
-              width: 32,
-              alignment: Alignment.center,
-              child: const Text(
-                '+',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          Semantics(
+            label: 'btn_product_detail_qty_plus',
+            child: InkWell(
+              onTap: _increment,
+              child: Container(
+                width: 32,
+                alignment: Alignment.center,
+                child: const Text(
+                  '+',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
               ),
             ),
           ),

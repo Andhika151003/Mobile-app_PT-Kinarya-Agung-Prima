@@ -16,7 +16,7 @@ class ProductUserView extends StatefulWidget {
 class _ProductUserViewState extends State<ProductUserView> {
   final AdminProductController _productController = AdminProductController();
   final CartController _cartController = CartController();
-  
+
   final Color primaryGreen = const Color(0xFF00903D);
   String _selectedCategory = 'All Products';
   String _sortBy = 'Name A-Z';
@@ -48,24 +48,28 @@ class _ProductUserViewState extends State<ProductUserView> {
             children: [
               _buildHeader(context),
               const SizedBox(height: 20),
-              
+
               const Text(
                 'Product Catalog',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
               const SizedBox(height: 16),
-              
+
               _buildSearchBar(),
               const SizedBox(height: 16),
-              
+
               _buildCategoryTabs(),
               const SizedBox(height: 20),
-              
+
               _buildSortDropdown(),
               const SizedBox(height: 8),
 
               _buildProductGridStream(),
-              
+
               const SizedBox(height: 80),
             ],
           ),
@@ -81,19 +85,27 @@ class _ProductUserViewState extends State<ProductUserView> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Image.asset(
-          'assets/images/logo.png',   
+          'assets/images/logo.png',
           height: 35,
-          errorBuilder: (context, error, stackTrace) => const Icon(Icons.eco, color: Colors.green, size: 35),
+          errorBuilder: (context, error, stackTrace) =>
+              const Icon(Icons.eco, color: Colors.green, size: 35),
         ),
         IconButton(
-          icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black87, size: 26),
+          icon: Semantics(
+            label: 'btn_product_cart_header',
+            child: const Icon(
+              Icons.shopping_cart_outlined,
+              color: Colors.black87,
+              size: 26,
+            ),
+          ),
           onPressed: () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const CartView()),
             );
           },
-        )
+        ),
       ],
     );
   }
@@ -108,16 +120,19 @@ class _ProductUserViewState extends State<ProductUserView> {
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: _searchController,
-              onChanged: (value) {
-                setState(() {});
-              },
-              decoration: const InputDecoration(
-                hintText: 'Search Catalog',
-                hintStyle: TextStyle(color: Colors.grey),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            child: Semantics(
+              label: 'input_product_search',
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  setState(() {});
+                },
+                decoration: const InputDecoration(
+                  hintText: 'Search Catalog',
+                  hintStyle: TextStyle(color: Colors.grey),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                ),
               ),
             ),
           ),
@@ -128,7 +143,10 @@ class _ProductUserViewState extends State<ProductUserView> {
               borderRadius: BorderRadius.circular(6),
             ),
             child: IconButton(
-              icon: const Icon(Icons.search, color: Colors.white, size: 20),
+              icon: Semantics(
+                label: 'btn_product_search_submit',
+                child: const Icon(Icons.search, color: Colors.white, size: 20),
+              ),
               onPressed: () {
                 setState(() {});
               },
@@ -153,23 +171,26 @@ class _ProductUserViewState extends State<ProductUserView> {
                 _selectedCategory = category;
               });
             },
-            child: Container(
-              margin: const EdgeInsets.only(right: 20),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: isSelected ? Colors.black : Colors.transparent,
-                    width: 2,
+            child: Semantics(
+              label: 'btn_category_${category.replaceAll(' ', '_')}',
+              child: Container(
+                margin: const EdgeInsets.only(right: 20),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isSelected ? Colors.black : Colors.transparent,
+                      width: 2,
+                    ),
                   ),
                 ),
-              ),
-              child: Text(
-                category,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? Colors.black : Colors.grey.shade600,
+                child: Text(
+                  category,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected ? Colors.black : Colors.grey.shade600,
+                  ),
                 ),
               ),
             ),
@@ -181,7 +202,7 @@ class _ProductUserViewState extends State<ProductUserView> {
 
   Widget _buildProductGridStream() {
     return StreamBuilder<List<ProductModel>>(
-      stream: _productController.getSupplyProducts(), 
+      stream: _productController.getSupplyProducts(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator(color: primaryGreen));
@@ -194,7 +215,7 @@ class _ProductUserViewState extends State<ProductUserView> {
             child: Padding(
               padding: const EdgeInsets.all(40.0),
               child: Text(
-                'Catalog is currently empty.', 
+                'Catalog is currently empty.',
                 style: TextStyle(color: Colors.grey.shade500),
               ),
             ),
@@ -203,17 +224,20 @@ class _ProductUserViewState extends State<ProductUserView> {
 
         final allProducts = snapshot.data!;
         final displayProducts = ProductUserController().filterAndSortProducts(
-          allProducts, 
-          _selectedCategory, 
-          _searchController.text, 
-          _sortBy
+          allProducts,
+          _selectedCategory,
+          _searchController.text,
+          _sortBy,
         );
 
         if (displayProducts.isEmpty) {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(40.0),
-              child: Text('No products match your search/filter.', style: TextStyle(color: Colors.grey.shade500)),
+              child: Text(
+                'No products match your search/filter.',
+                style: TextStyle(color: Colors.grey.shade500),
+              ),
             ),
           );
         }
@@ -242,7 +266,9 @@ class _ProductUserViewState extends State<ProductUserView> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ProductDetailUserView(product: product)),
+          MaterialPageRoute(
+            builder: (context) => ProductDetailUserView(product: product),
+          ),
         );
       },
       child: Container(
@@ -273,11 +299,15 @@ class _ProductUserViewState extends State<ProductUserView> {
                   padding: const EdgeInsets.all(12.0),
                   child: product.imageUrl.isNotEmpty
                       ? Image.network(product.imageUrl, fit: BoxFit.contain)
-                      : Icon(Icons.image_outlined, size: 50, color: Colors.grey.shade300),
+                      : Icon(
+                          Icons.image_outlined,
+                          size: 50,
+                          color: Colors.grey.shade300,
+                        ),
                 ),
               ),
             ),
-            
+
             // 2. Teks Info Produk
             Expanded(
               flex: 5,
@@ -294,21 +324,33 @@ class _ProductUserViewState extends State<ProductUserView> {
                           product.name,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, height: 1.2),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            height: 1.2,
+                          ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           'Min. Order: ${product.moq ?? 1} pcs',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 11,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           'Sisa stok: ${product.stock}',
-                          style: TextStyle(color: product.stock < 10 ? Colors.red : Colors.grey.shade600, fontSize: 11),
+                          style: TextStyle(
+                            color: product.stock < 10
+                                ? Colors.red
+                                : Colors.grey.shade600,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
-                    
+
                     // Harga & Tombol Keranjang
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -320,68 +362,89 @@ class _ProductUserViewState extends State<ProductUserView> {
                             children: [
                               Text(
                                 'Rp ${product.price}',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: Colors.black,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
                         ),
-                        InkWell(
-                          onTap: () {
-                            int currentStock = product.stock; 
-                            int moq = product.moq ?? 1;
+                        Semantics(
+                          label:
+                              'btn_add_to_cart_${product.name.replaceAll(' ', '_')}',
+                          child: InkWell(
+                            onTap: () {
+                              int currentStock = product.stock;
+                              int moq = product.moq ?? 1;
 
-                            int qtyInCart = 0;
-                            try {
-                              final existingItem = _cartController.items.firstWhere((item) => item.id == product.id!);
-                              qtyInCart = existingItem.quantity;
-                            } catch (e) {
-                              qtyInCart = 0;
-                            }
+                              int qtyInCart = 0;
+                              try {
+                                final existingItem = _cartController.items
+                                    .firstWhere(
+                                      (item) => item.id == product.id!,
+                                    );
+                                qtyInCart = existingItem.quantity;
+                              } catch (e) {
+                                qtyInCart = 0;
+                              }
 
-                            if (currentStock < moq) {
+                              if (currentStock < moq) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Maaf, stok ${product.name} tidak mencukupi. Sisa stok: $currentStock',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              if ((qtyInCart + moq) > currentStock) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Stok terbatas! Anda sudah memiliki $qtyInCart di keranjang (Sisa stok di gudang: $currentStock)',
+                                    ),
+                                    backgroundColor: Colors.orange.shade700,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              double finalPrice = product.price.toDouble();
+
+                              _cartController.addToCart(
+                                id: product.id!,
+                                title: product.name,
+                                variant: product.category,
+                                price: finalPrice,
+                                imageUrl: product.imageUrl,
+                                quantity: moq,
+                                minOrder: moq,
+                                stockLimit: currentStock,
+                              );
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Maaf, stok ${product.name} tidak mencukupi. Sisa stok: $currentStock'),
-                                  backgroundColor: Colors.red,
+                                  content: Text(
+                                    '${product.name} dimasukkan ke keranjang!',
+                                  ),
+                                  backgroundColor: primaryGreen,
+                                  duration: const Duration(seconds: 2),
                                 ),
                               );
-                              return;
-                            }
-
-                            if ((qtyInCart + moq) > currentStock) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Stok terbatas! Anda sudah memiliki $qtyInCart di keranjang (Sisa stok di gudang: $currentStock)'),
-                                  backgroundColor: Colors.orange.shade700,
-                                ),
-                              );
-                              return;
-                            }
-
-                            double finalPrice = product.price.toDouble();
-
-                            _cartController.addToCart(
-                              id: product.id!,
-                              title: product.name,
-                              variant: product.category,
-                              price: finalPrice,
-                              imageUrl: product.imageUrl,
-                              quantity: moq,
-                              minOrder: moq,
-                              stockLimit: currentStock,
-                            );
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${product.name} dimasukkan ke keranjang!'),
-                                backgroundColor: primaryGreen, 
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                          child: const Icon(Icons.add_shopping_cart, size: 20, color: Colors.black54),
+                            },
+                            child: const Icon(
+                              Icons.add_shopping_cart,
+                              size: 20,
+                              color: Colors.black54,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -399,7 +462,14 @@ class _ProductUserViewState extends State<ProductUserView> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('Sort by:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+        const Text(
+          'Sort by:',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: Colors.black87,
+          ),
+        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
@@ -407,26 +477,34 @@ class _ProductUserViewState extends State<ProductUserView> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey.shade300),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _sortBy,
-              icon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
-              isDense: true,
-              style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500),
-              items: ['Name A-Z', 'Price Low-High', 'Price High-Low']
-                  .map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _sortBy = newValue;
-                  });
-                }
-              },
+          child: Semantics(
+            label: 'btn_product_sort_dropdown',
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _sortBy,
+                icon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
+                isDense: true,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+                items: ['Name A-Z', 'Price Low-High', 'Price High-Low'].map((
+                  String value,
+                ) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _sortBy = newValue;
+                    });
+                  }
+                },
+              ),
             ),
           ),
         ),

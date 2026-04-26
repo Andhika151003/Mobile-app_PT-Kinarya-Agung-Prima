@@ -35,10 +35,13 @@ class _CartViewState extends State<CartView> {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 16,
-              color: Colors.black54,
+            icon: Semantics(
+              label: 'btn_cart_back',
+              child: const Icon(
+                Icons.arrow_back_ios_new,
+                size: 16,
+                color: Colors.black54,
+              ),
             ),
             onPressed: () => Navigator.pop(context),
           ),
@@ -173,33 +176,36 @@ class _CartViewState extends State<CartView> {
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: isEmpty
-                            ? null
-                            : () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const CheckoutView(),
-                                  ),
-                                );
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryColor,
-                          disabledBackgroundColor: Colors.grey.shade300,
-                          disabledForegroundColor: Colors.grey.shade500,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      child: Semantics(
+                        label: 'btn_cart_checkout',
+                        child: ElevatedButton(
+                          onPressed: isEmpty
+                              ? null
+                              : () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const CheckoutView(),
+                                    ),
+                                  );
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primaryColor,
+                            disabledBackgroundColor: Colors.grey.shade300,
+                            disabledForegroundColor: Colors.grey.shade500,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 0,
                           ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Proceed to Checkout',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          child: const Text(
+                            'Proceed to Checkout',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -280,12 +286,15 @@ class _CartViewState extends State<CartView> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    InkWell(
-                      onTap: onDelete,
-                      child: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.redAccent,
-                        size: 20,
+                    Semantics(
+                      label: 'btn_cart_delete_${title.replaceAll(' ', '_')}',
+                      child: InkWell(
+                        onTap: onDelete,
+                        child: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.redAccent,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ],
@@ -318,12 +327,22 @@ class _CartViewState extends State<CartView> {
                       style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w800, fontSize: 14)),
                     Row(
                       children: [
-                        _buildQtyButton(Icons.remove, isAtMin ? null : onRemove, isDisabled: isAtMin),
+                        _buildQtyButton(
+                          Icons.remove, 
+                          isAtMin ? null : onRemove, 
+                          isDisabled: isAtMin,
+                          label: 'btn_cart_qty_minus_${title.replaceAll(' ', '_')}',
+                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text('$qty', style: const TextStyle(fontWeight: FontWeight.bold)),
                         ),
-                        _buildQtyButton(Icons.add, isAtMax ? null : onAdd, isDisabled: isAtMax),
+                        _buildQtyButton(
+                          Icons.add, 
+                          isAtMax ? null : onAdd, 
+                          isDisabled: isAtMax,
+                          label: 'btn_cart_qty_plus_${title.replaceAll(' ', '_')}',
+                        ),
                       ],
                     ),
                   ],
@@ -336,20 +355,23 @@ class _CartViewState extends State<CartView> {
     );
   }
 
-  Widget _buildQtyButton(IconData icon, VoidCallback? onPressed, {bool isDisabled = false}) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: isDisabled ? Colors.grey.shade200 : Colors.grey.shade100,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon, 
-          size: 16, 
-          color: isDisabled ? Colors.grey.shade400 : Colors.black87
+  Widget _buildQtyButton(IconData icon, VoidCallback? onPressed, {bool isDisabled = false, String? label}) {
+    return Semantics(
+      label: label,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isDisabled ? Colors.grey.shade200 : Colors.grey.shade100,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon, 
+            size: 16, 
+            color: isDisabled ? Colors.grey.shade400 : Colors.black87
+          ),
         ),
       ),
     );
