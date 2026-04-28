@@ -43,8 +43,8 @@ class RetailProfileController {
 
         if (profileImage != null) {
           final storageService = SupabaseStorageService();
-          final fileName = 'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          uploadedImageUrl = await storageService.uploadProductImage(profileImage, fileName);
+          final fileName = 'retail_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          uploadedImageUrl = await storageService.uploadRetailProfileImage(profileImage, fileName);
         }
 
         final updateData = {

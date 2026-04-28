@@ -21,11 +21,13 @@ class _MainNavigationUserState extends State<MainNavigationUser> {
     const ProfileUserView(),
   ];
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex], 
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
       
       bottomNavigationBar: Semantics(
         label: 'main_navigation_bar',

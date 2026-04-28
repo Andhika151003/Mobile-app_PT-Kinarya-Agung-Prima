@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -137,8 +138,20 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   Future<void> _selectDate(bool isStart) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final initialDate = isStart ? _startDate : _endDate;
-    final firstDate = initialDate.isBefore(today) ? initialDate : today;
+
+    DateTime initialDate;
+    DateTime firstDate;
+
+    if (isStart) {
+      // Start Date: tidak boleh pilih masa lalu
+      initialDate = _startDate.isBefore(today) ? today : _startDate;
+      firstDate = today;
+    } else {
+      // End Date: tidak boleh pilih sebelum Start Date
+      final minEndDate = _startDate.isBefore(today) ? today : _startDate;
+      initialDate = _endDate.isBefore(minEndDate) ? minEndDate : _endDate;
+      firstDate = minEndDate;
+    }
 
     final picked = await showDatePicker(
       context: context,
@@ -157,6 +170,10 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
       setState(() {
         if (isStart) {
           _startDate = picked;
+          // Jika start date lebih akhir dari end date, geser end date otomatis
+          if (_endDate.isBefore(_startDate)) {
+            _endDate = _startDate;
+          }
         } else {
           _endDate = picked;
         }
@@ -525,11 +542,8 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   }
 
   String _formatPrice(dynamic price) {
-    final val = (price is num) ? price.toInt() : 0;
-    if (val >= 1000) {
-      return 'Rp ${val.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
-    }
-    return 'Rp $val';
+    final num val = (price is num) ? price : 0;
+    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(val);
   }
 
   @override

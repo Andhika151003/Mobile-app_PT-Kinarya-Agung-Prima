@@ -115,7 +115,7 @@ class PromotionAdminController extends ChangeNotifier {
       if (imageFile != null) {
         final storageService = SupabaseStorageService();
         final fileName = 'promo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        imageUrl = await storageService.uploadProductImage(imageFile, fileName);
+        imageUrl = await storageService.uploadPromotionImage(imageFile, fileName);
       }
 
       final newPromo = PromotionModel(
@@ -176,7 +176,7 @@ class PromotionAdminController extends ChangeNotifier {
       if (imageFile != null) {
         final storageService = SupabaseStorageService();
         final fileName = 'promo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        imageUrl = await storageService.uploadProductImage(imageFile, fileName);
+        imageUrl = await storageService.uploadPromotionImage(imageFile, fileName);
       }
 
       await promotionRef.update({

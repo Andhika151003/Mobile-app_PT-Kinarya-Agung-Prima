@@ -260,7 +260,10 @@ class _CheckoutViewState extends State<CheckoutView> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    final promos = snapshot.data ?? [];
+                    final allPromos = snapshot.data ?? [];
+                    // Only show promos that are currently active (not upcoming)
+                    final promos = allPromos.where((p) => p.isActive).toList();
+                    
                     if (promos.isEmpty) {
                       return const Center(
                         child: Text('Tidak ada promo aktif saat ini.'),

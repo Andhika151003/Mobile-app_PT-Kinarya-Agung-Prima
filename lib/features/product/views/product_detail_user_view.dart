@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/product.dart';
 import '../../cart/controllers/cart_controller.dart';
+import '../../cart/views/cart_view.dart';
 
 class ProductDetailUserView extends StatefulWidget {
   final ProductModel product;
@@ -126,9 +127,10 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          '$_quantity ${widget.product.name} added to cart!',
+                          '$_quantity ${widget.product.name} ditambahkan ke keranjang!',
                         ),
                         backgroundColor: primaryGreen,
+                        duration: const Duration(seconds: 2),
                       ),
                     );
                     Navigator.pop(context);
@@ -186,7 +188,6 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -300,6 +301,51 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
         ),
       ),
       actions: [
+        ListenableBuilder(
+          listenable: _cartController,
+          builder: (context, child) {
+            int cartItemCount = _cartController.items.length;
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black87, size: 24),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CartView()),
+                    );
+                  },
+                ),
+                if (cartItemCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 14,
+                        minHeight: 14,
+                      ),
+                      child: Text(
+                        '$cartItemCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
         Padding(
           padding: const EdgeInsets.only(right: 20.0),
           child: Center(

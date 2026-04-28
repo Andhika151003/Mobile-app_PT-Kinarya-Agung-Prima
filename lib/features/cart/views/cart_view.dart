@@ -15,6 +15,10 @@ class _CartViewState extends State<CartView> {
 
   static const _primaryColor = Color(0xFF4A7D3C);
 
+  Future<void> _onRefresh() async {
+    await _cartController.syncStockFromFirestore();
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -61,50 +65,62 @@ class _CartViewState extends State<CartView> {
             children: [
               // AREA DAFTAR PRODUK
               Expanded(
-                child: isEmpty
-                    ? const Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.shopping_cart_outlined,
-                              size: 64,
-                              color: Colors.black12,
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              'Keranjang Masih Kosong',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black38,
-                                fontWeight: FontWeight.w600,
+                child: RefreshIndicator(
+                  color: _primaryColor,
+                  onRefresh: _onRefresh,
+                  child: isEmpty
+                      ? ListView(
+                          // ListView agar pull gesture bisa dipicu meski kosong
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: const [
+                            SizedBox(height: 120),
+                            Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.shopping_cart_outlined,
+                                    size: 64,
+                                    color: Colors.black12,
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Keranjang Masih Kosong',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black38,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
+                        )
+                      : ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _cartController.items.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final item = _cartController.items[index];
+                            return _buildCartItem(
+                              title: item.title,
+                              variant: item.variant,
+                              price: item.price,
+                              qty: item.quantity,
+                              imageUrl: item.imageUrl,
+                              onAdd: () => _cartController.incrementQty(item.id),
+                              onRemove: () =>
+                                  _cartController.decrementQty(item.id),
+                              onDelete: () => _cartController.removeItem(item.id),
+                              minLimit: item.minOrder,
+                              maxLimit: item.stockLimit,
+                            );
+                          },
                         ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _cartController.items.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final item = _cartController.items[index];
-                          return _buildCartItem(
-                            title: item.title,
-                            variant: item.variant,
-                            price: item.price,
-                            qty: item.quantity,
-                            imageUrl: item.imageUrl,
-                            onAdd: () => _cartController.incrementQty(item.id),
-                            onRemove: () =>
-                                _cartController.decrementQty(item.id),
-                            onDelete: () => _cartController.removeItem(item.id),
-                            minLimit: item.minOrder,
-                            maxLimit: item.stockLimit,
-                          );
-                        },
-                      ),
+                ),
               ),
 
               // AREA ORDER SUMMARY
@@ -314,7 +330,7 @@ class _CartViewState extends State<CartView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0).format(price),
+                    Text(NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(price),
                       style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w800, fontSize: 14)),
                     Row(
                       children: [

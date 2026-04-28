@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/product.dart';
 import '../controllers/product_admin_controller.dart';
 import 'product_detail_admin_view.dart';
 import '../../authentication/views/profile_admin_view.dart';
 import 'form_add_product_admin_view.dart';
+import 'see_all_product_admin_view.dart';
 
 class ProductAdminView extends StatefulWidget {
   const ProductAdminView({super.key});
@@ -62,7 +64,33 @@ class _ProductAdminViewState extends State<ProductAdminView> {
               _buildFilterRow(),
               const SizedBox(height: 24),
               
-              _buildSectionHeader('Popular Products', 'See All'),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AllProductAdminView()),
+                  );
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Popular Products',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+                    ),
+                    Row(
+                      children: const [
+                        Text(
+                          'See All', 
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black54),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black54),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 16),
               
               _buildProductStream(),
@@ -231,8 +259,7 @@ class _ProductAdminViewState extends State<ProductAdminView> {
 
         final allProducts = snapshot.data!;
         
-        // DIDELEGASIKAN KE CONTROLLER!
-        final products = _productController.filterAndSortProducts(
+        final filteredProducts = _productController.filterAndSortProducts(
           allProducts, 
           _selectedCategory, 
           _searchController.text, 
@@ -240,7 +267,8 @@ class _ProductAdminViewState extends State<ProductAdminView> {
           _sortBy
         );
 
-        // Jika hasil filter kosong
+        final products = filteredProducts.take(7).toList();
+
         if (products.isEmpty) {
           return Center(
             child: Padding(
@@ -266,6 +294,11 @@ class _ProductAdminViewState extends State<ProductAdminView> {
   }
 
   Widget _buildProductCard(BuildContext context, ProductModel product) {
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
     int alertLevel = (product.lowStockAlert != null && product.lowStockAlert! > 0) ? product.lowStockAlert! : 5;
     bool isInStock = product.stock > alertLevel;
     
@@ -348,7 +381,7 @@ class _ProductAdminViewState extends State<ProductAdminView> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Rp ${product.price}',
+                      currencyFormatter.format(product.price),
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
                     ),
                     Text('Per item', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),

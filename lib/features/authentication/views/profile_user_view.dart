@@ -78,8 +78,6 @@ class _ProfileUserViewState extends State<ProfileUserView> {
                     _buildProfileHeader(),
                     const SizedBox(height: 40),
                     _buildBusinessDetails(),
-                    const SizedBox(height: 20),
-                    _buildStoreStatusCard(),
                     const SizedBox(height: 32),
                     _buildStatsCard(
                       icon: Icons.inventory_2_outlined,
@@ -90,7 +88,7 @@ class _ProfileUserViewState extends State<ProfileUserView> {
                     _buildStatsCard(
                       icon: Icons.account_balance_wallet_outlined, 
                       title: 'Total Spent',
-                      value: NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0).format(totalSpent),
+                      value: NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(totalSpent),
                     ),
                     const SizedBox(height: 16),
                     _buildLogoutButton(context),
@@ -399,91 +397,6 @@ class _ProfileUserViewState extends State<ProfileUserView> {
           'Log Out',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-      ),
-    );
-  }
-
-  Widget _buildStoreStatusCard() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        // Warna berubah sedikit jika inaktif
-        color: isActive ? Colors.green.shade50 : Colors.red.shade50, 
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isActive ? Colors.green.shade200 : Colors.red.shade200,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(
-                isActive ? Icons.store_mall_directory : Icons.store_mall_directory_outlined,
-                color: isActive ? const Color(0xFF458833) : Colors.red,
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Store Status',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                  Text(
-                    isActive ? 'Active (Accepting Orders)' : 'Inactive (Closed)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isActive ? const Color(0xFF458833) : Colors.red,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          
-          // TOMBOL SAKLAR ON/OFF
-          Switch(
-            value: isActive,
-            activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF458833),
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: Colors.red.shade300,
-            onChanged: (bool newValue) async {
-              setState(() {
-                isActive = newValue;
-              });
-
-              try {
-                await _retailController.updateStoreStatus(newValue);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(newValue ? 'Store is now Active!' : 'Store is now Inactive!'),
-                      backgroundColor: newValue ? const Color(0xFF458833) : Colors.red,
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                }
-              } catch (e) {
-                setState(() {
-                  isActive = !newValue;
-                });
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Failed to update status.')),
-                  );
-                }
-              }
-            },
-          ),
-        ],
       ),
     );
   }

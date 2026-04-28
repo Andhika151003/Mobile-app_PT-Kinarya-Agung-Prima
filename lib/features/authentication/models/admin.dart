@@ -9,6 +9,7 @@ class AdminUser {
   final String phoneNumber;
   final DateTime createdAt;
   final int accessLevel;
+  final bool isActive;
 
   AdminUser({
     this.id,
@@ -19,6 +20,7 @@ class AdminUser {
     required this.createdAt,
     this.role = 'admin',
     this.accessLevel = 1,
+    this.isActive = true,
   });
 
   Map<String, dynamic> toMap() {
@@ -30,6 +32,7 @@ class AdminUser {
       'role': role,
       'phoneNumber': phoneNumber,
       'accessLevel': accessLevel,
+      'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -50,6 +53,7 @@ class AdminUser {
       phoneNumber: map['phoneNumber'] ?? '',
       createdAt: parsedDate,
       accessLevel: map['accessLevel'] ?? 1,
+      isActive: map['isActive'] ?? true,
     );
   }
 
@@ -70,6 +74,7 @@ class AdminUser {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       createdAt: createdAt ?? this.createdAt,
       accessLevel: accessLevel ?? this.accessLevel,
+      isActive: isActive ?? this.isActive,
     );
   }
 }

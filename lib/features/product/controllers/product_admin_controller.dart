@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product.dart';
@@ -112,10 +113,10 @@ class AdminProductController {
       stock: int.tryParse(stock.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
       lowStockAlert: int.tryParse(lowStock) ?? 0,
       description: description.trim(),
-      weight: double.tryParse(weight) ?? 0.0,
-      length: double.tryParse(length) ?? 0.0,
-      width: double.tryParse(width) ?? 0.0,
-      height: double.tryParse(height) ?? 0.0,
+      weight: double.tryParse(weight.replaceAll(',', '.')) ?? 0.0,
+      length: double.tryParse(length.replaceAll(',', '.')) ?? 0.0,
+      width: double.tryParse(width.replaceAll(',', '.')) ?? 0.0,
+      height: double.tryParse(height.replaceAll(',', '.')) ?? 0.0,
       imageUrl: coverImageUrl,
       imageUrls: additionalImageUrls,
       isAvailable: true,
@@ -169,10 +170,10 @@ class AdminProductController {
       stock: int.tryParse(stock.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
       lowStockAlert: int.tryParse(lowStock) ?? 0,
       description: description.trim(),
-      weight: double.tryParse(weight) ?? 0.0,
-      length: double.tryParse(length) ?? 0.0,
-      width: double.tryParse(width) ?? 0.0,
-      height: double.tryParse(height) ?? 0.0,
+      weight: double.tryParse(weight.replaceAll(',', '.')) ?? 0.0,
+      length: double.tryParse(length.replaceAll(',', '.')) ?? 0.0,
+      width: double.tryParse(width.replaceAll(',', '.')) ?? 0.0,
+      height: double.tryParse(height.replaceAll(',', '.')) ?? 0.0,
       imageUrl: finalCoverUrl,
       imageUrls: finalAdditionalUrls,
       isAvailable: oldProduct.isAvailable,
@@ -222,15 +223,22 @@ class AdminProductController {
   }
 
   String formatRevenue(int revenue) {
+    final formatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+    
     if (revenue == 0) return 'Rp 0';
     if (revenue >= 1000000) {
       double inMillions = revenue / 1000000;
       return 'Rp ${inMillions.toStringAsFixed(1)}M';
     } else if (revenue >= 1000) {
+      // Untuk ribuan di dashboard, kita tetap pakai K tapi pastikan formatnya enak dibaca
       double inThousands = revenue / 1000;
       return 'Rp ${inThousands.toStringAsFixed(1)}K';
     }
-    return 'Rp $revenue';
+    return formatter.format(revenue);
   }
 
   Future<void> addStock(ProductModel product, int quantity) async {

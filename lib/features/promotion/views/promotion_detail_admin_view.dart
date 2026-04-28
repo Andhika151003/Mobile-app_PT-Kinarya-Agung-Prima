@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../models/promotion.dart';
 import 'form_promotion_admin_view.dart';
 
@@ -414,11 +415,8 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
   }
 
   String _formatPrice(dynamic price) {
-    final val = (price is num) ? price.toInt() : 0;
-    if (val >= 1000) {
-      return 'Rp ${val.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
-    }
-    return 'Rp $val';
+    final num val = (price is num) ? price : 0;
+    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(val);
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../controllers/register_controller.dart';
 import 'login_view.dart';
@@ -203,6 +204,7 @@ class _RegisterViewState extends State<RegisterView> {
                       child: TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        maxLength: 255,
                         decoration: _inputDecoration('Enter your email'),
                         validator: controller.validateEmail,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -225,6 +227,10 @@ class _RegisterViewState extends State<RegisterView> {
                       label: 'input_register_fullname',
                       child: TextFormField(
                         controller: _fullNameController,
+                        maxLength: 100,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+                        ],
                         decoration: _inputDecoration('Enter your full name'),
                         validator: controller.validateFullName,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -248,6 +254,10 @@ class _RegisterViewState extends State<RegisterView> {
                       child: TextFormField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
+                        maxLength: 15,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                         decoration: _inputDecoration('Enter your phone number'),
                         validator: controller.validatePhoneNumber,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -271,6 +281,7 @@ class _RegisterViewState extends State<RegisterView> {
                       child: TextFormField(
                         controller: _addressController,
                         maxLines: 3,
+                        maxLength: 255,
                         decoration: _inputDecoration('Enter your address'),
                         validator: controller.validateAddress,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -294,6 +305,7 @@ class _RegisterViewState extends State<RegisterView> {
                       child: TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
+                        maxLength: 64,
                         decoration: _inputDecoration('Create a password').copyWith(
                           suffixIcon: IconButton(
                           icon: Semantics(
@@ -332,6 +344,7 @@ class _RegisterViewState extends State<RegisterView> {
                       child: TextFormField(
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirmPassword,
+                        maxLength: 64,
                         decoration: _inputDecoration('Confirm your password').copyWith(
                           suffixIcon: IconButton(
                           icon: Semantics(

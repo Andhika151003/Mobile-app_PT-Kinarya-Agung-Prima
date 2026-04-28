@@ -31,4 +31,17 @@ class CartItem {
       'stockLimit': stockLimit,
     };
   }
-}
+
+  factory CartItem.fromMap(Map<String, dynamic> map) {
+    return CartItem(
+      id: map['id'] as String,
+      title: map['title'] as String,
+      variant: map['variant'] as String,
+      price: (map['price'] as num).toDouble(),
+      imageUrl: map['imageUrl'] as String,
+      quantity: (map['quantity'] as num).toInt(),
+      minOrder: (map['minOrder'] as num).toInt(),
+      stockLimit: (map['stockLimit'] as num).toInt(),
+    );
+  }
+}

@@ -105,6 +105,7 @@ class RegisterController extends ChangeNotifier {
         'phoneNumber': phoneNumber.trim(),
         'address': address.trim(),
         'role': 'retailer', // Hanya retailer yang bisa registrasi
+        'isActive': true,
         'createdAt': FieldValue.serverTimestamp(),
       });
 

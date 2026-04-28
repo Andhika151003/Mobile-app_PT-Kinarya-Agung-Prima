@@ -134,6 +134,18 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
       return;
     }
 
+    if (_descriptionController.text.trim().length < 20) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Deskripsi terlalu singkat. Mohon jelaskan minimal 20 karakter.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     final success = await _controller.submitComplaint(
@@ -338,9 +350,11 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
 
                   _buildFormCard(
                     title: 'Deskripsikan Kendala Anda',
-                    child: TextField(
+                    child: TextFormField(
                       controller: _descriptionController,
                       maxLines: 4,
+                      maxLength: 1000,
+                      textInputAction: TextInputAction.done,
                       decoration: InputDecoration(
                         hintText:
                             'Barang yang diterima tidak sesuai pesanan, spesifikasi berbeda, dan kemasan rusak...',

@@ -115,7 +115,7 @@ void main() {
       );
 
       cartController.decrementQty('p1');
-      expect(cartController.items[0].quantity, equals(2)); // Tidak boleh kurang dari minOrder
+      expect(cartController.items[0].quantity, equals(2));
     });
 
     test('Menghapus item dari keranjang', () {

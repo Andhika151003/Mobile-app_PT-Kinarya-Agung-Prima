@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class PromotionModel {
   final String? id;
@@ -99,10 +100,17 @@ class PromotionModel {
   }
 
   bool get isUpcoming {
-    if (status != 'active') return false;
+    if (status != 'active' && status != 'upcoming') return false;
     final now = DateTime.now();
     final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
     return now.isBefore(inclusiveStartDate);
+  }
+
+  bool get isStartingSoon {
+    final now = DateTime.now();
+    final fiveDaysFromNow = now.add(const Duration(days: 5));
+    final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
+    return isUpcoming && inclusiveStartDate.isBefore(fiveDaysFromNow);
   }
 
   bool get isEndingSoon {
@@ -116,7 +124,7 @@ class PromotionModel {
       case 'percentage':
         return '${discountValue.toInt()}% OFF';
       case 'fixed':
-        return 'Rp ${discountValue.toStringAsFixed(0)} OFF';
+        return '${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(discountValue)} OFF';
       case 'bogo':
         return 'BOGO';
       case 'bundle':

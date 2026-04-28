@@ -10,6 +10,7 @@ class CsUser {
   final DateTime createdAt;
   final String department;
   final int handledTickets;
+  final bool isActive;
 
   CsUser({
     this.id,
@@ -21,6 +22,7 @@ class CsUser {
     this.role = 'cs',
     this.department = 'General',
     this.handledTickets = 0,
+    this.isActive = true,
   });
 
   Map<String, dynamic> toMap() {
@@ -33,6 +35,7 @@ class CsUser {
       'phoneNumber': phoneNumber,
       'department': department,
       'handledTickets': handledTickets,
+      'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -54,6 +57,7 @@ class CsUser {
       createdAt: parsedDate,
       department: map['department'] ?? 'General',
       handledTickets: map['handledTickets'] ?? 0,
+      isActive: map['isActive'] ?? true,
     );
   }
 
@@ -76,6 +80,7 @@ class CsUser {
       createdAt: createdAt ?? this.createdAt,
       department: department ?? this.department,
       handledTickets: handledTickets ?? this.handledTickets,
+      isActive: isActive ?? this.isActive,
     );
   }
 }

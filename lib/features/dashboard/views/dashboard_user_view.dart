@@ -17,7 +17,9 @@ class DashboardUserView extends StatefulWidget {
   State<DashboardUserView> createState() => _DashboardUserViewState();
 }
 
-class _DashboardUserViewState extends State<DashboardUserView> {
+class _DashboardUserViewState extends State<DashboardUserView> 
+    with AutomaticKeepAliveClientMixin {
+
   final DashboardUserController _controller = DashboardUserController();
   final PromotionUserController _promoController = PromotionUserController();
 
@@ -32,12 +34,26 @@ class _DashboardUserViewState extends State<DashboardUserView> {
   late Stream<List<ProductModel>> _recommendedProductsStream;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
     _loadUserData();
     _loadPromotions();
     _recentOrdersStream = _controller.getRecentOrders();
     _recommendedProductsStream = _controller.getRecommendedProducts();
+  }
+
+  Future<void> _onRefresh() async {
+    await Future.wait([
+      _loadUserData(),
+      _loadPromotions(),
+    ]);
+    setState(() {
+      _recentOrdersStream = _controller.getRecentOrders();
+      _recommendedProductsStream = _controller.getRecommendedProducts();
+    });
   }
 
   @override
@@ -131,7 +147,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                             : null,
                       ),
                       const SizedBox(height: 16),
-  
+
                       // Title
                       Text(
                         promo.title,
@@ -143,7 +159,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                         ),
                       ),
                       const SizedBox(height: 8),
-  
+
                       // Description
                       Text(
                         promo.description,
@@ -157,7 +173,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                         overflow: TextOverflow.visible,
                       ),
                       const SizedBox(height: 16),
-  
+
                       // Discount badge
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -186,7 +202,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                         ),
                       ),
                       const SizedBox(height: 8),
-  
+
                       // Valid until
                       Text(
                         'Valid until ${_formatDate(promo.endDate)}',
@@ -196,7 +212,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                         ),
                       ),
                       const SizedBox(height: 20),
-  
+
                       // Claim button
                       SizedBox(
                         width: double.infinity,
@@ -211,9 +227,9 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                                 borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),
-                          child: const Text(
-                            'Claim Offer Now',
-                            style: TextStyle(
+                          child: Text(
+                            promo.isActive ? 'Claim Offer Now' : 'Wait for it!',
+                            style: const TextStyle(
                                 fontWeight: FontWeight.w700, fontSize: 15),
                           ),
                         ),
@@ -222,7 +238,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                   ),
                 ),
               ),
-  
+
               // Close button
               Positioned(
                 top: 10,
@@ -250,26 +266,33 @@ class _DashboardUserViewState extends State<DashboardUserView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return SafeArea(
       child: Container(
         color: const Color(0xFFF8F9FA),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildAppBar(),
-              const SizedBox(height: 20),
-              _buildGreetingSection(),
-              const SizedBox(height: 20),
-              _buildPromoBanner(),
-              const SizedBox(height: 24),
-              _buildQuickActions(),
-              const SizedBox(height: 24),
-              _buildRecentOrders(),
-              const SizedBox(height: 24),
-              _buildRecommendedProducts(),
-            ],
+        child: RefreshIndicator(
+          color: const Color(0xFF00903D),
+          onRefresh: _onRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildAppBar(),
+                const SizedBox(height: 20),
+                _buildGreetingSection(),
+                const SizedBox(height: 20),
+                _buildPromoBanner(),
+                const SizedBox(height: 24),
+                _buildQuickActions(),
+                const SizedBox(height: 24),
+                _buildRecentOrders(),
+                const SizedBox(height: 24),
+                _buildRecommendedProducts(),
+              ],
+            ),
           ),
         ),
       ),
@@ -485,7 +508,26 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                               fontWeight: FontWeight.w600),
                         ),
                       ),
-  
+                    
+                    // Upcoming badge
+                    if (promo.isStartingSoon && !promo.isActive)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha:0.8),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          '🚀 Upcoming!',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+
                     Text(
                       promo.title,
                       style: const TextStyle(
@@ -743,16 +785,10 @@ class _DashboardUserViewState extends State<DashboardUserView> {
               style:
                   TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            TextButton(
-              onPressed: () {},
-              child: const Text(
-                'See All',
-                style: TextStyle(
-                    color: Colors.green, fontWeight: FontWeight.bold),
-              ),
-            ),
           ],
         ),
+        const SizedBox(height: 16),
+
         StreamBuilder<List<ProductModel>>(
           stream: _recommendedProductsStream,
           builder: (context, snapshot) {

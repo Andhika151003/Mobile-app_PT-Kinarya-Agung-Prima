@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/product.dart';
 import '../controllers/product_admin_controller.dart';
 import '../controllers/product_user_controller.dart';
@@ -16,11 +17,18 @@ class ProductUserView extends StatefulWidget {
 class _ProductUserViewState extends State<ProductUserView> {
   final AdminProductController _productController = AdminProductController();
   final CartController _cartController = CartController();
+
+  final NumberFormat currencyFormatter = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
   
   final Color primaryGreen = const Color(0xFF00903D);
   String _selectedCategory = 'All Products';
   String _sortBy = 'Name A-Z';
   final TextEditingController _searchController = TextEditingController();
+  int _refreshKey = 0;
 
   final List<String> _categories = [
     'All Products',
@@ -36,45 +44,56 @@ class _ProductUserViewState extends State<ProductUserView> {
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    setState(() {
+      _refreshKey++; // increment key agar StreamBuilder rebuild
+    });
+    // beri jeda singkat supaya spinner terasa natural
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 20),
-              
-              const Text(
-                'Product Catalog',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-              ),
-              const SizedBox(height: 16),
-              
-              _buildSearchBar(),
-              const SizedBox(height: 16),
-              
-              _buildCategoryTabs(),
-              const SizedBox(height: 20),
-              
-              _buildSortDropdown(),
-              const SizedBox(height: 8),
+        child: RefreshIndicator(
+          color: primaryGreen,
+          onRefresh: _onRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: 20),
+                
+                const Text(
+                  'Product Catalog',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+                ),
+                const SizedBox(height: 16),
+                
+                _buildSearchBar(),
+                const SizedBox(height: 16),
+                
+                _buildCategoryTabs(),
+                const SizedBox(height: 20),
+                
+                _buildSortDropdown(),
+                const SizedBox(height: 8),
 
-              _buildProductGridStream(),
-              
-              const SizedBox(height: 80),
-            ],
+                _buildProductGridStream(),
+                
+                const SizedBox(height: 80),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
-  // --- WIDGET BUILDERS ---
 
   Widget _buildHeader(BuildContext context) {
     return Row(
@@ -85,12 +104,49 @@ class _ProductUserViewState extends State<ProductUserView> {
           height: 35,
           errorBuilder: (context, error, stackTrace) => const Icon(Icons.eco, color: Colors.green, size: 35),
         ),
-        IconButton(
-          icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black87, size: 26),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CartView()),
+        ListenableBuilder(
+          listenable: _cartController,
+          builder: (context, child) {
+            int cartItemCount = _cartController.items.length;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black87, size: 26),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CartView()),
+                    );
+                  },
+                ),
+                
+                if (cartItemCount > 0)
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        '$cartItemCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         )
@@ -181,6 +237,7 @@ class _ProductUserViewState extends State<ProductUserView> {
 
   Widget _buildProductGridStream() {
     return StreamBuilder<List<ProductModel>>(
+      key: ValueKey(_refreshKey), // rebuild stream saat refresh
       stream: _productController.getSupplyProducts(), 
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -230,14 +287,14 @@ class _ProductUserViewState extends State<ProductUserView> {
           ),
           itemCount: displayProducts.length,
           itemBuilder: (context, index) {
-            return _buildProductCard(context, displayProducts[index]);
+            return _buildProductCard(context, displayProducts[index], currencyFormatter);
           },
         );
       },
     );
   }
 
-  Widget _buildProductCard(BuildContext context, ProductModel product) {
+  Widget _buildProductCard(BuildContext context, ProductModel product, NumberFormat currencyFormatter) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -319,7 +376,7 @@ class _ProductUserViewState extends State<ProductUserView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Rp ${product.price}',
+                                currencyFormatter.format(product.price),
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -375,7 +432,7 @@ class _ProductUserViewState extends State<ProductUserView> {
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('${product.name} dimasukkan ke keranjang!'),
+                                content: Text('${product.name} ditambahkan ke keranjang!'),
                                 backgroundColor: primaryGreen, 
                                 duration: const Duration(seconds: 2),
                               ),

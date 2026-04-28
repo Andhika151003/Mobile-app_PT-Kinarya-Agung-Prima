@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../controllers/product_admin_controller.dart';
 
@@ -195,7 +196,9 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               _buildTextField(
                 controller: _skuController,
                 hint: 'e.g. PRD-1003',
-                isRequired: false,
+                isRequired: true,
+                maxLength: 50,
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\-]'))],
               ),
               _buildTextFieldLabel('Category'),
               _buildCategoryDropdown(),
@@ -215,6 +218,8 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
                 controller: _regularPriceController,
                 prefixText: 'Rp ',
                 isNumber: true,
+                isDecimal: false,
+                maxLength: 11,
                 hint: '85000',
               ),
 
@@ -222,6 +227,8 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               _buildTextField(
                 controller: _moqController,
                 isNumber: true,
+                isDecimal: false,
+                maxLength: 6,
                 hint: '10',
                 isRequired: false,
               ),
@@ -234,12 +241,16 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               _buildTextField(
                 controller: _stockController,
                 isNumber: true,
+                isDecimal: false,
+                maxLength: 6,
                 hint: '1000',
               ),
               _buildTextFieldLabel('Low Stock Alert'),
               _buildTextField(
                 controller: _lowStockController,
                 isNumber: true,
+                isDecimal: false,
+                maxLength: 6,
                 hint: '100',
                 isRequired: false,
               ),
@@ -252,6 +263,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               _buildTextField(
                 controller: _descriptionController,
                 maxLines: 4,
+                maxLength: 2000,
                 hint: 'Enter product description...',
               ),
               const SizedBox(height: 24),
@@ -263,6 +275,8 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               _buildTextField(
                 controller: _weightController,
                 isNumber: true,
+                isDecimal: true,
+                maxLength: 6,
                 hint: '4.00',
                 isRequired: false,
               ),
@@ -366,17 +380,26 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
     String? prefixText,
     String? suffixText,
     bool isNumber = false,
+    bool isDecimal = false, 
     int maxLines = 1,
     bool isRequired = true,
+    int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: isNumber
-            ? const TextInputType.numberWithOptions(decimal: true)
-            : TextInputType.text,
-        maxLines: maxLines,
+    child: TextFormField(
+      controller: controller,
+      maxLength: maxLength,
+      keyboardType: isNumber
+          ? TextInputType.numberWithOptions(decimal: isDecimal)
+          : TextInputType.text,
+      inputFormatters: inputFormatters ?? (isNumber 
+          ? (isDecimal 
+              ? [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))] 
+              : [FilteringTextInputFormatter.digitsOnly]) 
+          : null),
+      maxLines: maxLines,
         validator: (value) {
           if (isRequired && (value == null || value.trim().isEmpty)) {
             return '* Required';

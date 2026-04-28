@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class PaymentStatusView extends StatefulWidget {
   final String orderId;
@@ -63,39 +64,55 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
 
   Future<void> _syncFromDuitku() async {
     try {
-      final response = await http.post(
-        Uri.parse(
-            'https://backend-payment-kinarya.vercel.app/check-status'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'orderId': widget.orderId}),
-      ).timeout(const Duration(seconds: 10));
+      final baseUrl = dotenv.get('BACKEND_URL');
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/check-status'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'orderId': widget.orderId}),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         final duitkuStatus = body['statusCode'] as String?;
 
         if (duitkuStatus == '00') {
+          // Status Berhasil
           await FirebaseFirestore.instance
               .collection('orders')
               .doc(widget.orderId)
               .update({
-            'status': 'Paid',
-            'paidAt': FieldValue.serverTimestamp(),
-          });
-
-          final doc = await FirebaseFirestore.instance
+                'status': 'Paid',
+                'paidAt': FieldValue.serverTimestamp(),
+              });
+          _syncMessage = 'Status diperbarui: Pembayaran Berhasil';
+        } else if (duitkuStatus == '02') {
+          // Status Expired atau Cancelled
+          await FirebaseFirestore.instance
               .collection('orders')
               .doc(widget.orderId)
-              .get();
-          if (mounted && doc.exists) {
-            setState(() {
-              _order = doc.data();
-              _syncMessage = 'Status diperbarui dari Duitku';
-            });
-          }
+              .update({'status': 'Expired'});
+          _syncMessage = 'Status diperbarui: Pembayaran Kedaluwarsa';
+        } else {
+          _syncMessage = 'Status saat ini: $duitkuStatus';
+        }
+
+        final doc = await FirebaseFirestore.instance
+            .collection('orders')
+            .doc(widget.orderId)
+            .get();
+        if (mounted && doc.exists) {
+          setState(() {
+            _order = doc.data();
+          });
         }
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Sync Duitku Error: $e');
+      if (mounted) {
+        setState(() => _syncMessage = 'Gagal sinkronisasi status');
+      }
     } finally {
       if (mounted) setState(() => _isChecking = false);
     }
@@ -113,7 +130,7 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
       case 'Paid':
       case 'Shipped':
       case 'Delivered':
-        return 1.0; 
+        return 1.0;
       case 'Ordered':
         return 0.4;
       case 'Expired':
@@ -184,15 +201,15 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
       backgroundColor: const Color(0xFFF7F8FA),
       body: SafeArea(
         child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: _green),
-              )
+            ? const Center(child: CircularProgressIndicator(color: _green))
             : Column(
                 children: [
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 32),
+                        horizontal: 20,
+                        vertical: 32,
+                      ),
                       child: Column(
                         children: [
                           _Card(
@@ -202,15 +219,20 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                                   width: 56,
                                   height: 56,
                                   decoration: BoxDecoration(
-                                    color: _statusColor(status).withValues(alpha: 0.1),
+                                    color: _statusColor(
+                                      status,
+                                    ).withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
-                                    status == 'Paid' || status == 'Shipped' || status == 'Delivered'
+                                    status == 'Paid' ||
+                                            status == 'Shipped' ||
+                                            status == 'Delivered'
                                         ? Icons.check_circle_outline_rounded
-                                        : status == 'Expired' || status == 'Cancelled'
-                                            ? Icons.cancel_outlined
-                                            : Icons.history_rounded,
+                                        : status == 'Expired' ||
+                                              status == 'Cancelled'
+                                        ? Icons.cancel_outlined
+                                        : Icons.history_rounded,
                                     color: _statusColor(status),
                                     size: 32,
                                   ),
@@ -250,7 +272,11 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                                     padding: const EdgeInsets.only(top: 12),
                                     child: Text(
                                       _syncMessage!,
-                                      style: TextStyle(fontSize: 12, color: _green, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: _green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                               ],
@@ -274,7 +300,8 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                                 const SizedBox(height: 16),
                                 _DetailRow(
                                   label: 'Transaction ID',
-                                  value: '#${widget.orderId.substring(0, 12).toUpperCase()}',
+                                  value:
+                                      '#${widget.orderId.substring(0, 12).toUpperCase()}',
                                 ),
                                 _DetailRow(
                                   label: 'Amount',
@@ -320,7 +347,8 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                                         color: Colors.grey.shade100,
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                            color: Colors.grey.shade200),
+                                          color: Colors.grey.shade200,
+                                        ),
                                       ),
                                       child: Icon(
                                         _paymentIcon(paymentMethod),
@@ -363,7 +391,9 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                      border: Border(
+                        top: BorderSide(color: Colors.grey.shade200),
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -377,7 +407,9 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: _green,
                                   disabledBackgroundColor: Colors.grey.shade400,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
@@ -407,7 +439,9 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                           width: double.infinity,
                           child: OutlinedButton(
                             onPressed: () {
-                              Navigator.of(context).popUntil((route) => route.isFirst);
+                              Navigator.of(
+                                context,
+                              ).popUntil((route) => route.isFirst);
                             },
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -488,10 +522,7 @@ class _DetailRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
               ),
               Text(
                 value,

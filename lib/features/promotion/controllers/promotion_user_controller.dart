@@ -10,29 +10,35 @@ class PromotionUserController {
 
   Future<List<PromotionModel>> getActivePromotions() async {
     try {
-      final now = DateTime.now();
-
       final snapshot = await _firestore
           .collection('promotions')
-          .where('status', isEqualTo: 'active')
+          .where('status', whereIn: ['active', 'upcoming'])
           .get();
 
-      final activePromos = snapshot.docs
+      final promos = snapshot.docs
           .map((doc) => PromotionModel.fromMap(doc.id, doc.data()))
           .where((promo) {
-            return !promo.startDate.isAfter(now) && promo.endDate.isAfter(now);
+            return promo.isActive || promo.isStartingSoon;
           })
           .toList();
 
-      activePromos.sort((a, b) {
-        if (a.isEndingSoon && !b.isEndingSoon) return -1;
-        if (!a.isEndingSoon && b.isEndingSoon) return 1;
-        return b.startDate.compareTo(a.startDate);
+      promos.sort((a, b) {
+        // Prioritaskan yang sedang aktif
+        if (a.isActive && !b.isActive) return -1;
+        if (!a.isActive && b.isActive) return 1;
+        
+        // Lalu yang segera berakhir (jika aktif)
+        if (a.isActive && b.isActive) {
+          if (a.isEndingSoon && !b.isEndingSoon) return -1;
+          if (!a.isEndingSoon && b.isEndingSoon) return 1;
+        }
+        
+        return a.startDate.compareTo(b.startDate);
       });
 
-      return activePromos;
+      return promos;
     } catch (e) {
-      debugPrint('Error fetching active promotions: $e');
+      debugPrint('Error fetching promotions: $e');
       return [];
     }
   }

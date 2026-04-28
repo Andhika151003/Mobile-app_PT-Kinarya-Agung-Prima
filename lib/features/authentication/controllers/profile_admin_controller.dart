@@ -45,8 +45,8 @@ class AdminProfileController {
 
         if (profileImage != null) {
           final storageService = SupabaseStorageService();
-          final fileName = 'admin_profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          uploadedImageUrl = await storageService.uploadProductImage(profileImage, fileName);
+          final fileName = 'admin_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          uploadedImageUrl = await storageService.uploadAdminProfileImage(profileImage, fileName);
         }
 
         final updateData = {

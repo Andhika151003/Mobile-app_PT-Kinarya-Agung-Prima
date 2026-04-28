@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/product.dart';
 import '../controllers/product_admin_controller.dart';
 import '../views/form_edit_product_admin_view.dart';
@@ -25,6 +26,11 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -50,7 +56,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                   const SizedBox(height: 24),
                   
 
-                  _buildInfoRow('Regular Price', 'Rp ${_currentProduct.price}'),
+                  _buildInfoRow('Regular Price', currencyFormatter.format(_currentProduct.price)),
                   const SizedBox(height: 16),
                   _buildInfoRow('MOQ (Min. Order)', '${_currentProduct.moq ?? 1} units'),
                   const SizedBox(height: 16),
