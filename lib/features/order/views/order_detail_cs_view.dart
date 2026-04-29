@@ -31,7 +31,12 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
   }
 
   int get _currentStep {
-    if (_order.status == 'Cancelled') return -1;
+    if (_order.status == 'Cancelled' || _order.status == 'Expired') {
+      if (_order.deliveredAt != null) return 3;
+      if (_order.shippedAt != null) return 2;
+      if (_order.paidAt != null) return 1;
+      return 0;
+    }
     return _statusSteps.indexOf(_order.status);
   }
 
@@ -368,6 +373,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
             children: List.generate(_statusSteps.length, (i) {
               final isDone = _currentStep >= i;
               final isLast = i == _statusSteps.length - 1;
+              final isCancelledOrExpired = _order.status == 'Cancelled' || _order.status == 'Expired';
               return Expanded(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,12 +387,12 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                             height: 28,
                             decoration: BoxDecoration(
                               color: isDone
-                                  ? const Color(0xFF2E7D32)
+                                  ? (isCancelledOrExpired && i == _currentStep ? Colors.red : const Color(0xFF2E7D32))
                                   : const Color(0xFFE5E7EB),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              isDone ? Icons.check : (i == _currentStep + 1 && _order.status != 'Cancelled' ? Icons.access_time : Icons.circle),
+                              isDone ? (isCancelledOrExpired && i == _currentStep ? Icons.close : Icons.check) : (i == _currentStep + 1 && !isCancelledOrExpired ? Icons.access_time : Icons.circle),
                               color: isDone
                                   ? Colors.white
                                   : const Color(0xFFD1D5DB),
@@ -634,8 +640,10 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
 
     if (status == 'Delivered') {
       bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
-    } else if (status == 'Expired' || status == 'Cancelled') {
+    } else if (status == 'Cancelled') {
       bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Expired') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
     } else if (status == 'Ordered') {
       bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
     } else if (status == 'Shipped') {

@@ -186,6 +186,35 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             ),
             const SizedBox(height: 8),
             _buildPaymentInfoCard(order.paymentMethod, order.createdAt, transactionId, invoiceId),
+            if (order.status == 'Shipped') ...[
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    setState(() => _isLoading = true);
+                    final success = await _userController.receiveOrder(order.orderId);
+                    if (success && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Pesanan berhasil diterima!'), backgroundColor: _primaryColor),
+                      );
+                      await _fetchOrder();
+                    } else if (context.mounted) {
+                      setState(() => _isLoading = false);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Gagal memperbarui status.'), backgroundColor: Colors.red),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Pesanan Diterima', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -239,7 +268,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                       children: [
                         Container(width: 8, height: 8, decoration: BoxDecoration(color: isCancelledOrExpired ? Colors.red : (isPaid ? _primaryColor : Colors.orange), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Flexible(child: Text(isCancelledOrExpired ? 'Expired / Canceled' : (isPaid ? 'Paid' : 'Unpaid'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isCancelledOrExpired ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
+                        Flexible(child: Text(status == 'Cancelled' ? 'Canceled' : (status == 'Expired' ? 'Expired' : (isPaid ? 'Paid' : 'Unpaid')), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isCancelledOrExpired ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                   ],
@@ -255,7 +284,18 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
   Widget _buildStatusStepper(String currentStatus, OrderModel order) {
     final steps = ['Ordered', 'Paid', 'Shipped', 'Delivered'];
     int currentIndex = steps.indexOf(currentStatus);
-    if (currentIndex == -1) currentIndex = 0;
+    bool isCancelledOrExpired = currentStatus == 'Cancelled' || currentStatus == 'Expired';
+    if (currentIndex == -1) {
+      if (order.deliveredAt != null) {
+        currentIndex = 3;
+      } else if (order.shippedAt != null) {
+        currentIndex = 2;
+      } else if (order.paidAt != null) {
+        currentIndex = 1;
+      } else {
+        currentIndex = 0;
+      }
+    }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,15 +318,15 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             children: [
               Row(
                 children: [
-                  Expanded(child: Container(height: 3, color: index == 0 ? Colors.transparent : (isCompleted ? ((currentStatus == 'Cancelled' || currentStatus == 'Expired') ? Colors.red : _primaryColor) : Colors.grey.shade300))),
+                  Expanded(child: Container(height: 3, color: index == 0 ? Colors.transparent : (isCompleted ? _primaryColor : Colors.grey.shade300))),
                   Container(
                     width: 24, height: 24,
                     decoration: BoxDecoration(
-                      color: isCompleted ? ((currentStatus == 'Cancelled' || currentStatus == 'Expired') ? Colors.red : _primaryColor) : Colors.white,
+                      color: isCompleted ? (isCancelledOrExpired && index == currentIndex ? Colors.red : _primaryColor) : Colors.white,
                       shape: BoxShape.circle,
-                      border: Border.all(color: isCompleted ? ((currentStatus == 'Cancelled' || currentStatus == 'Expired') ? Colors.red : _primaryColor) : Colors.grey.shade300),
+                      border: Border.all(color: isCompleted ? (isCancelledOrExpired && index == currentIndex ? Colors.red : _primaryColor) : Colors.grey.shade300),
                     ),
-                    child: Icon((currentStatus == 'Cancelled' || currentStatus == 'Expired') && index == currentIndex ? Icons.close : Icons.check, size: 14, color: isCompleted ? Colors.white : Colors.grey.shade300),
+                    child: Icon(isCancelledOrExpired && index == currentIndex ? Icons.close : Icons.check, size: 14, color: isCompleted ? Colors.white : Colors.grey.shade300),
                   ),
                   Expanded(child: Container(height: 3, color: index == steps.length - 1 ? Colors.transparent : (isCompleted && index < currentIndex ? _primaryColor : Colors.grey.shade300))),
                 ],
@@ -517,8 +557,10 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
 
     if (status == 'Delivered') {
       bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
-    } else if (status == 'Expired' || status == 'Cancelled') {
+    } else if (status == 'Cancelled') {
       bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Expired') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
     } else if (status == 'Ordered') {
       bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
     } else if (status == 'Shipped') {

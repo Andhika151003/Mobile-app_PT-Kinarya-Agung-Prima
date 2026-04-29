@@ -57,4 +57,17 @@ class OrderUserController {
       return false;
     }
   }
+  
+  Future<bool> receiveOrder(String orderId) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'status': 'Delivered',
+        'deliveredAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e) {
+      debugPrint("Error updating order status: $e");
+      return false;
+    }
+  }
 }

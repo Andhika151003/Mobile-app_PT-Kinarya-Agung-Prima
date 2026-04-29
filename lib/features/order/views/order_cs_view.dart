@@ -22,6 +22,7 @@ class _OrderCsViewState extends State<OrderCsView> {
     {'label': 'Paid', 'value': 'Paid'},
     {'label': 'Delivered', 'value': 'Delivered'},
     {'label': 'Cancelled', 'value': 'Cancelled'},
+    {'label': 'Expired', 'value': 'Expired'},
   ];
 
   @override
@@ -174,8 +175,10 @@ class _OrderCsViewState extends State<OrderCsView> {
 
     if (order.status == 'Delivered') {
       statusBgColor = const Color(0xFFE6F4EA); statusColor = const Color(0xFF1E8E3E); statusIcon = Icons.check_circle_outline; statusLabel = 'Delivered';
-    } else if (order.status == 'Expired' || order.status == 'Cancelled') {
+    } else if (order.status == 'Cancelled') {
       statusBgColor = const Color(0xFFFCE8E6); statusColor = const Color(0xFFD93025); statusIcon = Icons.cancel_outlined; statusLabel = 'Cancelled';
+    } else if (order.status == 'Expired') {
+      statusBgColor = const Color(0xFFFCE8E6); statusColor = const Color(0xFFD93025); statusIcon = Icons.timer_off_outlined; statusLabel = 'Expired';
     } else if (order.status == 'Ordered') {
       statusBgColor = const Color(0xFFFEF7E0); statusColor = const Color(0xFFF9AB00); statusIcon = Icons.access_time; statusLabel = 'Ordered';
     } else if (order.status == 'Shipped') {

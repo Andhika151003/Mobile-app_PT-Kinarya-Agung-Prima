@@ -345,7 +345,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                       children: [
                         Container(width: 8, height: 8, decoration: BoxDecoration(color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : (status == 'Ordered' ? Colors.orange : _primaryColor), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Flexible(child: Text((status == 'Cancelled' || status == 'Expired') ? 'Expired / Canceled' : (status == 'Ordered' ? 'Unpaid' : 'Paid'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
+                        Flexible(child: Text(status == 'Cancelled' ? 'Canceled' : (status == 'Expired' ? 'Expired' : (status == 'Ordered' ? 'Unpaid' : 'Paid')), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                   ],
@@ -361,7 +361,18 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   Widget _buildStatusStepper(String currentStatus, OrderModel order) {
     final steps = ['Ordered', 'Paid', 'Shipped', 'Delivered'];
     int currentIndex = steps.indexOf(currentStatus);
-    if (currentIndex == -1) currentIndex = 0;
+    bool isCancelledOrExpired = currentStatus == 'Cancelled' || currentStatus == 'Expired';
+    if (currentIndex == -1) {
+      if (order.deliveredAt != null) {
+        currentIndex = 3;
+      } else if (order.shippedAt != null) {
+        currentIndex = 2;
+      } else if (order.paidAt != null) {
+        currentIndex = 1;
+      } else {
+        currentIndex = 0;
+      }
+    }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,12 +399,12 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                   Container(
                     width: 24, height: 24,
                     decoration: BoxDecoration(
-                      color: isCompleted ? (currentStatus == 'Cancelled' ? Colors.red : _primaryColor) : Colors.white, 
+                      color: isCompleted ? (isCancelledOrExpired && index == currentIndex ? Colors.red : _primaryColor) : Colors.white, 
                       shape: BoxShape.circle, 
-                      border: Border.all(color: isCompleted ? (currentStatus == 'Cancelled' ? Colors.red : _primaryColor) : Colors.grey.shade300)
+                      border: Border.all(color: isCompleted ? (isCancelledOrExpired && index == currentIndex ? Colors.red : _primaryColor) : Colors.grey.shade300)
                     ),
                     child: Icon(
-                      currentStatus == 'Cancelled' && index == currentIndex ? Icons.close : Icons.check, 
+                      isCancelledOrExpired && index == currentIndex ? Icons.close : Icons.check, 
                       size: 14, 
                       color: isCompleted ? Colors.white : Colors.grey.shade300
                     ),
@@ -557,8 +568,10 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
 
     if (status == 'Delivered') {
       bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
-    } else if (status == 'Expired' || status == 'Cancelled') {
+    } else if (status == 'Cancelled') {
       bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Expired') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
     } else if (status == 'Ordered') {
       bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
     } else if (status == 'Shipped') {
