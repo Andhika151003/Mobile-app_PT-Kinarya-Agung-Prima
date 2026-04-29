@@ -290,7 +290,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                               ? () {
                                   setState(() {
                                     _appliedPromo = p;
-                                    promoCode = p.sku;
+                                    promoCode = p.title;
                                   });
                                   Navigator.pop(context);
                                 }
