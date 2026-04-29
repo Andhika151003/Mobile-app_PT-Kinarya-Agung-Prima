@@ -237,10 +237,10 @@ class _OrderCsViewState extends State<OrderCsView> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (statusIcon != null) ...[
-                        Icon(statusIcon, size: 12, color: statusColor),
-                        const SizedBox(width: 4),
-                      ],
+                      ...[
+                      Icon(statusIcon, size: 12, color: statusColor),
+                      const SizedBox(width: 4),
+                    ],
                       Text(
                         statusLabel,
                         style: TextStyle(

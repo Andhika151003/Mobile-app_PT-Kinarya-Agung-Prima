@@ -108,9 +108,7 @@ class CheckoutController {
         }
       }
 
-      await batch.commit();
-
-      final String apiUrl = '${dotenv.get('BACKEND_URL')}/create-transaction';
+      final String apiUrl = '$_backendUrl/create-transaction';
 
       final response = await _client.post(
         Uri.parse(apiUrl),

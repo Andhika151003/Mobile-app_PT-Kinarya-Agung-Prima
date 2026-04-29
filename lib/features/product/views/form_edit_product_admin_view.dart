@@ -432,7 +432,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: DropdownButtonFormField<String>(
-        value: _selectedCategory,
+        initialValue: _selectedCategory,
         icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(

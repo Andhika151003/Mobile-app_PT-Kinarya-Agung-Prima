@@ -70,6 +70,7 @@ class CsUser {
     DateTime? createdAt,
     String? department,
     int? handledTickets,
+    bool? isActive,
   }) {
     return CsUser(
       id: id ?? this.id,

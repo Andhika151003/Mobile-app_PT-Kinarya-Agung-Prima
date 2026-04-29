@@ -67,9 +67,9 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
   }
 
   void _filterItems() {
-    final MapList = _allOrders.map((e) => e.toMap()).toList();
+    final mapList = _allOrders.map((e) => e.toMap()).toList();
     final filteredMaps = _adminController.filterAndSearchOrders(
-      MapList, 
+      mapList, 
       _selectedFilter == 'All Transactions' ? 'All' : _selectedFilter, 
       _searchQuery
     );

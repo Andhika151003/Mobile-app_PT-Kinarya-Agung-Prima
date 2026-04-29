@@ -228,16 +228,6 @@ class _ProductAdminViewState extends State<ProductAdminView> {
     );
   }
 
-  Widget _buildSectionHeader(String title, String actionText) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-        Text(actionText, style: TextStyle(color: primaryGreen, fontWeight: FontWeight.bold, fontSize: 13)),
-      ],
-    );
-  }
-
   Widget _buildProductStream() {
     return StreamBuilder<List<ProductModel>>(
       stream: _productController.getSupplyProducts(),

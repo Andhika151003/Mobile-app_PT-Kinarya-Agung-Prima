@@ -169,7 +169,7 @@ class OrderModel {
       total: total,
       items: items,
       status: status ?? this.status,
-      paymentUrl: paymentUrl ?? this.paymentUrl,
+      paymentUrl: paymentUrl ?? paymentUrl,
       createdAt: createdAt,
       paidAt: paidAt ?? this.paidAt,
       shippedAt: shippedAt ?? this.shippedAt,

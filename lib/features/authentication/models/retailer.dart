@@ -70,6 +70,7 @@ class RetailerUser {
     DateTime? createdAt,
     String? address,
     String? storeName,
+    bool? isActive,
   }) {
     return RetailerUser(
       id: id ?? this.id,

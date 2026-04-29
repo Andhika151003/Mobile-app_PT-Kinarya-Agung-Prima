@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../../order/controllers/order_user_controller.dart';
 import '../../order/models/order.dart';
 import '../controllers/complaint_retail_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,7 +24,6 @@ class ComplaintFormView extends StatefulWidget {
 
 class _ComplaintFormViewState extends State<ComplaintFormView> {
   final ComplaintUserController _controller = ComplaintUserController();
-  final OrderUserController _orderController = OrderUserController();
 
   bool _isLoading = false;
   bool _isLoadingOrders = false;
@@ -123,11 +121,14 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
   }
 
   Future<void> _submitComplaint() async {
-    if (_selectedIssueType == null ||
-        _descriptionController.text.trim().isEmpty) {
+    if (_currentOrderId == null || 
+        _currentProductName == null || 
+        _selectedIssueType == null ||
+        _descriptionController.text.trim().isEmpty ||
+        _attachedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Harap pilih jenis kendala dan isi deskripsi.'),
+          content: Text('Harap lengkapi semua data form (Produk, Kendala, Deskripsi, dan Lampiran).'),
           backgroundColor: Colors.red,
         ),
       );
@@ -310,7 +311,7 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                   _buildFormCard(
                     title: 'Pilih Jenis Kendala',
                     child: DropdownButtonFormField<String>(
-                      value: _selectedIssueType,
+                      initialValue: _selectedIssueType,
                       decoration: InputDecoration(
                         hintText: 'Pilih jenis kendala...',
                         hintStyle: TextStyle(
@@ -454,7 +455,7 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                     child: Column(
                       children: [
                         DropdownButtonFormField<String>(
-                          value:
+                          initialValue:
                               _purchasedProducts.any(
                                 (p) =>
                                     p['key'] ==
@@ -574,7 +575,7 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _submitComplaint,
+                onPressed: _isLoading ? null : _submitComplaint,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primaryColor,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -583,14 +584,20 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Kirim',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _isLoading 
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Text(
+                      'Kirim',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
               ),
             ),
           ),

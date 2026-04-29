@@ -17,7 +17,7 @@ class CartController extends ChangeNotifier {
   List<CartItem> get items => _items;
 
   double get subtotal =>
-      _items.fold(0, (sum, item) => sum + (item.price * item.quantity));
+      _items.fold(0, (acc, item) => acc + (item.price * item.quantity));
 
   final double shippingCost = 0.0;
   double get total => subtotal + shippingCost;

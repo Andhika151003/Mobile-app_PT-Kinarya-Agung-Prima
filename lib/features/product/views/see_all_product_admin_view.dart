@@ -156,7 +156,7 @@ class _AllProductAdminViewState extends State<AllProductAdminView> {
                     const Text('Sembunyikan Stok Menipis', style: TextStyle(fontSize: 12)),
                     Switch(
                       value: _inStockOnly,
-                      activeColor: primaryGreen,
+                      activeThumbColor: primaryGreen,
                       onChanged: (val) {
                         setState(() => _inStockOnly = val);
                       },

@@ -65,6 +65,7 @@ class AdminUser {
     String? phoneNumber,
     DateTime? createdAt,
     int? accessLevel,
+    bool? isActive,
   }) {
     return AdminUser(
       id: id ?? this.id,

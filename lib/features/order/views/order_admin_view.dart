@@ -62,8 +62,8 @@ class _OrderAdminViewState extends State<OrderAdminView> {
   void _applySearch(String query) {
     setState(() {
       _searchQuery = query;
-      final MapList = _allOrders.map((e) => e.toMap()).toList();
-      final filteredMaps = _adminController.filterAndSearchOrders(MapList, 'All Transactions', query);
+      final mapList = _allOrders.map((e) => e.toMap()).toList();
+      final filteredMaps = _adminController.filterAndSearchOrders(mapList, 'All Transactions', query);
       _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
       _currentPage = 1;
     });
@@ -314,7 +314,9 @@ class _Pagination extends StatelessWidget {
     int start = (currentPage - 2).clamp(1, totalPages);
     int end = (start + 4).clamp(1, totalPages);
     start = (end - 4).clamp(1, totalPages);
-    for (int i = start; i <= end; i++) pages.add(i);
+    for (int i = start; i <= end; i++) {
+      pages.add(i);
+    }
 
     return Container(
       color: Colors.white,

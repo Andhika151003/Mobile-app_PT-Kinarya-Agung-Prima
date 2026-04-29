@@ -842,15 +842,11 @@ class _CheckoutViewState extends State<CheckoutView> {
                       discountAmount: discountAmount,
                     );
 
-                    if (!mounted) return;
+                    if (!context.mounted) return;
                     setState(() => _isProcessing = false);
 
-                    final navigator = Navigator.of(context);
-                    final messenger = ScaffoldMessenger.of(context);
-
                     if (result.containsKey('error')) {
-                      if (!context.mounted) return;
-                      messenger.showSnackBar(
+                      ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(result['error']!),
                           backgroundColor: Colors.red,
@@ -858,8 +854,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                         ),
                       );
                     } else {
-                      if (!context.mounted) return;
-                      await navigator.push<bool>(
+                      await Navigator.of(context).push<bool>(
                         MaterialPageRoute(
                           builder: (_) => PaymentWebView(
                             paymentUrl: result['paymentUrl']!,
@@ -870,7 +865,7 @@ class _CheckoutViewState extends State<CheckoutView> {
 
                       if (!context.mounted) return;
                       _cartController.clearCart();
-                      navigator.pushReplacement(
+                      Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
                           builder: (_) =>
                               PaymentStatusView(orderId: result['orderId']!),
