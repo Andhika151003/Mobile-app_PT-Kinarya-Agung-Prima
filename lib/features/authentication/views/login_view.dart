@@ -5,6 +5,7 @@ import '../controllers/login_controller.dart';
 import '../../shared/main_navigation_user.dart';
 import '../../shared/main_navigation_cs.dart';
 import 'register_view.dart';
+import 'forgot_password_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -297,10 +298,10 @@ class _LoginViewState extends State<LoginView> {
                         label: 'btn_login_forgot_password',
                         child: TextButton(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Fitur forgot password akan segera hadir'),
-                                duration: Duration(seconds: 2),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ForgotPasswordView(),
                               ),
                             );
                           },
