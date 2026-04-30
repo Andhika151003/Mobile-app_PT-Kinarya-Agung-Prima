@@ -85,26 +85,28 @@ class RegisterController extends ChangeNotifier {
     required String email,
     required String phoneNumber,
     required String address,
+    required String businessType,
     required String password,
   }) async {
     _setLoading(true);
     _clearError();
 
     try {
-      // 1. Buat user di Firebase Authentication
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
 
-      // 2. Simpan data user ke Firestore
+      await userCredential.user!.sendEmailVerification();
+
       await _firestore.collection('users').doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
         'fullName': fullName.trim(),
         'email': email.trim(),
         'phoneNumber': phoneNumber.trim(),
         'address': address.trim(),
-        'role': 'retailer', // Hanya retailer yang bisa registrasi
+        'businessType': businessType,
+        'role': 'retailer',
         'isActive': true,
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -122,6 +124,12 @@ class RegisterController extends ChangeNotifier {
           break;
         case 'weak-password':
           message = 'Password must be at least 8 characters';
+          break;
+        case 'too-many-requests':
+          message = 'Firebase is blocking requests due to too many attempts. Please try again later.';
+          break;
+        case 'network-request-failed':
+          message = 'Network error. Please check your internet connection.';
           break;
         default:
           message = 'Registration failed: ${e.message}';

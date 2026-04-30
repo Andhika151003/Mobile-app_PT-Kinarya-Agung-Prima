@@ -23,6 +23,18 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
 
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isEmailVerified = false;
+  bool _isSendingVerification = false;
+  String _currentEmail = '';
+
+  final List<String> _businessTypes = [
+    'Pet Shop',
+    'Skincare',
+    'UD (Usaha Dagang)',
+    'Toko Kelontong / Perseorangan',
+    'Lainnya'
+  ];
+  String? _selectedBusinessType;
 
   final RetailProfileController _controller = RetailProfileController();
   File? _newProfileImage;
@@ -64,7 +76,13 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
             _nameController.text = data['fullName'] ?? '';
             _locationController.text = data['address'] ?? '';
             _contactController.text = data['phoneNumber'] ?? '';
-            _typeController.text = data['businessType'] ?? 'Retail Store';
+            _currentEmail = data['email'] ?? '';
+            _selectedBusinessType = data['businessType'];
+            _isEmailVerified = user.emailVerified; 
+            // Fallback jika tidak ada di list
+            if (_selectedBusinessType != null && !_businessTypes.contains(_selectedBusinessType)) {
+               _selectedBusinessType = 'Lainnya';
+            }
             _existingPhotoUrl = data['photoUrl'];
             
             _isLoading = false;
@@ -87,7 +105,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
         storeName: _nameController.text.trim(),
         location: _locationController.text.trim(),
         contact: _contactController.text.trim(),
-        businessType: _typeController.text.trim(),
+        businessType: _selectedBusinessType ?? 'Lainnya',
         profileImage: _newProfileImage,
       );
 
@@ -105,6 +123,36 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _sendVerificationEmail() async {
+    setState(() => _isSendingVerification = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await user.sendEmailVerification();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Verification link sent to your email!'),
+              backgroundColor: Color(0xFF458833),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMsg = e.toString();
+        if (errorMsg.contains('too-many-requests')) {
+          errorMsg = 'Please wait a moment before trying again.';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send link: $errorMsg')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSendingVerification = false);
     }
   }
 
@@ -134,10 +182,43 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                     ),
                     const SizedBox(height: 20),
                     
-                    _buildTextField('Business Name', 'Enter Your Name', _nameController),
-                    _buildTextField('Business Type', 'Enter Your Business Type', _typeController),
-                    _buildTextField('Location', 'Enter Your Location', _locationController, maxLines: 3),
-                    _buildTextField('Contact', 'Enter Your Number', _contactController, isNumber: true),
+                    _buildEmailDisplay(),
+                    const SizedBox(height: 16),
+                    _buildTextField('Business Name', 'Enter Your Name', _nameController, semanticLabel: 'input_edit_profile_name'),
+                    
+                    // Business Type Dropdown
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        'Business Type',
+                        style: TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Semantics(
+                        label: 'input_edit_profile_business_type',
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedBusinessType,
+                          items: _businessTypes.map((type) {
+                            return DropdownMenuItem(
+                              value: type,
+                              child: Text(type, style: const TextStyle(fontSize: 14)),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedBusinessType = value;
+                            });
+                          },
+                          decoration: _inputDecorationEdit('Select business type'),
+                          validator: (value) => value == null ? 'Please select business type' : null,
+                        ),
+                      ),
+                    ),
+
+                    _buildTextField('Location', 'Enter Your Location', _locationController, maxLines: 3, semanticLabel: 'input_edit_profile_location'),
+                    _buildTextField('Contact', 'Enter Your Number', _contactController, isNumber: true, semanticLabel: 'input_edit_profile_contact'),
                     
                     const SizedBox(height: 32),
                     _buildActionButtons(context, primaryGreen),
@@ -231,7 +312,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
     );
   }
 
-  Widget _buildTextField(String label, String hintText, TextEditingController controller, {bool isNumber = false, int maxLines = 1}) {
+  Widget _buildTextField(String label, String hintText, TextEditingController controller, {bool isNumber = false, int maxLines = 1, String? semanticLabel}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -246,40 +327,19 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
             ),
           ),
           const SizedBox(height: 8),
-          TextFormField(
-            controller: controller,
-            keyboardType: isNumber ? TextInputType.number : (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
-            maxLines: maxLines,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return '* $label is required';
-              }
-              return null;
-            },
-            decoration: InputDecoration(
-              hintText: hintText,
-              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF458833)),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.red),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.red, width: 2),
-              ),
+          Semantics(
+            label: semanticLabel,
+            child: TextFormField(
+              controller: controller,
+              keyboardType: isNumber ? TextInputType.number : (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
+              maxLines: maxLines,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return '* $label is required';
+                }
+                return null;
+              },
+              decoration: _inputDecorationEdit(hintText),
             ),
           ),
         ],
@@ -287,6 +347,111 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
     );
   }
 
+  InputDecoration _inputDecorationEdit(String hintText) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xFF458833)),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Colors.red, width: 2),
+      ),
+    );
+  }
+
+
+  Widget _buildEmailDisplay() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Email Address',
+          style: TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _currentEmail,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _isEmailVerified ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _isEmailVerified ? Icons.verified : Icons.warning_amber_rounded,
+                      size: 14,
+                      color: _isEmailVerified ? const Color(0xFF458833) : Colors.orange.shade800,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _isEmailVerified ? 'Verified' : 'Not Verified',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: _isEmailVerified ? const Color(0xFF458833) : Colors.orange.shade800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (!_isEmailVerified) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _isSendingVerification ? null : _sendVerificationEmail,
+              icon: _isSendingVerification 
+                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF458833)))
+                  : const Icon(Icons.send_rounded, size: 16, color: Color(0xFF458833)),
+              label: Text(
+                _isSendingVerification ? 'Sending...' : 'Send Verification Link',
+                style: const TextStyle(color: Color(0xFF458833), fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                backgroundColor: const Color(0xFFE8F5E9),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 
   Widget _buildActionButtons(BuildContext context, Color primaryGreen) {
     return Row(

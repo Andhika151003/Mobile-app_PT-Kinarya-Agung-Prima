@@ -19,9 +19,11 @@ class _ProfileUserViewState extends State<ProfileUserView> {
   String location = 'Loading...';
   String contact = 'Loading...';
   String businessType = 'Loading...';
+  String email = 'Loading...';
   String storeId = '-';
   int totalOrders = 0; 
   double totalSpent = 0;
+  bool isEmailVerified = false;
   bool isActive = true;
   String? photoUrl;
   bool isLoading = true;
@@ -43,9 +45,11 @@ class _ProfileUserViewState extends State<ProfileUserView> {
           location = data['address'] ?? 'No Location';
           contact = data['phoneNumber'] ?? 'No Contact';
           businessType = data['businessType'] ?? 'No Business Type';
+          email = data['email'] ?? 'No Email';
           storeId = '#KNY${data['uid'].substring(0, 6).toUpperCase()}';
           isActive = data['isActive'] ?? true; 
           photoUrl = data['photoUrl'];
+          isEmailVerified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
           
           // Stats dari controller
           totalOrders = stats['totalOrders'] ?? 0;
@@ -250,10 +254,11 @@ class _ProfileUserViewState extends State<ProfileUserView> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Retail Store',
+            businessType,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.blueGrey.shade600,
+              fontWeight: FontWeight.w600,
+              color: isEmailVerified ? const Color(0xFF458833) : Colors.orange.shade700,
             ),
           ),
           const SizedBox(height: 16),
@@ -304,6 +309,8 @@ class _ProfileUserViewState extends State<ProfileUserView> {
         ),
         const SizedBox(height: 16),
         _buildDetailRow('Store ID', storeId),
+        const SizedBox(height: 16),
+        _buildDetailRow('Email', email),
         const SizedBox(height: 16),
         _buildDetailRow('Business Type', businessType),
         const SizedBox(height: 16),

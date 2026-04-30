@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../controllers/register_controller.dart';
 import 'login_view.dart';
+import 'verify_email_view.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -20,6 +21,15 @@ class _RegisterViewState extends State<RegisterView> {
   final _addressController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  String? _selectedBusinessType;
+  final List<String> _businessTypes = [
+    'Pet Shop',
+    'Skincare',
+    'UD (Usaha Dagang)',
+    'Toko Kelontong / Perseorangan',
+    'Lainnya'
+  ];
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -67,7 +77,7 @@ class _RegisterViewState extends State<RegisterView> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); // tutup dialog
+                    Navigator.pop(context);
                     // Navigasi ke halaman Login
                     Navigator.pushReplacement(
                       context,
@@ -111,11 +121,17 @@ class _RegisterViewState extends State<RegisterView> {
         email: _emailController.text,
         phoneNumber: _phoneController.text,
         address: _addressController.text,
+        businessType: _selectedBusinessType ?? 'Lainnya',
         password: _passwordController.text,
       );
 
       if (success && mounted) {
-        _showSuccessDialog(context);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const VerifyEmailView(),
+          ),
+        );
       } else if (mounted && controller.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -234,6 +250,42 @@ class _RegisterViewState extends State<RegisterView> {
                         decoration: _inputDecoration('Enter your full name'),
                         validator: controller.validateFullName,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Business Type Field (Dropdown)
+                    const Text(
+                      'Business Type',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Inter',
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Semantics(
+                      label: 'input_register_business_type',
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedBusinessType,
+                        items: _businessTypes.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(type, style: const TextStyle(fontSize: 14, fontFamily: 'Inter')),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedBusinessType = value;
+                          });
+                        },
+                        decoration: _inputDecoration('Select business type'),
+                        validator: (value) => value == null ? 'Please select your business type' : null,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        icon: const Icon(Icons.keyboard_arrow_down),
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     const SizedBox(height: 20),
