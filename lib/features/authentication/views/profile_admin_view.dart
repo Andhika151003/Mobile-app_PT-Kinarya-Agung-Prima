@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import 'login_view.dart';
 import 'form_edit_admin_view.dart';
 import '../controllers/profile_admin_controller.dart';
+import '../../promotion/views/promotion_admin_view.dart';
+import '../../complaint/views/complaint_history_admin_view.dart';
+import '../../admin/view/admin_cs_view.dart';
 
 class ProfileAdminView extends StatefulWidget {
   const ProfileAdminView({super.key});
@@ -12,16 +14,15 @@ class ProfileAdminView extends StatefulWidget {
   State<ProfileAdminView> createState() => _ProfileAdminViewState();
 }
 
-class _ProfileAdminViewState extends State<ProfileAdminView> {
+class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final AdminProfileController _adminController = AdminProfileController();
   String adminName = 'Loading...';
   String location = 'Loading...';
   String contact = 'Loading...';
-  String bankAccount = 'Loading...';
-  String bankName = 'Loading...';
   String distributorId = '-';
-  int monthlySales = 0; 
-  double totalRevenue = 0; 
   String? photoUrl;
 
   bool isLoading = true;
@@ -35,22 +36,16 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
   Future<void> _fetchAdminData() async {
     try {
       final data = await _adminController.getAdminProfile();
-      final stats = await _adminController.getAdminStats();
 
       if (data != null && mounted) {
         setState(() {
           adminName = data['fullName'] ?? 'No Name';
           location = data['address'] ?? 'No Location';
           contact = data['phoneNumber'] ?? 'No Contact';
-          bankAccount = data['bankAccount'] ?? 'Not Set';
-          bankName = data['bankName'] ?? 'Not Set';
           distributorId = '#DS${data['uid'].substring(0, 6).toUpperCase()}';
           photoUrl = data['photoUrl'];
 
-          // Stats dari controller
-          monthlySales = stats['monthlySales'] ?? 0;
-          totalRevenue = stats['totalRevenue'] ?? 0.0;
-
+          // Stats dari controller (Data tidak lagi ditampilkan di profile)
           isLoading = false;
         });
       } else {
@@ -64,8 +59,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-
+    super.build(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(context),
@@ -81,18 +75,12 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
                   const SizedBox(height: 40),
                   _buildBusinessDetails(),
                   const SizedBox(height: 32),
-                  _buildStatsCard(
-                    icon: Icons.inventory_2_outlined,
-                    title: 'Monthly Sales',
-                    value: '$monthlySales Units',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildStatsCard(
-                    icon: Icons.account_balance_wallet_outlined,
-                    title: 'Total Revenue',
-                    value: currencyFormat.format(totalRevenue),
-                  ),
-                  const SizedBox(height: 40),
+                  _buildComplaintHistoryCard(context),
+                  const SizedBox(height: 24),
+                   _buildManagePromotionCard(context),
+                   const SizedBox(height: 24),
+                   _buildStaffManagementCard(context),
+                   const SizedBox(height: 40),
                   _buildLogoutButton(context),
                   const SizedBox(height: 20),
                 ],
@@ -218,20 +206,8 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
+      automaticallyImplyLeading: false,
       centerTitle: true,
-      leading: Center(
-        child: Container(
-          margin: const EdgeInsets.only(left: 20),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.black45),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-      ),
       title: const Text(
         'My Profile',
         style: TextStyle(
@@ -244,75 +220,271 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
   }
 
   Widget _buildProfileHeader() {
-    return Center(
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF458833), width: 2),
-            ),
-            child: CircleAvatar(
-              radius: 44,
-              backgroundColor: const Color(0xFFE8F5E9),
-              backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
-                  ? NetworkImage(photoUrl!)
-                  : null,
-              child: photoUrl == null || photoUrl!.isEmpty
-                  ? const Icon(Icons.storefront_outlined, size: 40, color: Color(0xFF458833))
-                  : null,
-            ),
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF458833), width: 1.5),
           ),
-          const SizedBox(height: 16),
-          Text(
-            adminName,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+          child: CircleAvatar(
+            radius: 35,
+            backgroundColor: const Color(0xFFE8F5E9),
+            backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
+                ? NetworkImage(photoUrl!)
+                : null,
+            child: photoUrl == null || photoUrl!.isEmpty
+                ? const Icon(Icons.storefront_outlined, size: 30, color: Color(0xFF458833))
+                : null,
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Distributor',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.blueGrey.shade600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ElevatedButton(
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const FormProfileAdminView()),
-                  );
-                  if (result == true) {
-                    setState(() => isLoading = true);
-                    _fetchAdminData();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF458833),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  minimumSize: const Size(70, 30),
-                  padding: EdgeInsets.zero,
+              Text(
+                adminName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
-                child: const Text(
-                  'Edit',
-                  style: TextStyle(color: Colors.white, fontSize: 13),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Distributor',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.blueGrey.shade600,
                 ),
               ),
             ],
           ),
-        ],
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FormProfileAdminView()),
+            );
+            if (result == true) {
+              setState(() => isLoading = true);
+              _fetchAdminData();
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF458833),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+            minimumSize: const Size(60, 30),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+          ),
+          child: const Text(
+            'Edit',
+            style: TextStyle(color: Colors.white, fontSize: 13),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildComplaintHistoryCard(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminComplaintHistoryView()),
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFD32F2F).withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD32F2F).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.feedback_outlined, color: Color(0xFFD32F2F), size: 24),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Riwayat Komplain',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Lihat semua laporan kendala dari pelanggan',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManagePromotionCard(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const PromotionAdminView()),
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF458833).withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF458833).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.card_giftcard_outlined, color: Color(0xFF458833), size: 24),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Manage Promotions',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Create and manage your discount codes',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaffManagementCard(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminCsView()),
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border:
+              Border.all(color: const Color(0xFF1976D2).withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1976D2).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.support_agent_outlined,
+                  color: Color(0xFF1976D2), size: 24),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Staff Management',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Manage your customer service team',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
@@ -335,10 +507,6 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
         _buildDetailRow('Location', location),
         const SizedBox(height: 16),
         _buildDetailRow('Contact', contact),
-        const SizedBox(height: 16),
-        _buildDetailRow('Bank Account', bankAccount),
-        const SizedBox(height: 16),
-        _buildDetailRow('Bank Name', bankName),
       ],
     );
   }
@@ -364,46 +532,6 @@ class _ProfileAdminViewState extends State<ProfileAdminView> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildStatsCard({required IconData icon, required String title, required String value}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-            spreadRadius: 2,
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade50),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: const Color(0xFF458833), size: 18),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade600, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
-          ),
-        ],
-      ),
     );
   }
 

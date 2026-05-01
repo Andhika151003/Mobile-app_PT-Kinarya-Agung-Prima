@@ -4,6 +4,7 @@ import '../controllers/promotion_admin_controller.dart';
 import '../models/promotion.dart';
 import 'form_promotion_admin_view.dart';
 import 'promotion_detail_admin_view.dart';
+import '../../shared/widgets/shimmer_loading.dart';
 
 class PromotionAdminView extends StatefulWidget {
   const PromotionAdminView({super.key});
@@ -53,8 +54,10 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
         body: Consumer<PromotionAdminController>(
           builder: (context, controller, child) {
             if (controller.isLoading && controller.promotions.isEmpty) {
-              return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: 5,
+                itemBuilder: (context, index) => const PromotionCardShimmer(),
               );
             }
 

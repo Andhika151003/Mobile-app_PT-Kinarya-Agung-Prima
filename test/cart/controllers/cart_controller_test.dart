@@ -25,6 +25,7 @@ void main() {
         minOrder: 1,
         stockLimit: 10,
         quantity: 2,
+        category: 'Test Category',
       );
 
       expect(cartController.items.length, equals(1));
@@ -43,6 +44,7 @@ void main() {
         minOrder: 1,
         stockLimit: 10,
         quantity: 2,
+        category: 'Test Category',
       );
 
       cartController.addToCart(
@@ -54,6 +56,7 @@ void main() {
         minOrder: 1,
         stockLimit: 10,
         quantity: 3,
+        category: 'Test Category',
       );
 
       expect(cartController.items.length, equals(1));
@@ -70,6 +73,7 @@ void main() {
         minOrder: 1,
         stockLimit: 5,
         quantity: 3,
+        category: 'Test Category',
       );
 
       cartController.addToCart(
@@ -81,6 +85,7 @@ void main() {
         minOrder: 1,
         stockLimit: 5,
         quantity: 4,
+        category: 'Test Category',
       );
 
       expect(cartController.items[0].quantity, equals(5));
@@ -96,6 +101,7 @@ void main() {
         minOrder: 1,
         stockLimit: 10,
         quantity: 1,
+        category: 'Test Category',
       );
 
       cartController.incrementQty('p1');
@@ -112,6 +118,7 @@ void main() {
         minOrder: 2,
         stockLimit: 10,
         quantity: 2,
+        category: 'Test Category',
       );
 
       cartController.decrementQty('p1');
@@ -128,6 +135,7 @@ void main() {
         minOrder: 1,
         stockLimit: 10,
         quantity: 1,
+        category: 'Test Category',
       );
 
       cartController.removeItem('p1');
@@ -144,6 +152,7 @@ void main() {
         minOrder: 1,
         stockLimit: 10,
         quantity: 1,
+        category: 'Test Category',
       );
 
       // shippingCost adalah 9.99

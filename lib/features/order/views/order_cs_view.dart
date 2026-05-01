@@ -70,6 +70,22 @@ class _OrderCsViewState extends State<OrderCsView> {
                 );
               },
             ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.sort, color: Colors.black87),
+              onSelected: (String value) {
+                _controller.setSort(value);
+              },
+              itemBuilder: (BuildContext context) => [
+                const PopupMenuItem(value: 'Newest', child: Text('Newest')),
+                const PopupMenuItem(value: 'Oldest', child: Text('Oldest')),
+                const PopupMenuItem(
+                    value: 'Status', child: Text('Status Priority')),
+                const PopupMenuItem(
+                    value: 'Price (High-Low)', child: Text('Price: High to Low')),
+                const PopupMenuItem(
+                    value: 'Price (Low-High)', child: Text('Price: Low to High')),
+              ],
+            ),
           ],
         ),
         body: Consumer<OrderCsController>(

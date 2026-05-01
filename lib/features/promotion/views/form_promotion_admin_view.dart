@@ -558,7 +558,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new,
-              color: Color(0xFF1F2937), size: 18),
+              color: Color(0xFF1F2937), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -569,6 +569,40 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             color: Color(0xFF1F2937),
           ),
         ),
+        actions: [
+          if (isEditing && !_isLoading)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red, size: 22),
+              onPressed: _deletePromotion,
+            ),
+          if (_isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.only(right: 20),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Color(0xFF2E7D32)),
+                ),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton(
+                onPressed: _savePromotion,
+                child: Text(
+                  isEditing ? 'Update' : 'Save',
+                  style: const TextStyle(
+                    color: Color(0xFF2E7D32),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         controller: _scrollController,
@@ -1174,90 +1208,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                         ),
             ],
 
-            const SizedBox(height: 28),
-
-            // ── Tombol Aksi ───────────────────────────────────
-            if (!isEditing)
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _savePromotion,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2))
-                      : const Text('Create Promotion',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white)),
-                ),
-              )
-            else
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed:
-                            _isLoading ? null : _savePromotion,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2E7D32),
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2))
-                            : const Text('Update Promotion',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed:
-                            _isLoading ? null : _deletePromotion,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color(0xFFF3F4F6),
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        child: const Text('Delete Promotion',
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF374151))),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

@@ -2,31 +2,74 @@ import 'package:flutter/material.dart';
 import '../dashboard/views/dashboard_admin_view.dart';
 import '../product/views/product_admin_view.dart';
 import '../order/views/order_admin_view.dart';
-import '../promotion/views/promotion_admin_view.dart';
+import '../statistic/views/admin_statistic_view.dart';
+import '../statistic/controllers/statistic_controller.dart';
+import '../authentication/views/profile_admin_view.dart';
+import 'package:provider/provider.dart';
 
 class MainNavigationAdmin extends StatefulWidget {
   const MainNavigationAdmin({super.key});
 
   @override
-  State<MainNavigationAdmin> createState() => _MainNavigationAdminState();
+  State<MainNavigationAdmin> createState() => MainNavigationAdminState();
+
+  static MainNavigationAdminState? of(BuildContext context) {
+    return context.findAncestorStateOfType<MainNavigationAdminState>();
+  }
 }
 
-class _MainNavigationAdminState extends State<MainNavigationAdmin> {
+class MainNavigationAdminState extends State<MainNavigationAdmin> {
   int _selectedIndex = 0;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void setIndex(int index) {
+    if (_selectedIndex == index) return;
+    setState(() {
+      _selectedIndex = index;
+    });
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
 
   final List<Widget> _pages = [
     const DashboardAdminView(),
     const OrderAdminView(),
     const ProductAdminView(),
-    const Center(child: Text('Halaman Analytics')),
-    const PromotionAdminView(),
+    const AdminStatisticView(),
+    const ProfileAdminView(),
   ];
 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: ChangeNotifierProvider(
+        create: (_) => AdminStatisticController()..fetchAnalyticsData(),
+        child: PageView(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          children: _pages,
+        ),
+      ),
       bottomNavigationBar: Semantics(
         label: 'main_navigation_bar',
         child: BottomNavigationBar(
@@ -37,9 +80,7 @@ class _MainNavigationAdminState extends State<MainNavigationAdmin> {
           selectedFontSize: 11,
           unselectedFontSize: 11,
           onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
+            setIndex(index);
           },
           items: [
             BottomNavigationBarItem(
@@ -59,8 +100,8 @@ class _MainNavigationAdminState extends State<MainNavigationAdmin> {
               label: 'Analytics',
             ),
             BottomNavigationBarItem(
-              icon: _buildNavIcon(Icons.card_giftcard_outlined, 4),
-              label: 'Promotions',
+              icon: _buildNavIcon(Icons.person_outline, 4),
+              label: 'Profile',
             ),
           ],
         ),

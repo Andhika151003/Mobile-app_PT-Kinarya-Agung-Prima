@@ -25,6 +25,7 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
   final List<String> _filters = ['All Transactions', 'Today', 'This Week'];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _selectedSort = 'Newest';
 
   @override
   void initState() {
@@ -76,7 +77,38 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
     
     setState(() {
       _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
+      _applySortInternal();
     });
+  }
+
+  void _applySortInternal() {
+    if (_selectedSort == 'Newest') {
+      _filteredOrders.sort((a, b) =>
+          (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Oldest') {
+      _filteredOrders.sort((a, b) =>
+          (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Status') {
+      final priority = {
+        'Ordered': 0,
+        'Paid': 1,
+        'Shipped': 2,
+        'Delivered': 3,
+        'Cancelled': 4,
+        'Expired': 5,
+      };
+      _filteredOrders.sort((a, b) {
+        int pA = priority[a.status] ?? 99;
+        int pB = priority[b.status] ?? 99;
+        if (pA != pB) return pA.compareTo(pB);
+        return (b.createdAt ?? DateTime(0))
+            .compareTo(a.createdAt ?? DateTime(0));
+      });
+    } else if (_selectedSort == 'Price (High-Low)') {
+      _filteredOrders.sort((a, b) => b.total.compareTo(a.total));
+    } else if (_selectedSort == 'Price (Low-High)') {
+      _filteredOrders.sort((a, b) => a.total.compareTo(b.total));
+    }
   }
 
   @override
@@ -107,44 +139,78 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Search Bar ──────────────────────────────────────────────
-          Padding(
+           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Container(
-              height: 46,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: TextField(
-                controller: _searchController,
-                style: const TextStyle(fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'Search ID, Name, or Product...',
-                  hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade400),
-                  prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  suffixIcon: _searchQuery.isNotEmpty 
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                            _filterItems();
-                          });
-                        },
-                      )
-                    : null,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Search ID, Name, or Product...',
+                        hintStyle:
+                            TextStyle(fontSize: 14, color: Colors.grey.shade400),
+                        prefixIcon:
+                            const Icon(Icons.search, size: 20, color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _searchQuery = '';
+                                    _filterItems();
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                          _filterItems();
+                        });
+                      },
+                    ),
+                  ),
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                    _filterItems();
-                  });
-                },
-              ),
+                const SizedBox(width: 8),
+                Container(
+                  height: 46,
+                  width: 46,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(Icons.sort, color: Colors.black87),
+                    onSelected: (String value) {
+                      setState(() {
+                        _selectedSort = value;
+                        _applySortInternal();
+                      });
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      const PopupMenuItem(value: 'Newest', child: Text('Newest')),
+                      const PopupMenuItem(value: 'Oldest', child: Text('Oldest')),
+                      const PopupMenuItem(value: 'Status', child: Text('Status Priority')),
+                      const PopupMenuItem(value: 'Price (High-Low)', child: Text('Price: High to Low')),
+                      const PopupMenuItem(value: 'Price (Low-High)', child: Text('Price: Low to High')),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
 

@@ -18,7 +18,6 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
   final currencyFormatter =
       NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
-  // Status step index
   static const _statusSteps = ['Ordered', 'Paid', 'Shipped', 'Delivered'];
 
   bool _isUpdating = false;
@@ -68,8 +67,6 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
     ];
     return months[m];
   }
-
-  // Status colors removed in favor of _buildStatusBadge
 
   Future<void> _fetchOrder() async {
     final updated = await _controller.getOrderById(_order.orderId);
@@ -590,6 +587,14 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
           const Divider(color: Color(0xFFF3F4F6)),
           const SizedBox(height: 8),
           _summaryRow('Subtotal', currencyFormatter.format(_order.subtotal)),
+          if (_order.discountAmount > 0) ...[
+            const SizedBox(height: 4),
+            _summaryRow(
+              'Discount', 
+              '-${currencyFormatter.format(_order.discountAmount)}',
+              valueColor: Colors.red.shade600,
+            ),
+          ],
           const SizedBox(height: 4),
           _summaryRow(
               'Pajak (11%)', currencyFormatter.format(_order.tax)),
@@ -621,7 +626,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
     );
   }
 
-  Widget _summaryRow(String label, String value) {
+  Widget _summaryRow(String label, String value, {Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -630,7 +635,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                 fontSize: 13, color: Color(0xFF6B7280), fontFamily: 'Inter')),
         Text(value,
             style:
-                const TextStyle(fontSize: 13, fontFamily: 'Inter')),
+                TextStyle(fontSize: 13, fontFamily: 'Inter', color: valueColor ?? Colors.black)),
       ],
     );
   }

@@ -261,7 +261,6 @@ class _CheckoutViewState extends State<CheckoutView> {
                       return const Center(child: CircularProgressIndicator());
                     }
                     final allPromos = snapshot.data ?? [];
-                    // Only show promos that are currently active (not upcoming)
                     final promos = allPromos.where((p) => p.isActive).toList();
                     
                     if (promos.isEmpty) {
@@ -286,22 +285,43 @@ class _CheckoutViewState extends State<CheckoutView> {
                         }
 
                         return InkWell(
-                          onTap: isEligible
-                              ? () {
-                                  setState(() {
-                                    _appliedPromo = p;
-                                    promoCode = p.title;
-                                  });
-                                  Navigator.pop(context);
-                                }
-                              : () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Promo tidak berlaku untuk produk di keranjang Anda.'),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
-                                },
+                          onTap: () async {
+                            if (!isEligible) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Promo tidak berlaku untuk produk di keranjang Anda.'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user == null) return;
+
+                            final messenger = ScaffoldMessenger.of(context);
+                            final navigator = Navigator.of(context);
+
+                            final alreadyUsed = await _promoController.checkIfPromoUsed(user.uid, p.id ?? '');
+                            
+                            if (alreadyUsed) {
+                              if (mounted) {
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Anda sudah pernah menggunakan promo ini.'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+
+                            setState(() {
+                              _appliedPromo = p;
+                              promoCode = p.title;
+                            });
+                            if (mounted) navigator.pop();
+                          },
                           child: Opacity(
                             opacity: isEligible ? 1.0 : 0.5,
                             child: Container(
@@ -453,23 +473,17 @@ class _CheckoutViewState extends State<CheckoutView> {
           discountAmount = _appliedPromo!.discountValue;
         }
       } else if (_appliedPromo!.discountType == 'bundle') {
-        // --- LOGIKA BUNDLE BARU ---
         if (hasSpecificProducts) {
-          // Ambil semua ID produk yang ada di keranjang
           final cartProductIds = _cartController.items.map((item) => item.id).toSet();
-          
-          // Cek apakah semua productId dari syarat promo tersedia di keranjang
           bool allProductsPresent = _appliedPromo!.productIds.every(
             (id) => cartProductIds.contains(id)
           );
 
           if (allProductsPresent) {
-            // Jika semua produk ada, diskon bundle diberikan satu kali saja
             discountAmount = _appliedPromo!.discountValue;
           }
         }
       } else if (_appliedPromo!.discountType == 'bogo') {
-        // BOGO ditunda sesuai catatan, namun logikanya dipertahankan agar tidak error
         for (var item in _cartController.items) {
           if (hasSpecificProducts) {
             if (_appliedPromo!.productIds.contains(item.id) &&
@@ -486,7 +500,6 @@ class _CheckoutViewState extends State<CheckoutView> {
         }
       }
 
-      // Cap diskon total agar tidak melebihi subtotal seluruh keranjang
       if (discountAmount > _cartController.subtotal) {
         discountAmount = _cartController.subtotal;
       }
@@ -821,6 +834,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                             'productId': item.id,
                             'title': item.title,
                             'variant': item.variant,
+                            'category': item.category,
                             'quantity': item.quantity,
                             'price': item.price,
                             'imageUrl': item.imageUrl,
@@ -828,12 +842,15 @@ class _CheckoutViewState extends State<CheckoutView> {
                         })
                         .toList();
 
+                    final messenger = ScaffoldMessenger.of(context);
+                    final navigator = Navigator.of(context);
                     final result = await _checkoutController.processCheckout(
                       fullName: fullname,
                       shippingAddress: shippingAddress,
                       paymentMethod: paymentMethod,
                       paymentMethodCode: _paymentMethodCode,
-                      promoCode: promoCode,
+                      promoId: _appliedPromo?.id,
+                      promoCode: _appliedPromo != null ? _appliedPromo!.title : '-',
                       subtotal: _cartController.subtotal,
                       shippingCost: _cartController.shippingCost,
                       tax: tax,
@@ -842,19 +859,19 @@ class _CheckoutViewState extends State<CheckoutView> {
                       discountAmount: discountAmount,
                     );
 
-                    if (!context.mounted) return;
+                    if (!mounted) return;
                     setState(() => _isProcessing = false);
 
                     if (result.containsKey('error')) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(
                           content: Text(result['error']!),
                           backgroundColor: Colors.red,
-                          duration: const Duration(seconds: 5),
                         ),
                       );
                     } else {
-                      await Navigator.of(context).push<bool>(
+                      _cartController.clearCart();
+                      await navigator.push<bool>(
                         MaterialPageRoute(
                           builder: (_) => PaymentWebView(
                             paymentUrl: result['paymentUrl']!,

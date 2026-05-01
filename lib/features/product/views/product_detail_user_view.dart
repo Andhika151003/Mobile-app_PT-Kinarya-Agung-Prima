@@ -120,6 +120,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                       variant: 'Default',
                       price: finalPrice,
                       imageUrl: widget.product.imageUrl,
+                      category: widget.product.category,
                       quantity: _quantity,
                       minOrder: widget.product.moq ?? 1,
                       stockLimit: currentStock,

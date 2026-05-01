@@ -199,7 +199,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                       child: Semantics(
                         label: 'input_edit_profile_business_type',
                         child: DropdownButtonFormField<String>(
-                          value: _selectedBusinessType,
+                          initialValue: _selectedBusinessType,
                           items: _businessTypes.map((type) {
                             return DropdownMenuItem(
                               value: type,

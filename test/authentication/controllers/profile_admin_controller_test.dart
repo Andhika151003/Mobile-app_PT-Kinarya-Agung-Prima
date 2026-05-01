@@ -55,8 +55,6 @@ void main() {
         address: 'New HQ',
         phoneNumber: '08123456789',
         businessType: 'Distributor',
-        bankAccount: '12345678',
-        bankName: 'BCA',
       );
 
       final doc = await fakeFirestore.collection('users').doc('admin123').get();

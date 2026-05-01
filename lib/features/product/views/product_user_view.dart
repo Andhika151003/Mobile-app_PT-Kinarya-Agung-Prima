@@ -6,6 +6,7 @@ import '../controllers/product_user_controller.dart';
 import 'product_detail_user_view.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../../cart/views/cart_view.dart';
+import '../../shared/widgets/shimmer_loading.dart';
 
 class ProductUserView extends StatefulWidget {
   const ProductUserView({super.key});
@@ -46,9 +47,8 @@ class _ProductUserViewState extends State<ProductUserView> {
 
   Future<void> _onRefresh() async {
     setState(() {
-      _refreshKey++; // increment key agar StreamBuilder rebuild
+      _refreshKey++; 
     });
-    // beri jeda singkat supaya spinner terasa natural
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
@@ -237,11 +237,22 @@ class _ProductUserViewState extends State<ProductUserView> {
 
   Widget _buildProductGridStream() {
     return StreamBuilder<List<ProductModel>>(
-      key: ValueKey(_refreshKey), // rebuild stream saat refresh
+      key: ValueKey(_refreshKey), 
       stream: _productController.getSupplyProducts(), 
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: primaryGreen));
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.65,
+            ),
+            itemCount: 6,
+            itemBuilder: (context, index) => const ProductCardShimmer(),
+          );
         }
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
@@ -422,9 +433,10 @@ class _ProductUserViewState extends State<ProductUserView> {
                             _cartController.addToCart(
                               id: product.id!,
                               title: product.name,
-                              variant: product.category,
+                              variant: 'Default',
                               price: finalPrice,
                               imageUrl: product.imageUrl,
+                              category: product.category,
                               quantity: moq,
                               minOrder: moq,
                               stockLimit: currentStock,

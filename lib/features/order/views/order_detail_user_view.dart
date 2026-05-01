@@ -150,6 +150,14 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                     child: Column(
                       children: [
                         _buildSummaryRow('Subtotal', currency.format(order.subtotal)),
+                        if (order.discountAmount > 0) ...[
+                          const SizedBox(height: 8),
+                          _buildSummaryRow(
+                            'Discount', 
+                            '-${currency.format(order.discountAmount)}',
+                            valueColor: Colors.red.shade600,
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         _buildSummaryRow('Tax (11%)', currency.format(order.tax)),
                         const SizedBox(height: 8),
@@ -437,12 +445,12 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value) {
+  Widget _buildSummaryRow(String label, String value, {Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-        Text(value, style: const TextStyle(fontSize: 13, color: Colors.black87)),
+        Text(value, style: TextStyle(fontSize: 13, color: valueColor ?? Colors.black87)),
       ],
     );
   }

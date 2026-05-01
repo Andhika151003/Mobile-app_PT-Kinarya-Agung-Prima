@@ -53,4 +53,31 @@ class PromotionUserController {
       return null;
     }
   }
+
+  Future<bool> checkIfPromoUsed(String userId, String promoId) async {
+    try {
+      // Check if there is any order (except cancelled) using this promoId for this user
+      final snapshot = await _firestore
+          .collection('orders')
+          .where('userId', isEqualTo: userId)
+          .where('promoId', isEqualTo: promoId)
+          .get();
+
+      // Filter in memory for non-cancelled status if needed, 
+      // but usually any order that reached 'Ordered' state counts until it's 'Cancelled'.
+      // The user said "1 user 1 diskon", so if they use it and then cancel, should they be able to use it again?
+      // Usually yes. So let's check status.
+      
+      bool used = snapshot.docs.any((doc) {
+        final data = doc.data();
+        final status = data['status']?.toString();
+        return status != 'Cancelled';
+      });
+
+      return used;
+    } catch (e) {
+      debugPrint('Error checking promo usage: $e');
+      return false;
+    }
+  }
 }

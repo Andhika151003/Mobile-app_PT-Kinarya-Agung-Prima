@@ -28,11 +28,7 @@ class _AdminMasterViewState extends State<AdminMasterView> {
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new,
-                color: Color(0xFF1F2937), size: 18),
-            onPressed: () => Navigator.pop(context),
-          ),
+          centerTitle: true,
         ),
         body: Consumer<AdminMasterController>(
           builder: (context, controller, child) {

@@ -20,8 +20,6 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
   final TextEditingController _typeController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _contactController = TextEditingController();
-  final TextEditingController _bankAccountController = TextEditingController();
-  final TextEditingController _bankNameController = TextEditingController();
 
   bool _isLoading = true;
   bool _isSaving = false;
@@ -52,8 +50,7 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
     _typeController.dispose();
     _locationController.dispose();
     _contactController.dispose();
-    _bankAccountController.dispose();
-    _bankNameController.dispose();
+    _contactController.dispose();
     super.dispose();
   }
 
@@ -69,8 +66,6 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
             _locationController.text = data['address'] ?? '';
             _contactController.text = data['phoneNumber'] ?? '';
             _typeController.text = data['businessType'] ?? 'Distributor';
-            _bankAccountController.text = data['bankAccount'] ?? '';
-            _bankNameController.text = data['bankName'] ?? '';
             _existingPhotoUrl = data['photoUrl'];
             
             _isLoading = false;
@@ -94,8 +89,6 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
         address: _locationController.text.trim(),
         phoneNumber: _contactController.text.trim(),
         businessType: _typeController.text.trim(),
-        bankAccount: _bankAccountController.text.trim(),
-        bankName: _bankNameController.text.trim(),
         profileImage: _newProfileImage,
       );
 
@@ -146,8 +139,6 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
                     _buildTextField('Business Type', 'Enter Your Business Type', _typeController),
                     _buildTextField('Location', 'Enter Your Location', _locationController, maxLines: 3),
                     _buildTextField('Contact', 'Enter Your Number', _contactController, isNumber: true),
-                    _buildTextField('Bank Account Number', 'Enter Your Account Number', _bankAccountController, isNumber: true),
-                    _buildTextField('Bank Name', 'Enter Your Bank Type', _bankNameController),
                     
                     const SizedBox(height: 32),
                     _buildActionButtons(context, primaryGreen),

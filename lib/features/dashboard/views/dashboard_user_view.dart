@@ -9,6 +9,7 @@ import '../../product/models/product.dart';
 import '../../product/views/product_detail_user_view.dart';
 import '../../complaint/views/complaint_form_view.dart';
 import '../../complaint/views/complaint_history_view.dart';
+import '../../shared/widgets/shimmer_loading.dart';
 
 class DashboardUserView extends StatefulWidget {
   const DashboardUserView({super.key});
@@ -17,9 +18,8 @@ class DashboardUserView extends StatefulWidget {
   State<DashboardUserView> createState() => _DashboardUserViewState();
 }
 
-class _DashboardUserViewState extends State<DashboardUserView> 
+class _DashboardUserViewState extends State<DashboardUserView>
     with AutomaticKeepAliveClientMixin {
-
   final DashboardUserController _controller = DashboardUserController();
   final PromotionUserController _promoController = PromotionUserController();
 
@@ -46,10 +46,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
   }
 
   Future<void> _onRefresh() async {
-    await Future.wait([
-      _loadUserData(),
-      _loadPromotions(),
-    ]);
+    await Future.wait([_loadUserData(), _loadPromotions()]);
     setState(() {
       _recentOrdersStream = _controller.getRecentOrders();
       _recommendedProductsStream = _controller.getRecommendedProducts();
@@ -82,7 +79,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
       final promos = await _promoController.getActivePromotions();
       if (mounted) {
         setState(() => _activePromos = promos);
-        
+
         if (promos.isNotEmpty) {
           final prefs = await SharedPreferences.getInstance();
           final bool hasSeenPromo = prefs.getBool('hasSeenPromo_v1') ?? false;
@@ -131,7 +128,9 @@ class _DashboardUserViewState extends State<DashboardUserView>
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
-                          image: promo.imageUrl != null && promo.imageUrl!.isNotEmpty
+                          image:
+                              promo.imageUrl != null &&
+                                  promo.imageUrl!.isNotEmpty
                               ? DecorationImage(
                                   image: NetworkImage(promo.imageUrl!),
                                   fit: BoxFit.cover,
@@ -165,7 +164,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                         promo.description,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha:0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 13,
                           height: 1.4,
                         ),
@@ -177,18 +176,24 @@ class _DashboardUserViewState extends State<DashboardUserView>
                       // Discount badge
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha:0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: Colors.white.withValues(alpha:0.5)),
+                            color: Colors.white.withValues(alpha: 0.5),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.local_offer,
-                                color: Colors.white, size: 16),
+                            const Icon(
+                              Icons.local_offer,
+                              color: Colors.white,
+                              size: 16,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               promo.discountText,
@@ -207,7 +212,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                       Text(
                         'Valid until ${_formatDate(promo.endDate)}',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha:0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 11,
                         ),
                       ),
@@ -221,16 +226,18 @@ class _DashboardUserViewState extends State<DashboardUserView>
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFF1B8A3A),
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             elevation: 0,
                           ),
                           child: Text(
                             promo.isActive ? 'Claim Offer Now' : 'Wait for it!',
                             style: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 15),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                       ),
@@ -249,11 +256,14 @@ class _DashboardUserViewState extends State<DashboardUserView>
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha:0.25),
+                      color: Colors.white.withValues(alpha: 0.25),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.close,
-                        color: Colors.white, size: 16),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ),
                 ),
               ),
@@ -267,6 +277,10 @@ class _DashboardUserViewState extends State<DashboardUserView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    if (isLoading && userName == 'Retailer') {
+      return const SafeArea(child: DashboardUserShimmer());
+    }
 
     return SafeArea(
       child: Container(
@@ -306,8 +320,11 @@ class _DashboardUserViewState extends State<DashboardUserView>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Image.asset('assets/images/logo.png',
-              height: 40, fit: BoxFit.contain),
+          Image.asset(
+            'assets/images/logo.png',
+            height: 40,
+            fit: BoxFit.contain,
+          ),
           Row(
             children: [
               IconButton(
@@ -315,17 +332,20 @@ class _DashboardUserViewState extends State<DashboardUserView>
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ComplaintHistoryView()),
+                    MaterialPageRoute(
+                      builder: (context) => const ComplaintHistoryView(),
+                    ),
                   );
                 },
               ),
-              // Notification bell icon (bisa ditambah badge promo)
               if (_activePromos.isNotEmpty)
                 Stack(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.notifications_outlined,
-                          color: Colors.black87),
+                      icon: const Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.black87,
+                      ),
                       onPressed: () {},
                     ),
                     Positioned(
@@ -344,8 +364,10 @@ class _DashboardUserViewState extends State<DashboardUserView>
                 )
               else
                 IconButton(
-                  icon: const Icon(Icons.notifications_outlined,
-                      color: Colors.black87),
+                  icon: const Icon(
+                    Icons.notifications_outlined,
+                    color: Colors.black87,
+                  ),
                   onPressed: () {},
                 ),
             ],
@@ -461,7 +483,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
         decoration: BoxDecoration(
           color: bannerColor,
           borderRadius: BorderRadius.circular(16),
-          image: hasImage 
+          image: hasImage
               ? DecorationImage(
                   image: NetworkImage(promo.imageUrl!),
                   fit: BoxFit.cover,
@@ -476,8 +498,8 @@ class _DashboardUserViewState extends State<DashboardUserView>
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
               colors: [
-                Colors.black.withValues(alpha:0.6),
-                Colors.black.withValues(alpha:0.2),
+                Colors.black.withValues(alpha: 0.6),
+                Colors.black.withValues(alpha: 0.2),
                 Colors.transparent,
               ],
             ),
@@ -495,36 +517,42 @@ class _DashboardUserViewState extends State<DashboardUserView>
                       Container(
                         margin: const EdgeInsets.only(bottom: 6),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha:0.25),
+                          color: Colors.white.withValues(alpha: 0.25),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
                           '⏰ Ending Soon!',
                           style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600),
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    
+
                     // Upcoming badge
                     if (promo.isStartingSoon && !promo.isActive)
                       Container(
                         margin: const EdgeInsets.only(bottom: 6),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha:0.8),
+                          color: Colors.blue.withValues(alpha: 0.8),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
                           '🚀 Upcoming!',
                           style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600),
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
 
@@ -535,7 +563,11 @@ class _DashboardUserViewState extends State<DashboardUserView>
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         shadows: [
-                          Shadow(blurRadius: 4, color: Colors.black45, offset: Offset(2, 2)),
+                          Shadow(
+                            blurRadius: 4,
+                            color: Colors.black45,
+                            offset: Offset(2, 2),
+                          ),
                         ],
                       ),
                       maxLines: 1,
@@ -549,7 +581,11 @@ class _DashboardUserViewState extends State<DashboardUserView>
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         shadows: [
-                          Shadow(blurRadius: 2, color: Colors.black45, offset: Offset(1, 1)),
+                          Shadow(
+                            blurRadius: 2,
+                            color: Colors.black45,
+                            offset: Offset(1, 1),
+                          ),
                         ],
                       ),
                     ),
@@ -561,16 +597,21 @@ class _DashboardUserViewState extends State<DashboardUserView>
                         foregroundColor: const Color(0xFF1B8A3A),
                         elevation: 4,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 8),
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: const Text(
                         'Claim Now',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 12),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -582,8 +623,8 @@ class _DashboardUserViewState extends State<DashboardUserView>
                   promo.discountType == 'bogo'
                       ? Icons.shopping_bag_outlined
                       : promo.discountType == 'bundle'
-                          ? Icons.inventory_2_outlined
-                          : Icons.card_giftcard,
+                      ? Icons.inventory_2_outlined
+                      : Icons.card_giftcard,
                   color: Colors.white,
                   size: 56,
                 ),
@@ -604,7 +645,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
               context,
               MaterialPageRoute(
                 builder: (context) => const ComplaintFormView(
-                  orderId: 'Bantuan Umum', 
+                  orderId: 'Bantuan Umum',
                   orderDate: '-',
                 ),
               ),
@@ -645,10 +686,16 @@ class _DashboardUserViewState extends State<DashboardUserView>
           ],
         ),
         StreamBuilder<List<Map<String, dynamic>>>(
-          stream: _recentOrdersStream, 
+          stream: _recentOrdersStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return Column(
+                children: const [
+                  OrderCardShimmer(),
+                  SizedBox(height: 12),
+                  OrderCardShimmer(),
+                ],
+              );
             }
             if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
@@ -662,7 +709,10 @@ class _DashboardUserViewState extends State<DashboardUserView>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Center(
-                  child: Text('No recent orders found', style: TextStyle(color: Colors.grey)),
+                  child: Text(
+                    'No recent orders found',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
               );
             }
@@ -682,8 +732,8 @@ class _DashboardUserViewState extends State<DashboardUserView>
                 } else if (order['createdAt'] is String) {
                   date = DateTime.tryParse(order['createdAt']);
                 }
-                
-                final dateStr = date != null 
+
+                final dateStr = date != null
                     ? DateFormat('MMM dd, yyyy').format(date)
                     : '-';
 
@@ -692,7 +742,11 @@ class _DashboardUserViewState extends State<DashboardUserView>
                 return _buildOrderItem(
                   orderIdRaw.toString(),
                   status,
-                  NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(amount),
+                  NumberFormat.currency(
+                    locale: 'id_ID',
+                    symbol: 'Rp ',
+                    decimalDigits: 0,
+                  ).format(amount),
                   dateStr,
                 );
               },
@@ -703,8 +757,12 @@ class _DashboardUserViewState extends State<DashboardUserView>
     );
   }
 
-  Widget _buildOrderItem(String orderId, String status, String total,
-      String date) {
+  Widget _buildOrderItem(
+    String orderId,
+    String status,
+    String total,
+    String date,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -712,7 +770,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -723,8 +781,10 @@ class _DashboardUserViewState extends State<DashboardUserView>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(orderId,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                orderId,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               _buildStatusBadge(status),
             ],
           ),
@@ -732,10 +792,18 @@ class _DashboardUserViewState extends State<DashboardUserView>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Total: $total',
-                  style: TextStyle(color: Colors.grey[700], fontSize: 13, fontWeight: FontWeight.w500)),
-              Text(date,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              Text(
+                'Total: $total',
+                style: TextStyle(
+                  color: Colors.grey[700],
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                date,
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
             ],
           ),
         ],
@@ -744,31 +812,62 @@ class _DashboardUserViewState extends State<DashboardUserView>
   }
 
   Widget _buildStatusBadge(String status) {
-    Color bg; Color fg; IconData icon; String label;
+    Color bg;
+    Color fg;
+    IconData icon;
+    String label;
 
     if (status == 'Delivered') {
-      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+      bg = const Color(0xFFE6F4EA);
+      fg = const Color(0xFF1E8E3E);
+      icon = Icons.check_circle_outline;
+      label = 'Delivered';
     } else if (status == 'Expired' || status == 'Cancelled') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+      bg = const Color(0xFFFCE8E6);
+      fg = const Color(0xFFD93025);
+      icon = Icons.cancel_outlined;
+      label = 'Cancelled';
     } else if (status == 'Ordered') {
-      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+      bg = const Color(0xFFFEF7E0);
+      fg = const Color(0xFFF9AB00);
+      icon = Icons.access_time;
+      label = 'Ordered';
     } else if (status == 'Shipped') {
-      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+      bg = const Color(0xFFE3F2FD);
+      fg = const Color(0xFF1976D2);
+      icon = Icons.local_shipping_outlined;
+      label = 'Shipped';
     } else if (status == 'Paid') {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
+      bg = const Color(0xFFE8EAF6);
+      fg = const Color(0xFF3949AB);
+      icon = Icons.payment;
+      label = 'Paid';
     } else {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
+      bg = const Color(0xFFE8EAF6);
+      fg = const Color(0xFF3949AB);
+      icon = Icons.info_outline;
+      label = status;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: fg),
           const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: fg,
+            ),
+          ),
         ],
       ),
     );
@@ -782,8 +881,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
           children: [
             const Text(
               'Recommended for You',
-              style:
-                  TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -793,7 +891,18 @@ class _DashboardUserViewState extends State<DashboardUserView>
           stream: _recommendedProductsStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.65,
+                ),
+                itemCount: 2,
+                itemBuilder: (context, index) => const ProductCardShimmer(),
+              );
             }
             if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
@@ -810,8 +919,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
@@ -824,8 +932,8 @@ class _DashboardUserViewState extends State<DashboardUserView>
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ProductDetailUserView(
-                            product: products[index]),
+                        builder: (context) =>
+                            ProductDetailUserView(product: products[index]),
                       ),
                     );
                   },
@@ -841,7 +949,10 @@ class _DashboardUserViewState extends State<DashboardUserView>
 
   Widget _buildProductCard(ProductModel product) {
     final currencyFormatter = NumberFormat.currency(
-        locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -849,7 +960,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -871,13 +982,17 @@ class _DashboardUserViewState extends State<DashboardUserView>
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: product.imageUrl.isNotEmpty
-                        ? Image.network(product.imageUrl,
+                        ? Image.network(
+                            product.imageUrl,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.image,
-                                    color: Colors.grey, size: 50))
-                        : const Icon(Icons.image,
-                            color: Colors.grey, size: 50),
+                                const Icon(
+                                  Icons.image,
+                                  color: Colors.grey,
+                                  size: 50,
+                                ),
+                          )
+                        : const Icon(Icons.image, color: Colors.grey, size: 50),
                   ),
                 ),
               ),
@@ -885,8 +1000,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
             const SizedBox(height: 12),
             Text(
               product.name,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 14),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -909,8 +1023,18 @@ class _DashboardUserViewState extends State<DashboardUserView>
   // ── HELPERS ───────────────────────────────────────────────
   String _formatDate(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }

@@ -204,7 +204,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
               TextButton(
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
-                  if (mounted) {
+                  if (context.mounted) {
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => const LoginView()),
                       (route) => false,

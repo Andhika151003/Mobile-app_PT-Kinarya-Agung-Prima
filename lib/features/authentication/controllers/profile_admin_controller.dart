@@ -34,8 +34,6 @@ class AdminProfileController {
     required String address,
     required String phoneNumber,
     required String businessType,
-    required String bankAccount,
-    required String bankName,
     File? profileImage,
   }) async {
     try {
@@ -54,8 +52,6 @@ class AdminProfileController {
           'address': address,
           'phoneNumber': phoneNumber,
           'businessType': businessType,
-          'bankAccount': bankAccount,
-          'bankName': bankName,
         };
 
         if (uploadedImageUrl != null) {

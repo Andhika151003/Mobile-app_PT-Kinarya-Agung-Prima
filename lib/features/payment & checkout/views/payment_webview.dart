@@ -60,7 +60,6 @@ class _PaymentWebViewState extends State<PaymentWebView> {
       )
       ..loadRequest(Uri.parse(widget.paymentUrl));
 
-    // Listen to real-time status updates from Firestore
     _statusSubscription = FirebaseFirestore.instance
         .collection('orders')
         .doc(widget.orderId)
@@ -70,7 +69,6 @@ class _PaymentWebViewState extends State<PaymentWebView> {
         final data = snapshot.data() as Map<String, dynamic>;
         final status = data['status'];
         
-        // If external webhook updates status to Paid, close this view
         if (status == 'Paid' && !_isUpdating) {
           debugPrint('Order ${widget.orderId} status detected as PAID in real-time');
           _onPaymentFinished(alreadyUpdated: true);
@@ -157,7 +155,6 @@ class _PaymentWebViewState extends State<PaymentWebView> {
 
   Widget _buildErrorPlaceholder() {
     return Center(
-      // Bungkus Column dengan widget Padding
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(

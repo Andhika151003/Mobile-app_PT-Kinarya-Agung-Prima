@@ -8,7 +8,6 @@ class CsUser {
   final String role;
   final String phoneNumber;
   final DateTime createdAt;
-  final String department;
   final int handledTickets;
   final bool isActive;
 
@@ -20,7 +19,6 @@ class CsUser {
     required this.phoneNumber,
     required this.createdAt,
     this.role = 'cs',
-    this.department = 'General',
     this.handledTickets = 0,
     this.isActive = true,
   });
@@ -33,7 +31,6 @@ class CsUser {
       'email': email,
       'role': role,
       'phoneNumber': phoneNumber,
-      'department': department,
       'handledTickets': handledTickets,
       'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
@@ -55,7 +52,6 @@ class CsUser {
       password: '',
       phoneNumber: map['phoneNumber'] ?? '',
       createdAt: parsedDate,
-      department: map['department'] ?? 'General',
       handledTickets: map['handledTickets'] ?? 0,
       isActive: map['isActive'] ?? true,
     );
@@ -68,7 +64,6 @@ class CsUser {
     String? password,
     String? phoneNumber,
     DateTime? createdAt,
-    String? department,
     int? handledTickets,
     bool? isActive,
   }) {
@@ -79,7 +74,6 @@ class CsUser {
       password: password ?? this.password,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       createdAt: createdAt ?? this.createdAt,
-      department: department ?? this.department,
       handledTickets: handledTickets ?? this.handledTickets,
       isActive: isActive ?? this.isActive,
     );

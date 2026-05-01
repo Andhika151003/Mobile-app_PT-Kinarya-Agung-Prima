@@ -51,6 +51,7 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0.5,
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search,
@@ -153,7 +154,7 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
               MaterialPageRoute(
                 builder: (context) => ComplaintDetailCsView(
                   complaint: complaint,
-                  readOnly: true, // Admin cannot reject/resolve
+                  readOnly: true,
                 ),
               ),
             );

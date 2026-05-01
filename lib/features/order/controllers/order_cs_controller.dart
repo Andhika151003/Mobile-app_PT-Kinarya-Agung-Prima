@@ -20,6 +20,8 @@ class OrderCsController extends ChangeNotifier {
 
   String _searchQuery = '';
   String _statusFilter = 'all';
+  String _selectedSort = 'Newest';
+  String get selectedSort => _selectedSort;
 
   Future<void> fetchAllOrders() async {
     _setLoading(true);
@@ -77,6 +79,11 @@ class OrderCsController extends ChangeNotifier {
     _applyFilters();
   }
 
+  void setSort(String sort) {
+    _selectedSort = sort;
+    _applyFilters();
+  }
+
   void _applyFilters() {
     var filtered = List<OrderModel>.from(_orders);
 
@@ -90,7 +97,37 @@ class OrderCsController extends ChangeNotifier {
     }
 
     if (_statusFilter != 'all') {
-      filtered = filtered.where((order) => order.status == _statusFilter).toList();
+      filtered =
+          filtered.where((order) => order.status == _statusFilter).toList();
+    }
+
+    // Sort
+    if (_selectedSort == 'Newest') {
+      filtered.sort((a, b) =>
+          (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Oldest') {
+      filtered.sort((a, b) =>
+          (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Status') {
+      final priority = {
+        'Ordered': 0,
+        'Paid': 1,
+        'Shipped': 2,
+        'Delivered': 3,
+        'Cancelled': 4,
+        'Expired': 5,
+      };
+      filtered.sort((a, b) {
+        int pA = priority[a.status] ?? 99;
+        int pB = priority[b.status] ?? 99;
+        if (pA != pB) return pA.compareTo(pB);
+        return (b.createdAt ?? DateTime(0))
+            .compareTo(a.createdAt ?? DateTime(0));
+      });
+    } else if (_selectedSort == 'Price (High-Low)') {
+      filtered.sort((a, b) => b.total.compareTo(a.total));
+    } else if (_selectedSort == 'Price (Low-High)') {
+      filtered.sort((a, b) => a.total.compareTo(b.total));
     }
 
     _filteredOrders = filtered;

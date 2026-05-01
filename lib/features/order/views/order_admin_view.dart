@@ -12,7 +12,10 @@ class OrderAdminView extends StatefulWidget {
   State<OrderAdminView> createState() => _OrderAdminViewState();
 }
 
-class _OrderAdminViewState extends State<OrderAdminView> {
+class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   static const _green = Color(0xFF34A853); 
 
   final OrderAdminController _adminController = OrderAdminController();
@@ -22,6 +25,7 @@ class _OrderAdminViewState extends State<OrderAdminView> {
   List<OrderModel> _allOrders = [];
   List<OrderModel> _filteredOrders = [];
   bool _isLoading = true;
+  String _selectedSort = 'Newest';
 
   int _currentPage = 1;
   static const int _pageSize = 5;
@@ -46,6 +50,7 @@ class _OrderAdminViewState extends State<OrderAdminView> {
         setState(() {
           _allOrders = docs.map((e) => OrderModel.fromMap(e)).toList();
           _filteredOrders = List.from(_allOrders);
+          _applySortInternal();
           _isLoading = false;
         });
       }
@@ -65,8 +70,39 @@ class _OrderAdminViewState extends State<OrderAdminView> {
       final mapList = _allOrders.map((e) => e.toMap()).toList();
       final filteredMaps = _adminController.filterAndSearchOrders(mapList, 'All Transactions', query);
       _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
+      _applySortInternal();
       _currentPage = 1;
     });
+  }
+
+  void _applySortInternal() {
+    if (_selectedSort == 'Newest') {
+      _filteredOrders.sort((a, b) =>
+          (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Oldest') {
+      _filteredOrders.sort((a, b) =>
+          (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Status') {
+      final priority = {
+        'Ordered': 0,
+        'Paid': 1,
+        'Shipped': 2,
+        'Delivered': 3,
+        'Cancelled': 4,
+        'Expired': 5,
+      };
+      _filteredOrders.sort((a, b) {
+        int pA = priority[a.status] ?? 99;
+        int pB = priority[b.status] ?? 99;
+        if (pA != pB) return pA.compareTo(pB);
+        return (b.createdAt ?? DateTime(0))
+            .compareTo(a.createdAt ?? DateTime(0));
+      });
+    } else if (_selectedSort == 'Price (High-Low)') {
+      _filteredOrders.sort((a, b) => b.total.compareTo(a.total));
+    } else if (_selectedSort == 'Price (Low-High)') {
+      _filteredOrders.sort((a, b) => a.total.compareTo(b.total));
+    }
   }
 
   int get _totalPages => (_filteredOrders.length / _pageSize).ceil().clamp(1, 999);
@@ -79,6 +115,7 @@ class _OrderAdminViewState extends State<OrderAdminView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       backgroundColor: Colors.white, 
       body: SafeArea(
@@ -137,12 +174,38 @@ class _OrderAdminViewState extends State<OrderAdminView> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  GestureDetector(
+                   GestureDetector(
                     onTap: () => setState(() => _applySearch(_searchController.text.trim())),
                     child: Container(
                       width: 46, height: 46,
                       decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(8)),
                       child: const Icon(Icons.search, color: Colors.white, size: 22),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    height: 46,
+                    width: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: PopupMenuButton<String>(
+                      icon: const Icon(Icons.sort, color: Colors.black87),
+                      onSelected: (String value) {
+                        setState(() {
+                          _selectedSort = value;
+                          _applySortInternal();
+                        });
+                      },
+                      itemBuilder: (BuildContext context) => [
+                        const PopupMenuItem(value: 'Newest', child: Text('Newest')),
+                        const PopupMenuItem(value: 'Oldest', child: Text('Oldest')),
+                        const PopupMenuItem(value: 'Status', child: Text('Status Priority')),
+                        const PopupMenuItem(value: 'Price (High-Low)', child: Text('Price: High to Low')),
+                        const PopupMenuItem(value: 'Price (Low-High)', child: Text('Price: Low to High')),
+                      ],
                     ),
                   ),
                 ],

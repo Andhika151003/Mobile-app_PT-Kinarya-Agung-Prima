@@ -14,7 +14,10 @@ class ProductAdminView extends StatefulWidget {
   State<ProductAdminView> createState() => _ProductAdminViewState();
 }
 
-class _ProductAdminViewState extends State<ProductAdminView> {
+class _ProductAdminViewState extends State<ProductAdminView> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final AdminProductController _productController = AdminProductController();
   final Color primaryGreen = const Color(0xFF00903D);
 
@@ -31,6 +34,7 @@ class _ProductAdminViewState extends State<ProductAdminView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
@@ -116,17 +120,6 @@ class _ProductAdminViewState extends State<ProductAdminView> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Image.asset('assets/images/logo.png', height: 35),
-        IconButton(
-              icon: const Icon(Icons.person_outline, color: Colors.black87),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProfileAdminView(), 
-                  ),
-                );
-              },
-            ),
       ],
     );
   }
@@ -511,7 +504,6 @@ class _AddStockDialogState extends State<AddStockDialog> {
 
   @override
   Widget build(BuildContext context) {
-    // 3. TAMPILKAN SKU ASLI DI DALAM POP-UP
     String displaySku = (widget.product.sku != null && widget.product.sku!.isNotEmpty) ? widget.product.sku! : 'No SKU';
 
     return Dialog(

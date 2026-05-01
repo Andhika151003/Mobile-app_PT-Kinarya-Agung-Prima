@@ -48,11 +48,13 @@ class OrderModel {
   
   final String paymentMethod;
   final String? paymentMethodCode;
+  final String? promoId;
   final String promoCode;
   
   final double subtotal;
   final double shippingCost;
   final double tax;
+  final double discountAmount;
   final double total;
   
   final List<OrderItemModel> items;
@@ -71,10 +73,12 @@ class OrderModel {
     required this.shippingAddress,
     required this.paymentMethod,
     this.paymentMethodCode,
+    this.promoId,
     required this.promoCode,
     required this.subtotal,
     required this.shippingCost,
     required this.tax,
+    required this.discountAmount,
     required this.total,
     required this.items,
     required this.status,
@@ -97,35 +101,30 @@ class OrderModel {
         .map((item) => OrderItemModel.fromMap(Map<String, dynamic>.from(item)))
         .toList();
 
-    String rawStatus = map['status']?.toString() ?? 'Ordered';
-    if (rawStatus == 'Pending Payment') rawStatus = 'Ordered';
-    if (rawStatus == 'Settled') rawStatus = 'Delivered';
-
     return OrderModel(
-      orderId: map['orderId']?.toString() ?? '-',
-      userId: map['userId']?.toString() ?? '-',
-      fullName: map['fullName']?.toString() ?? 'Customer',
-      shippingAddress: map['shippingAddress']?.toString() ?? 'Alamat tidak tersedia',
-      
-      paymentMethod: map['paymentMethod']?.toString() ?? '-',
+      orderId: map['orderId']?.toString() ?? '',
+      userId: map['userId']?.toString() ?? '',
+      fullName: map['fullName']?.toString() ?? '',
+      shippingAddress: map['shippingAddress']?.toString() ?? '',
+      paymentMethod: map['paymentMethod']?.toString() ?? '',
       paymentMethodCode: map['paymentMethodCode']?.toString(),
-      promoCode: map['promoCode']?.toString() ?? '-',
-      
+      promoId: map['promoId']?.toString(),
+      promoCode: map['promoCode']?.toString() ?? '',
       subtotal: (map['subtotal'] as num?)?.toDouble() ?? 0.0,
       shippingCost: (map['shippingCost'] as num?)?.toDouble() ?? 0.0,
       tax: (map['tax'] as num?)?.toDouble() ?? 0.0,
+      discountAmount: (map['discountAmount'] as num?)?.toDouble() ?? 0.0,
       total: (map['total'] as num?)?.toDouble() ?? 0.0,
-      
       items: parsedItems,
-      status: rawStatus,
+      status: map['status']?.toString() ?? 'Ordered',
       paymentUrl: map['paymentUrl']?.toString(),
-      
       createdAt: parseDate(map['createdAt']),
       paidAt: parseDate(map['paidAt']),
       shippedAt: parseDate(map['shippedAt']),
-      deliveredAt: parseDate(map['deliveredAt']) ?? parseDate(map['settledAt']), 
+      deliveredAt: parseDate(map['deliveredAt']),
     );
   }
+
   Map<String, dynamic> toMap() {
     return {
       'orderId': orderId,
@@ -134,14 +133,16 @@ class OrderModel {
       'shippingAddress': shippingAddress,
       'paymentMethod': paymentMethod,
       if (paymentMethodCode != null) 'paymentMethodCode': paymentMethodCode,
+      if (promoId != null) 'promoId': promoId,
       'promoCode': promoCode,
       'subtotal': subtotal,
       'shippingCost': shippingCost,
       'tax': tax,
+      'discountAmount': discountAmount,
       'total': total,
-      'items': items.map((item) => item.toMap()).toList(),
+      'items': items.map((e) => e.toMap()).toList(),
       'status': status,
-      'paymentUrl': paymentUrl,
+      if (paymentUrl != null) 'paymentUrl': paymentUrl,
       'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
       'paidAt': paidAt != null ? Timestamp.fromDate(paidAt!) : null,
       'shippedAt': shippedAt != null ? Timestamp.fromDate(shippedAt!) : null,
@@ -166,6 +167,7 @@ class OrderModel {
       subtotal: subtotal,
       shippingCost: shippingCost,
       tax: tax,
+      discountAmount: discountAmount,
       total: total,
       items: items,
       status: status ?? this.status,
