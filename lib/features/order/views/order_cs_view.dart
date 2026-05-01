@@ -191,7 +191,7 @@ class _OrderCsViewState extends State<OrderCsView> {
 
     final paymentStatus = order.paidAt != null
         ? 'Completed'
-        : (order.status == 'Cancelled' ? 'Refunded' : 'Pending');
+        : (order.status == 'Cancelled' ? 'Canceled' : 'Pending');
 
     return GestureDetector(
       onTap: () => Navigator.push(

@@ -389,23 +389,6 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
           ),
         ),
       );
-    } else if (status == 'Paid' || status == 'Shipped') {
-      return Padding(
-        padding: const EdgeInsets.only(top: 16),
-        child: SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: () {}, 
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red.shade700,
-              side: BorderSide(color: Colors.red.shade200),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Ajukan Refund / Pembatalan', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-          ),
-        ),
-      );
     }
     return const SizedBox.shrink();
   }
