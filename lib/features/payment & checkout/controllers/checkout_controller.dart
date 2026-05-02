@@ -94,7 +94,6 @@ class CheckoutController {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // Trigger Notification for Admin
       await _pushNotificationService.sendNotificationToAdmin(
         title: 'Pesanan Baru Masuk!',
         message: 'Pesanan $orderId telah dibuat oleh $fullName.',

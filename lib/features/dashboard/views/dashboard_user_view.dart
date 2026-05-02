@@ -1025,7 +1025,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                       ),
                     ),
                   ),
-                  if (hasPromo && bestPromo!.discountType != 'percentage')
+                  if (hasPromo && bestPromo.discountType != 'percentage')
                     Positioned(
                       top: 4,
                       left: 4,
@@ -1036,7 +1036,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          bestPromo!.discountText,
+                          bestPromo.discountText,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 9,

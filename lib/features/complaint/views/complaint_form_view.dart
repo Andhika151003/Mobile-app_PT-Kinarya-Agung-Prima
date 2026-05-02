@@ -303,7 +303,7 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                     _buildFormCard(
                       title: 'Pilih Jenis Kendala',
                       child: DropdownButtonFormField<String>(
-                        value: _selectedIssueType,
+                        initialValue: _selectedIssueType,
                         validator: (value) => value == null ? 'Pilih jenis kendala' : null,
                         decoration: InputDecoration(
                           hintText: 'Pilih jenis kendala...',
@@ -457,7 +457,7 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                       child: Column(
                         children: [
                           DropdownButtonFormField<String>(
-                            value:
+                            initialValue:
                                 _purchasedProducts.any(
                                   (p) =>
                                       p['key'] ==

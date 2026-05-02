@@ -126,7 +126,6 @@ class PromotionAdminController extends ChangeNotifier {
     _clearError();
 
     try {
-      // Check for overlapping promotions
       final conflicts = await _checkConflicts(
         applicableTo: applicableTo,
         productIds: productIds,
@@ -171,7 +170,6 @@ class PromotionAdminController extends ChangeNotifier {
 
       final docRef = await _firestore.collection('promotions').add(newPromo.toMap());
 
-      // Broadcast Notification to all users
       await _pushNotificationService.broadcastNotification(
         title: 'Promo Spesial Hari Ini!',
         message: 'Jangan lewatkan: $title. Cek sekarang sebelum kehabisan!',
@@ -212,7 +210,6 @@ class PromotionAdminController extends ChangeNotifier {
     _clearError();
 
     try {
-      // Check for overlapping promotions (excluding current one)
       if (status == 'active') {
         final conflicts = await _checkConflicts(
           applicableTo: applicableTo,
@@ -333,11 +330,9 @@ class PromotionAdminController extends ChangeNotifier {
   }) async {
     final List<String> conflicts = [];
     
-    // Normalize dates to day-level for overlap check
     final start = DateTime(startDate.year, startDate.month, startDate.day);
     final end = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
 
-    // Make sure we have the latest list
     if (_promotions.isEmpty) {
       await fetchAllPromotions();
     }
@@ -345,17 +340,14 @@ class PromotionAdminController extends ChangeNotifier {
     for (var promo in _promotions) {
       if (promo.id == excludePromotionId) continue;
       
-      // Only check active or upcoming promotions
       if (promo.status != 'active') continue;
 
       final pStart = DateTime(promo.startDate.year, promo.startDate.month, promo.startDate.day);
       final pEnd = DateTime(promo.endDate.year, promo.endDate.month, promo.endDate.day, 23, 59, 59);
 
-      // Check if date ranges overlap
       bool overlaps = start.isBefore(pEnd) && end.isAfter(pStart);
       if (!overlaps) continue;
 
-      // Check for product overlap
       if (applicableTo == 'all' || promo.applicableTo == 'all') {
         conflicts.add('Bentrokan promo global: "${promo.title}" (${promo.formattedDateRange})');
       } else {

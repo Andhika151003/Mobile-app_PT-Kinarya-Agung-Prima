@@ -49,7 +49,6 @@ class OrderUserController {
         if (data['success'] == true && data['status'] == 'Paid') {
           await OrderStatsHelper.markOrderAsPaid(orderId);
           
-          // Notify Admin of Payment
           await _pushNotificationService.sendNotificationToAdmin(
             title: 'Pembayaran Baru!',
             message: 'Pesanan $orderId telah berhasil dibayar oleh pelanggan.',
@@ -75,7 +74,6 @@ class OrderUserController {
 
       await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: 'Delivered');
 
-      // Trigger Notification for Admin
       await _pushNotificationService.sendNotificationToAdmin(
         title: 'Pesanan Diterima!',
         message: '$customerName telah mengonfirmasi penerimaan pesanan $orderId.',

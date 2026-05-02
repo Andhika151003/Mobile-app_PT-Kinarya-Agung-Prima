@@ -234,7 +234,6 @@ class AdminProductController {
       double inMillions = revenue / 1000000;
       return 'Rp ${inMillions.toStringAsFixed(1)}M';
     } else if (revenue >= 1000) {
-      // Untuk ribuan di dashboard, kita tetap pakai K tapi pastikan formatnya enak dibaca
       double inThousands = revenue / 1000;
       return 'Rp ${inThousands.toStringAsFixed(1)}K';
     }

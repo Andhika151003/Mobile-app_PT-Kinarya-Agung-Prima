@@ -70,7 +70,6 @@ class _CartViewState extends State<CartView> {
                   onRefresh: _onRefresh,
                   child: isEmpty
                       ? ListView(
-                          // ListView agar pull gesture bisa dipicu meski kosong
                           physics: const AlwaysScrollableScrollPhysics(),
                           children: const [
                             SizedBox(height: 120),

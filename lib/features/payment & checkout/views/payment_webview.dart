@@ -3,6 +3,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../order/controllers/order_stats_helper.dart';
 
 class PaymentWebView extends StatefulWidget {
@@ -28,7 +29,7 @@ class _PaymentWebViewState extends State<PaymentWebView> {
   int _errorCode = 0;
   StreamSubscription<DocumentSnapshot>? _statusSubscription;
 
-  static const String _merchantReturnUrl = 'https://backend-payment-kinarya.vercel.app';
+  final String _merchantReturnUrl = dotenv.get('BACKEND_URL');
 
   @override
   void initState() {
@@ -72,13 +73,10 @@ class _PaymentWebViewState extends State<PaymentWebView> {
             final url = request.url;
             debugPrint('🧭 Navigation Request: $url');
 
-            // Handle Merchant Return URL
             if (url.startsWith(_merchantReturnUrl) && !_isUpdating) {
               _onPaymentFinished();
               return NavigationDecision.prevent;
             }
-
-            // Handle Deep Links (E-wallets, Banking Apps, WhatsApp)
             if (!url.startsWith('http://') && !url.startsWith('https://')) {
               debugPrint('🔗 Deep Link Detected: $url');
               
@@ -93,10 +91,8 @@ class _PaymentWebViewState extends State<PaymentWebView> {
               } catch (e) {
                 debugPrint('❌ Failed to parse/launch URI: $e');
                 
-                // Special handling for Android Intent strings if Uri.parse fails
                 if (url.startsWith('intent://')) {
                   try {
-                    // Fallback to external application launch for intent schemes
                     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
                     return NavigationDecision.prevent;
                   } catch (e2) {
@@ -104,7 +100,6 @@ class _PaymentWebViewState extends State<PaymentWebView> {
                   }
                 }
               }
-              // Prevent WebView from trying to load it and showing an error
               return NavigationDecision.prevent;
             }
 

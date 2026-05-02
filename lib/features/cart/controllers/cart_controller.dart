@@ -52,15 +52,10 @@ class CartController extends ChangeNotifier {
   }
 
   // ── Sync stok dari Firestore ──────────────────────────────
-  /// Dipanggil saat pull-to-refresh di CartView.
-  /// Mengambil stok terbaru tiap produk dari Firestore dan
-  /// menyesuaikan quantity jika melebihi stok yang baru.
   Future<void> syncStockFromFirestore() async {
     if (_items.isEmpty) return;
     try {
       final ids = _items.map((e) => e.id).toList();
-
-      // Firestore whereIn max 10, chunk kalau perlu
       final List<DocumentSnapshot> docs = [];
       for (int i = 0; i < ids.length; i += 10) {
         final chunk = ids.sublist(i, i + 10 > ids.length ? ids.length : i + 10);
@@ -80,11 +75,9 @@ class CartController extends ChangeNotifier {
         if (index == -1) continue;
 
         final item = _items[index];
-        // Update stockLimit & minOrder ke nilai terbaru
         item.stockLimit = stock;
         item.minOrder = moq;
 
-        // Sesuaikan quantity jika melebihi stok terkini
         if (item.quantity > stock) {
           item.quantity = stock > 0 ? stock : moq;
           changed = true;
@@ -92,7 +85,6 @@ class CartController extends ChangeNotifier {
         changed = true;
       }
 
-      // Hapus item yang produknya sudah tidak tersedia (stock 0)
       final beforeLen = _items.length;
       _items.removeWhere((item) => item.stockLimit <= 0);
       if (_items.length != beforeLen) changed = true;

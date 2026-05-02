@@ -24,7 +24,6 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
   final CartController _cartController = CartController();
   final ProductUserController _productUserController = ProductUserController();
   PromotionModel? _activePromo;
-  bool _isPromoLoading = true;
 
   @override
   void initState() {
@@ -44,11 +43,10 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
       if (mounted) {
         setState(() {
           _activePromo = _productUserController.getBestPromotionForProduct(widget.product, promos);
-          _isPromoLoading = false;
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isPromoLoading = false);
+      if (mounted) setState(() {});
     }
   }
 

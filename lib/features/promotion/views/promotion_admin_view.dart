@@ -43,7 +43,7 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
           backgroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          automaticallyImplyLeading: false, // ← hapus back button
+          automaticallyImplyLeading: false,
           title: const Text(
             'Promotions',
             style: TextStyle(

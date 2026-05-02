@@ -504,7 +504,6 @@ class _CheckoutViewState extends State<CheckoutView> {
         if (hasSpecificProducts) {
           int minSets = -1;
           for (var pid in _appliedPromo!.productIds) {
-            // Find item in cart
             int qty = 0;
             for (var item in _cartController.items) {
               if (item.id == pid) {

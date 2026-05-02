@@ -328,7 +328,6 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
                   int index = val.toInt();
                   if (index < 0 || index >= trend.length) return const Text('');
                   
-                  // Logic to skip labels if there are too many
                   bool shouldShow = false;
                   if (trend.length <= 7) {
                     shouldShow = true;

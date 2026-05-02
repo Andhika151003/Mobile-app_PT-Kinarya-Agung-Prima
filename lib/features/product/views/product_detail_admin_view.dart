@@ -133,7 +133,6 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                         child: _buildStatCard(
                           title: 'Monthly Sales',
                           value: '${_currentProduct.monthlySales ?? 0}',
-                          // Mengambil nilai tren dari model, default 0.0 jika null
                           percentage: _currentProduct.monthlySalesTrend ?? 0.0, 
                           titleColor: Colors.blue.shade600,
                           bgColor: const Color(0xFFF0F6FF),
@@ -144,7 +143,6 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                         child: _buildStatCard(
                           title: 'Revenue',
                           value: _productController.formatRevenue(_currentProduct.revenue ?? 0),
-                          // Mengambil nilai tren dari model, default 0.0 jika null
                           percentage: _currentProduct.revenueTrend ?? 0.0, 
                           titleColor: Colors.purple.shade400,
                           bgColor: const Color(0xFFF7F0FF),

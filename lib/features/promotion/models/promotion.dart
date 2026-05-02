@@ -96,7 +96,6 @@ class PromotionModel {
     if (status != 'active') return false;
     final now = DateTime.now();
     
-    // Sesuaikan endDate agar mencakup seluruh hari sampai jam 23:59:59
     final inclusiveEndDate = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
     final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
 

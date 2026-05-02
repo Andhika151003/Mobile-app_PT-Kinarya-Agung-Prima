@@ -125,14 +125,12 @@ class AdminStatisticController extends ChangeNotifier {
 
       statusDist[status] = (statusDist[status] ?? 0) + 1;
 
-      // Only count revenue for successful orders
       bool isSuccessful = (status == 'Paid' || status == 'Shipped' || status == 'Delivered' || status == 'Settled');
       
       if (isSuccessful) {
         revenue += total;
         if (status == 'Delivered' || status == 'Settled') completedCount++;
 
-        // Sales Trend Data
         String dateKey;
         if (_currentFilter == StatFilter.today) {
           dateKey = DateFormat('HH:00').format(createdAt);
@@ -141,13 +139,10 @@ class AdminStatisticController extends ChangeNotifier {
         }
         trendData[dateKey] = (trendData[dateKey] ?? 0) + total;
 
-        // Retailer Performance
         if (!retailerStats.containsKey(userId)) {
           retailerStats[userId] = {'name': fullName, 'spent': 0.0};
         }
         retailerStats[userId]!['spent'] += total;
-
-        // Product & Category Analysis
         final items = data['items'] as List? ?? [];
         for (var item in items) {
           final itemMap = Map<String, dynamic>.from(item);
@@ -158,10 +153,8 @@ class AdminStatisticController extends ChangeNotifier {
           final category = itemMap['category'] ?? 'Uncategorized';
           final imageUrl = itemMap['imageUrl'];
 
-          // Category Popularity (Count based on orders)
           categoryOrderCounts[category] = (categoryOrderCounts[category] ?? 0) + 1;
 
-          // Product Stats
           if (!productStats.containsKey(title)) {
             productStats[title] = {
               'id': productId,
@@ -184,21 +177,16 @@ class AdminStatisticController extends ChangeNotifier {
     _orderStatusCounts = statusDist;
     _categoryOrderCounts = categoryOrderCounts;
 
-    // Sort and limit Top Products
     _topProducts = productStats.values.toList()
       ..sort((a, b) => b['revenue'].compareTo(a['revenue']));
     _topProducts = _topProducts.take(5).toList();
-
-    // Sort and limit Top Retailers
     _topRetailers = retailerStats.values.toList()
       ..sort((a, b) => b['spent'].compareTo(a['spent']));
     _topRetailers = _topRetailers.take(3).toList();
 
-    // Prepare Sales Trend based on filter
     List<Map<String, dynamic>> trendList = [];
     
     if (_currentFilter == StatFilter.today) {
-      // Fill all 24 hours
       for (int i = 0; i < 24; i++) {
         String hourKey = DateFormat('HH:00').format(DateTime(now.year, now.month, now.day, i));
         trendList.add({
@@ -219,7 +207,6 @@ class AdminStatisticController extends ChangeNotifier {
         });
       }
     } else {
-      // No trend chart for 'All Time'
       trendList = [];
     }
 

@@ -19,7 +19,6 @@ class PushNotificationService {
   PushNotificationService._internal();
 
   Future<void> initialize() async {
-    // 1. Request Permissions
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
       badge: true,
@@ -54,28 +53,23 @@ class PushNotificationService {
       ),
     );
 
-    // 4. Get FCM Token and save to Firestore
     await saveTokenToFirestore();
 
-    // 4. Handle Foreground Messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('Received foreground message: ${message.notification?.title}');
       _showLocalNotification(message);
     });
 
-    // 5. Handle Background/Terminated Messages (Interaction)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint('App opened from notification: ${message.data}');
     });
 
-    // 6. Listen to Firestore User Notifications (Simulation for status changes)
     listenToUserNotifications();
 
-    // 7. Watch for Auth changes to re-initialize listener if user logs in later
     _auth.authStateChanges().listen((user) {
       if (user != null) {
         listenToUserNotifications();
-        saveTokenToFirestore(); // Also refresh token on login
+        saveTokenToFirestore();
       }
     });
   }
@@ -103,8 +97,6 @@ class PushNotificationService {
     if (user == null) return;
 
     try {
-      // JANGAN di-await agar tidak menghambat proses navigasi UI
-      // Biarkan berjalan di background (fire and forget)
       _firestore.collection('users').doc(user.uid).update({
         'fcmToken': FieldValue.delete(),
       }).catchError((e) => debugPrint('Background clear token failed: $e'));
@@ -169,8 +161,6 @@ class PushNotificationService {
     String? relatedId,
   }) async {
     try {
-      // In a real production app, you would use FCM Topics (/topics/all)
-      // For this simulation, we send to all users in the 'users' collection
       final usersSnapshot = await _firestore.collection('users').get();
       
       final batch = _firestore.batch();
@@ -204,7 +194,6 @@ class PushNotificationService {
       android: androidDetails,
     );
 
-    // Kirim setelah 5 detik untuk memberi waktu pengguna menutup aplikasi (simulasi push)
     Future.delayed(const Duration(seconds: 5), () async {
       await _localNotifications.show(
         id: 999,
@@ -219,11 +208,9 @@ class PushNotificationService {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    // Get user role first to decide which collections to listen to
     final userDoc = await _firestore.collection('users').doc(user.uid).get();
     final role = (userDoc.data()?['role'] ?? 'retailer').toString().toLowerCase();
 
-    // 1. Listen for personal notifications (For everyone)
     _firestore
         .collection('users')
         .doc(user.uid)
@@ -240,7 +227,6 @@ class PushNotificationService {
       }
     });
 
-    // 2. Listen for Admin notifications (ONLY for Admins and CS)
     if (role == 'admin' || role == 'cs' || role == 'customer_support') {
       _firestore
           .collection('admin_notifications')
@@ -302,7 +288,6 @@ class PushNotificationService {
   }
 }
 
-// Global background message handler
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('Handling background message: ${message.messageId}');
 }

@@ -62,7 +62,6 @@ class OrderAdminController {
         await _firestore.collection('orders').doc(orderId).update(updateData);
       }
 
-      // Trigger Notification for User
       if (userId.isNotEmpty && userId != 'guest_user') {
         String title = 'Update Pesanan';
         String message = 'Status pesanan $orderId Anda berubah menjadi $newStatus.';
@@ -110,7 +109,6 @@ class OrderAdminController {
         'cancelledAt': FieldValue.serverTimestamp(),
       });
 
-      // Notify User
       final userId = data['userId']?.toString() ?? '';
       if (userId.isNotEmpty && userId != 'guest_user') {
         _pushNotificationService.sendNotificationToUser(

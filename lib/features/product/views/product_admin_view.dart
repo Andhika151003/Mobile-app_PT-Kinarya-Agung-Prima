@@ -317,7 +317,6 @@ class _ProductAdminViewState extends State<ProductAdminView>
           _sortBy,
         );
 
-        // If sorting by Best Selling, ensure they are top items
         final products = filteredProducts.take(10).toList();
 
         if (products.isEmpty) {

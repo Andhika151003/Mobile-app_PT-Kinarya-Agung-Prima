@@ -322,8 +322,6 @@ class _ProductUserViewState extends State<ProductUserView> {
 
   Widget _buildProductCard(BuildContext context, ProductModel product,
       NumberFormat currencyFormatter, PromotionModel? activePromo) {
-    double discountedPrice =
-        _productUserController.calculateDiscountedPrice(product, activePromo);
     bool hasPromo = activePromo != null;
 
     return GestureDetector(
