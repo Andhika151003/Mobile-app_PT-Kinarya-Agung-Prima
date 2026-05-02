@@ -6,6 +6,7 @@ import 'login_view.dart';
 import 'form_edit_user_view.dart';
 import '../controllers/profile_user_controller.dart';
 import '../../shared/widgets/shimmer_loading.dart';
+import '../../notification/services/push_notification_service.dart';
 
 class ProfileUserView extends StatefulWidget {
   const ProfileUserView({super.key});
@@ -14,7 +15,8 @@ class ProfileUserView extends StatefulWidget {
   State<ProfileUserView> createState() => _ProfileUserViewState();
 }
 
-class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAliveClientMixin {
+class _ProfileUserViewState extends State<ProfileUserView>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -26,7 +28,7 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
   String businessType = 'Loading...';
   String email = 'Loading...';
   String storeId = '-';
-  int totalOrders = 0; 
+  int totalOrders = 0;
   double totalSpent = 0;
   bool isEmailVerified = false;
   bool isActive = true;
@@ -43,7 +45,7 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
     try {
       final data = await _retailController.getRetailProfile();
       final stats = await _retailController.getRetailStats();
-      
+
       if (data != null && mounted) {
         setState(() {
           storeName = data['fullName'] ?? 'No Name';
@@ -52,14 +54,15 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
           businessType = data['businessType'] ?? 'No Business Type';
           email = data['email'] ?? 'No Email';
           storeId = '#KNY${data['uid'].substring(0, 6).toUpperCase()}';
-          isActive = data['isActive'] ?? true; 
+          isActive = data['isActive'] ?? true;
           photoUrl = data['photoUrl'];
-          isEmailVerified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
-          
+          isEmailVerified =
+              FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+
           // Stats dari controller
           totalOrders = stats['totalOrders'] ?? 0;
           totalSpent = stats['totalSpent'] ?? 0.0;
-          
+
           isLoading = false;
         });
       } else {
@@ -93,8 +96,10 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
       body: isLoading
           ? const ProfileShimmer()
           : SingleChildScrollView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 20.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -113,10 +118,11 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
                     icon: Icons.account_balance_wallet_outlined,
                     title: 'Total Spent',
                     value: NumberFormat.currency(
-                            locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
-                        .format(totalSpent),
+                      locale: 'id_ID',
+                      symbol: 'Rp ',
+                      decimalDigits: 0,
+                    ).format(totalSpent),
                   ),
-                  const SizedBox(height: 16),
                   _buildLogoutButton(context),
                   const SizedBox(height: 20),
                 ],
@@ -191,11 +197,14 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
                             context: context,
                             barrierDismissible: false,
                             builder: (context) => const Center(
-                              child: CircularProgressIndicator(color: primaryGreen),
+                              child: CircularProgressIndicator(
+                                color: primaryGreen,
+                              ),
                             ),
                           );
 
                           try {
+                            await PushNotificationService().clearToken();
                             await FirebaseAuth.instance.signOut();
 
                             if (context.mounted) {
@@ -227,9 +236,7 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
                         ),
                         child: const Text(
                           'Log Out',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -260,8 +267,11 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
                 ? NetworkImage(photoUrl!)
                 : null,
             child: photoUrl == null || photoUrl!.isEmpty
-                ? const Icon(Icons.storefront_outlined,
-                    size: 30, color: Color(0xFF458833))
+                ? const Icon(
+                    Icons.storefront_outlined,
+                    size: 30,
+                    color: Color(0xFF458833),
+                  )
                 : null,
           ),
         ),
@@ -281,10 +291,7 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
               const SizedBox(height: 2),
               Text(
                 businessType,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.blueGrey.shade600,
-                ),
+                style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade600),
               ),
             ],
           ),
@@ -294,7 +301,8 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => const FormProfileUserView()),
+                builder: (context) => const FormProfileUserView(),
+              ),
             ).then((_) {
               _fetchUserData();
             });
@@ -367,7 +375,11 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
     );
   }
 
-  Widget _buildStatsCard({required IconData icon, required String title, required String value}) {
+  Widget _buildStatsCard({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -393,14 +405,22 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
               const SizedBox(width: 8),
               Text(
                 title,
-                style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade600, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.blueGrey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
         ],
       ),
@@ -417,9 +437,7 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
         child: const Text(
@@ -429,4 +447,5 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
       ),
     );
   }
+
 }

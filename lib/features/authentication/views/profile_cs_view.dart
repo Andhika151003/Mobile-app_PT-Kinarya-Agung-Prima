@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_view.dart';
 import '../controllers/profile_cs_controller.dart';
+import '../../notification/services/push_notification_service.dart';
 
 class ProfileCsView extends StatefulWidget {
   const ProfileCsView({super.key});
@@ -160,6 +161,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
                           );
 
                           try {
+                            await PushNotificationService().clearToken();
                             await FirebaseAuth.instance.signOut();
 
                             if (context.mounted) {

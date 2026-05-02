@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../notification/services/notification_service.dart';
+import '../../notification/services/push_notification_service.dart';
 import 'order_stats_helper.dart';
 
 class OrderAdminController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final NotificationService _notificationService = NotificationService();
+  final PushNotificationService _pushNotificationService = PushNotificationService();
 
   Future<List<Map<String, dynamic>>> getAllOrdersAdmin() async {
     try {
@@ -78,7 +78,7 @@ class OrderAdminController {
           message = 'Pesanan $orderId Anda telah sampai di tujuan.';
         }
 
-        await _notificationService.addUserNotification(
+        await _pushNotificationService.sendNotificationToUser(
           userId: userId,
           title: title,
           message: message,
@@ -113,10 +113,10 @@ class OrderAdminController {
       // Notify User
       final userId = data['userId']?.toString() ?? '';
       if (userId.isNotEmpty && userId != 'guest_user') {
-        _notificationService.addUserNotification(
+        _pushNotificationService.sendNotificationToUser(
           userId: userId,
           title: 'Pesanan Dibatalkan',
-          message: 'Mohon maaf, pesanan $orderId Anda telah dibatalkan.',
+          message: 'Mohon maaf, pesanan $orderId Anda telah dibatalkan oleh admin.',
           type: 'order',
           relatedId: orderId,
         );

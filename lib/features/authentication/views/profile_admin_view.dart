@@ -6,6 +6,7 @@ import '../controllers/profile_admin_controller.dart';
 import '../../promotion/views/promotion_admin_view.dart';
 import '../../complaint/views/complaint_history_admin_view.dart';
 import '../../admin/view/admin_cs_view.dart';
+import '../../notification/services/push_notification_service.dart';
 
 class ProfileAdminView extends StatefulWidget {
   const ProfileAdminView({super.key});
@@ -158,6 +159,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
                           );
 
                           try {
+                            await PushNotificationService().clearToken();
                             await FirebaseAuth.instance.signOut();
 
                             if (context.mounted) {

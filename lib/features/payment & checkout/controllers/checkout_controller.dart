@@ -4,14 +4,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../../notification/services/notification_service.dart';
+import '../../notification/services/push_notification_service.dart';
 
 class CheckoutController {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
   final http.Client _client;
   final String _backendUrl;
-  final NotificationService _notificationService = NotificationService();
+  final PushNotificationService _pushNotificationService = PushNotificationService();
 
   CheckoutController({
     FirebaseFirestore? firestore,
@@ -95,7 +95,7 @@ class CheckoutController {
       });
 
       // Trigger Notification for Admin
-      await _notificationService.addAdminNotification(
+      await _pushNotificationService.sendNotificationToAdmin(
         title: 'Pesanan Baru Masuk!',
         message: 'Pesanan $orderId telah dibuat oleh $fullName.',
         type: 'order',

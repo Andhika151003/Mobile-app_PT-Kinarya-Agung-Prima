@@ -42,7 +42,7 @@ class AuthGate extends StatelessWidget {
 
             if (userSnapshot.hasData && userSnapshot.data!.exists) {
               final userData = userSnapshot.data!.data() as Map<String, dynamic>;
-              final String role = userData['role'] ?? 'user';
+              final String role = (userData['role'] ?? 'user').toString().toLowerCase();
               final bool isActive = userData['isActive'] ?? true;
 
               if (!isActive) {
@@ -53,7 +53,7 @@ class AuthGate extends StatelessWidget {
 
               if (role == 'admin') {
                 return const MainNavigationAdmin();
-              } else if (role == 'cs') {
+              } else if (role == 'cs' || role == 'customer_support') {
                 return const MainNavigationCs();
               } else {
                 return const MainNavigationUser();

@@ -121,91 +121,112 @@ class _NotificationUserViewState extends State<NotificationUserView> {
         bgColor = Colors.grey.withValues(alpha: 0.1);
     }
 
-    return GestureDetector(
-      onTap: () {
-        if (!notif.isRead) {
-          _controller.markAsRead(notif.id);
-        }
-        // Handle navigation based on type if needed
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
+    return Dismissible(
+      key: Key(notif.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: notif.isRead ? Colors.white : AppColors.primary.withValues(alpha: 0.03),
+          color: Colors.red[400],
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: notif.isRead ? Colors.transparent : AppColors.primary.withValues(alpha: 0.1),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: bgColor,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
+        child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+      ),
+      onDismissed: (direction) {
+        _controller.deleteNotification(notif.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Notifikasi dihapus'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+      child: GestureDetector(
+        onTap: () {
+          if (!notif.isRead) {
+            _controller.markAsRead(notif.id);
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: notif.isRead ? Colors.white : AppColors.primary.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: notif.isRead ? Colors.transparent : AppColors.primary.withValues(alpha: 0.1),
+              width: 1,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          notif.title,
-                          style: TextStyle(
-                            fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.w800,
-                            fontSize: 15,
-                            color: Colors.black87,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            notif.title,
+                            style: TextStyle(
+                              fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.w800,
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
                           ),
                         ),
+                        if (!notif.isRead)
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      notif.message,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 13,
+                        height: 1.4,
                       ),
-                      if (!notif.isRead)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    notif.message,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 13,
-                      height: 1.4,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    DateFormat('MMM dd, HH:mm').format(notif.timestamp),
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 11,
+                    const SizedBox(height: 8),
+                    Text(
+                      DateFormat('MMM dd, HH:mm').format(notif.timestamp),
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 11,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

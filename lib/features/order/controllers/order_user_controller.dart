@@ -4,13 +4,13 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'order_stats_helper.dart';
-import '../../notification/services/notification_service.dart';
+import '../../notification/services/push_notification_service.dart';
 
 class OrderUserController {
   final FirebaseFirestore _firestore;
   final http.Client _client;
   final String _duitkuBackendUrl;
-  final NotificationService _notificationService = NotificationService();
+  final PushNotificationService _pushNotificationService = PushNotificationService();
 
   OrderUserController({
     FirebaseFirestore? firestore,
@@ -48,6 +48,15 @@ class OrderUserController {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['status'] == 'Paid') {
           await OrderStatsHelper.markOrderAsPaid(orderId);
+          
+          // Notify Admin of Payment
+          await _pushNotificationService.sendNotificationToAdmin(
+            title: 'Pembayaran Baru!',
+            message: 'Pesanan $orderId telah berhasil dibayar oleh pelanggan.',
+            type: 'order',
+            relatedId: orderId,
+          );
+          
           return true;
         }
       }
@@ -67,7 +76,7 @@ class OrderUserController {
       await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: 'Delivered');
 
       // Trigger Notification for Admin
-      await _notificationService.addAdminNotification(
+      await _pushNotificationService.sendNotificationToAdmin(
         title: 'Pesanan Diterima!',
         message: '$customerName telah mengonfirmasi penerimaan pesanan $orderId.',
         type: 'order',

@@ -14,7 +14,6 @@ import '../../authentication/controllers/profile_user_controller.dart';
 import '../../notification/views/notif_user_view.dart';
 import '../../notification/controllers/notif_user_controller.dart';
 
-
 class DashboardUserView extends StatefulWidget {
   const DashboardUserView({super.key});
 
@@ -26,7 +25,8 @@ class _DashboardUserViewState extends State<DashboardUserView>
     with AutomaticKeepAliveClientMixin {
   final DashboardUserController _controller = DashboardUserController();
   final PromotionUserController _promoController = PromotionUserController();
-  final NotificationUserController _notifController = NotificationUserController();
+  final NotificationUserController _notifController =
+      NotificationUserController();
   final RetailProfileController _profileController = RetailProfileController();
 
   String userName = 'Retailer';
@@ -357,7 +357,8 @@ class _DashboardUserViewState extends State<DashboardUserView>
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const NotificationUserView(),
+                              builder: (context) =>
+                                  const NotificationUserView(),
                             ),
                           );
                         },
@@ -590,21 +591,22 @@ class _DashboardUserViewState extends State<DashboardUserView>
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      promo.discountText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 2,
-                            color: Colors.black45,
-                            offset: Offset(1, 1),
-                          ),
-                        ],
+                    if (promo.discountType != 'percentage')
+                      Text(
+                        promo.discountText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          shadows: [
+                            Shadow(
+                              blurRadius: 2,
+                              color: Colors.black45,
+                              offset: Offset(1, 1),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: () => _showPromoPopup(promo),
@@ -963,6 +965,22 @@ class _DashboardUserViewState extends State<DashboardUserView>
       decimalDigits: 0,
     );
 
+    // Find best promotion for this product to show badge
+    PromotionModel? bestPromo;
+    final matchingPromos = _activePromos.where((promo) => 
+      promo.applicableTo == 'all' || promo.productIds.contains(product.id)
+    ).toList();
+    
+    if (matchingPromos.isNotEmpty) {
+      matchingPromos.sort((a, b) {
+        if (a.discountType != b.discountType) return b.discountType == 'percentage' ? -1 : 1;
+        return b.discountValue.compareTo(a.discountValue);
+      });
+      bestPromo = matchingPromos.first;
+    }
+
+    bool hasPromo = bestPromo != null;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -981,42 +999,66 @@ class _DashboardUserViewState extends State<DashboardUserView>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Center(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
+              child: Stack(
+                children: [
+                  Center(
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: product.imageUrl.isNotEmpty
+                            ? Image.network(
+                                product.imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(
+                                      Icons.image,
+                                      color: Colors.grey,
+                                      size: 50,
+                                    ),
+                              )
+                            : const Icon(Icons.image, color: Colors.grey, size: 50),
+                      ),
+                    ),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: product.imageUrl.isNotEmpty
-                        ? Image.network(
-                            product.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(
-                                  Icons.image,
-                                  color: Colors.grey,
-                                  size: 50,
-                                ),
-                          )
-                        : const Icon(Icons.image, color: Colors.grey, size: 50),
-                  ),
-                ),
+                  if (hasPromo && bestPromo!.discountType != 'percentage')
+                    Positioned(
+                      top: 4,
+                      left: 4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          bestPromo!.discountText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 12),
             Text(
               product.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             Text(
               'Min. Order: ${product.moq ?? 1} pcs',
-              style: TextStyle(color: Colors.grey[500], fontSize: 11),
+              style: TextStyle(color: Colors.grey[500], fontSize: 10),
             ),
             const SizedBox(height: 8),
             Text(
