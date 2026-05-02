@@ -1,3 +1,4 @@
+import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -232,7 +233,21 @@ class _RegisterViewState extends State<RegisterView> {
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
-                        decoration: _inputDecoration('Enter your phone number'),
+                        decoration: _inputDecoration('Contoh: 8123456789')
+                            .copyWith(
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            child: Text(
+                              '+62',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                        ),
                         validator: controller.validatePhoneNumber,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
@@ -355,7 +370,7 @@ class _RegisterViewState extends State<RegisterView> {
                               ? null
                               : () => _handleRegister(controller),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E7D32),
+                            backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -460,7 +475,7 @@ class _RegisterViewState extends State<RegisterView> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

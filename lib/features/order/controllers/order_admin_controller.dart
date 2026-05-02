@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../notification/services/notification_service.dart';
 import 'order_stats_helper.dart';
 
 class OrderAdminController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final NotificationService _notificationService = NotificationService();
 
   Future<List<Map<String, dynamic>>> getAllOrdersAdmin() async {
     try {
@@ -47,11 +49,42 @@ class OrderAdminController {
 
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     try {
+      // Get order data to find userId
+      final orderDoc = await _firestore.collection('orders').doc(orderId).get();
+      if (!orderDoc.exists) return;
+      final orderData = orderDoc.data() as Map<String, dynamic>;
+      final userId = orderData['userId']?.toString() ?? '';
+
       if (newStatus == 'Paid' || newStatus == 'Shipped' || newStatus == 'Delivered') {
         await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus);
       } else {
         final updateData = <String, dynamic>{'status': newStatus};
         await _firestore.collection('orders').doc(orderId).update(updateData);
+      }
+
+      // Trigger Notification for User
+      if (userId.isNotEmpty && userId != 'guest_user') {
+        String title = 'Update Pesanan';
+        String message = 'Status pesanan $orderId Anda berubah menjadi $newStatus.';
+
+        if (newStatus == 'Paid') {
+          title = 'Pembayaran Diterima';
+          message = 'Pembayaran untuk pesanan $orderId telah kami konfirmasi.';
+        } else if (newStatus == 'Shipped') {
+          title = 'Pesanan Sedang Dikirim';
+          message = 'Pesanan $orderId Anda telah diserahkan ke kurir.';
+        } else if (newStatus == 'Delivered') {
+          title = 'Pesanan Telah Tiba';
+          message = 'Pesanan $orderId Anda telah sampai di tujuan.';
+        }
+
+        await _notificationService.addUserNotification(
+          userId: userId,
+          title: title,
+          message: message,
+          type: 'order',
+          relatedId: orderId,
+        );
       }
     } catch (e) {
       throw Exception('Gagal memperbarui status: $e');
@@ -76,6 +109,18 @@ class OrderAdminController {
         'status': 'Cancelled',
         'cancelledAt': FieldValue.serverTimestamp(),
       });
+
+      // Notify User
+      final userId = data['userId']?.toString() ?? '';
+      if (userId.isNotEmpty && userId != 'guest_user') {
+        _notificationService.addUserNotification(
+          userId: userId,
+          title: 'Pesanan Dibatalkan',
+          message: 'Mohon maaf, pesanan $orderId Anda telah dibatalkan.',
+          type: 'order',
+          relatedId: orderId,
+        );
+      }
 
       for (var itemMap in itemsData) {
         final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
@@ -122,6 +167,8 @@ class OrderAdminController {
         if (createdAt == null) return false;
         return createdAt.isAfter(weekAgo);
       }).toList();
+    } else if (['Ordered', 'Paid', 'Shipped', 'Delivered', 'Cancelled', 'Expired'].contains(selectedFilter)) {
+      results = results.where((order) => order['status'] == selectedFilter).toList();
     }
 
     if (searchQuery.isNotEmpty) {

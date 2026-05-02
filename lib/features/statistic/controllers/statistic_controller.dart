@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
-enum StatFilter { today, week, month, all }
+enum StatFilter { today, week, month }
 
 class AdminStatisticController extends ChangeNotifier {
   final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
 
-  AdminStatisticController({FirebaseFirestore? firestore, FirebaseAuth? auth})
-      : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  AdminStatisticController({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
   
   bool _isDisposed = false;
 
@@ -24,7 +21,7 @@ class AdminStatisticController extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  StatFilter _currentFilter = StatFilter.all;
+  StatFilter _currentFilter = StatFilter.week;
   StatFilter get currentFilter => _currentFilter;
 
   // --- Summary Stats ---
@@ -197,12 +194,36 @@ class AdminStatisticController extends ChangeNotifier {
       ..sort((a, b) => b['spent'].compareTo(a['spent']));
     _topRetailers = _topRetailers.take(3).toList();
 
-    // Prepare Sales Trend
-    _salesTrend = trendData.entries
-        .map((e) => {'date': e.key, 'value': e.value})
-        .toList();
+    // Prepare Sales Trend based on filter
+    List<Map<String, dynamic>> trendList = [];
     
-    _salesTrend.sort((a, b) => a['date'].compareTo(b['date']));
+    if (_currentFilter == StatFilter.today) {
+      // Fill all 24 hours
+      for (int i = 0; i < 24; i++) {
+        String hourKey = DateFormat('HH:00').format(DateTime(now.year, now.month, now.day, i));
+        trendList.add({
+          'date': hourKey,
+          'value': trendData[hourKey] ?? 0.0,
+          'sortKey': i,
+        });
+      }
+    } else if (_currentFilter == StatFilter.week || _currentFilter == StatFilter.month) {
+      int days = _currentFilter == StatFilter.week ? 7 : 30;
+      for (int i = days - 1; i >= 0; i--) {
+        DateTime d = now.subtract(Duration(days: i));
+        String dateKey = DateFormat('dd/MM').format(d);
+        trendList.add({
+          'date': dateKey,
+          'value': trendData[dateKey] ?? 0.0,
+          'sortKey': DateTime(d.year, d.month, d.day).millisecondsSinceEpoch,
+        });
+      }
+    } else {
+      // No trend chart for 'All Time'
+      trendList = [];
+    }
+
+    _salesTrend = trendList;
   }
 
   Future<void> _fetchUserStats() async {

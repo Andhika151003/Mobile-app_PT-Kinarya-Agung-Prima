@@ -21,6 +21,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _discountValueController;
+  late TextEditingController _maxDiscountController;
   late TextEditingController _skuController;
   late String _discountType;
   late DateTime _startDate;
@@ -28,6 +29,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
   late String _status;
+  late String _applicableTo;
   File? _imageFile;
   bool _isLoading = false;
 
@@ -63,6 +65,11 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
           ? widget.promotion!.discountValue.toString()
           : '',
     );
+    _maxDiscountController = TextEditingController(
+      text: widget.promotion?.maxDiscount != null
+          ? widget.promotion!.maxDiscount!.toString()
+          : '',
+    );
     _skuController = TextEditingController(
       text: widget.promotion?.sku ??
           '#PRM-${DateTime.now().millisecondsSinceEpoch % 9000 + 1000}',
@@ -74,6 +81,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     _startTime = _parseTime(widget.promotion?.startTime ?? '00:00');
     _endTime = _parseTime(widget.promotion?.endTime ?? '23:59');
     _status = widget.promotion?.status ?? 'active';
+    _applicableTo = widget.promotion?.applicableTo ?? 'products';
     _selectedProductIds =
         List<String>.from(widget.promotion?.productIds ?? []);
     _fetchProducts();
@@ -130,6 +138,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     _titleController.dispose();
     _descriptionController.dispose();
     _discountValueController.dispose();
+    _maxDiscountController.dispose();
     _skuController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -235,7 +244,9 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     final timeInvalid = (_startTime.hour > _endTime.hour) ||
         (_startTime.hour == _endTime.hour &&
             _startTime.minute >= _endTime.minute);
-    final productEmpty = _selectedProductIds.isEmpty;
+    
+    // Produk wajib diisi HANYA jika scope == 'products'
+    final productEmpty = _applicableTo == 'products' && _selectedProductIds.isEmpty;
 
     setState(() {
       _titleError = titleEmpty;
@@ -452,14 +463,15 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         discountType: _discountType,
         discountValue:
             double.tryParse(_discountValueController.text) ?? 0,
-        productIds: _selectedProductIds,
-        applicableTo: 'all',
+        productIds: _applicableTo == 'all' ? [] : _selectedProductIds,
+        applicableTo: _applicableTo,
         startDate: startDateTime,
         endDate: endDateTime,
         startTime: _formatTime(_startTime),
         endTime: _formatTime(_endTime),
         sku: _skuController.text,
         imageFile: _imageFile,
+        maxDiscount: double.tryParse(_maxDiscountController.text),
       );
     } else {
       success = await _controller.updatePromotion(
@@ -469,8 +481,8 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         discountType: _discountType,
         discountValue:
             double.tryParse(_discountValueController.text) ?? 0,
-        productIds: _selectedProductIds,
-        applicableTo: 'all',
+        productIds: _applicableTo == 'all' ? [] : _selectedProductIds,
+        applicableTo: _applicableTo,
         startDate: startDateTime,
         endDate: endDateTime,
         startTime: _formatTime(_startTime),
@@ -479,6 +491,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         sku: _skuController.text,
         imageFile: _imageFile,
         currentImageUrl: widget.promotion!.imageUrl,
+        maxDiscount: double.tryParse(_maxDiscountController.text),
       );
     }
 
@@ -837,6 +850,28 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
 
             const SizedBox(height: 20),
 
+            // ── Maximum Discount (Optional) ──────────────────
+            _label('Maximum Discount Amount (Optional)'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _maxDiscountController,
+              keyboardType: TextInputType.number,
+              decoration: _inputDeco(
+                'Enter Maximum Discount (Rp)',
+              ).copyWith(
+                prefixText: 'Rp ',
+                prefixStyle: const TextStyle(
+                    fontSize: 14, color: Color(0xFF6B7280)),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Limit total diskon yang bisa didapatkan user (berguna untuk BOGO atau diskon % besar).',
+              style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+            ),
+
+            const SizedBox(height: 20),
+
             // ── Promotion Period ──────────────────────────────
             _label('Promotion Period'),
             const SizedBox(height: 10),
@@ -897,8 +932,20 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
 
             const SizedBox(height: 24),
 
+            // ── Target Scope ──────────────────────────────────
+            _label('Promotion Scope'),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _buildScopeChip('Specific Products', 'products'),
+                const SizedBox(width: 12),
+                _buildScopeChip('All Products', 'all'),
+              ],
+            ),
+            const SizedBox(height: 24),
+
             // ── Product Selection ─────────────────────────────
-            if (true) ...[
+            if (_applicableTo == 'products') ...[
               _label('Product Selection'),
               const SizedBox(height: 6),
               if (_selectedProductIds.isNotEmpty)
@@ -1354,4 +1401,48 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       );
+
+  Widget _buildScopeChip(String label, String value) {
+    bool isSelected = _applicableTo == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() {
+          _applicableTo = value;
+          if (_applicableTo == 'all') {
+            _productError = false;
+          }
+        }),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFE8F5E9) : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF2E7D32) : const Color(0xFFE5E7EB),
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                value == 'all' ? Icons.public : Icons.inventory_2_outlined,
+                size: 16,
+                color: isSelected ? const Color(0xFF2E7D32) : const Color(0xFF6B7280),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? const Color(0xFF2E7D32) : const Color(0xFF6B7280),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

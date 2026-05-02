@@ -46,7 +46,8 @@ class AuthGate extends StatelessWidget {
               final bool isActive = userData['isActive'] ?? true;
 
               if (!isActive) {
-                // Jika tidak aktif, arahkan kembali ke Login
+                // Jika tidak aktif, sign out dan biarkan StreamBuilder mengarahkan ke LoginView
+                FirebaseAuth.instance.signOut();
                 return const LoginView();
               }
 

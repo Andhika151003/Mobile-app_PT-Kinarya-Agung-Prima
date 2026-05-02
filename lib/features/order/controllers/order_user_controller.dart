@@ -4,11 +4,13 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'order_stats_helper.dart';
+import '../../notification/services/notification_service.dart';
 
 class OrderUserController {
   final FirebaseFirestore _firestore;
   final http.Client _client;
   final String _duitkuBackendUrl;
+  final NotificationService _notificationService = NotificationService();
 
   OrderUserController({
     FirebaseFirestore? firestore,
@@ -58,7 +60,20 @@ class OrderUserController {
   
   Future<bool> receiveOrder(String orderId) async {
     try {
+      final orderDoc = await _firestore.collection('orders').doc(orderId).get();
+      final orderData = orderDoc.data();
+      final customerName = orderData?['fullName'] ?? 'Customer';
+
       await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: 'Delivered');
+
+      // Trigger Notification for Admin
+      await _notificationService.addAdminNotification(
+        title: 'Pesanan Diterima!',
+        message: '$customerName telah mengonfirmasi penerimaan pesanan $orderId.',
+        type: 'order',
+        relatedId: orderId,
+      );
+
       return true;
     } catch (e) {
       debugPrint("Error updating order status: $e");

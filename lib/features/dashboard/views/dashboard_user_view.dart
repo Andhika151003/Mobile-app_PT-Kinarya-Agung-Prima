@@ -1,3 +1,4 @@
+import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,7 +10,10 @@ import '../../product/models/product.dart';
 import '../../product/views/product_detail_user_view.dart';
 import '../../complaint/views/complaint_form_view.dart';
 import '../../complaint/views/complaint_history_view.dart';
-import '../../shared/widgets/shimmer_loading.dart';
+import '../../authentication/controllers/profile_user_controller.dart';
+import '../../notification/views/notif_user_view.dart';
+import '../../notification/controllers/notif_user_controller.dart';
+
 
 class DashboardUserView extends StatefulWidget {
   const DashboardUserView({super.key});
@@ -22,6 +26,8 @@ class _DashboardUserViewState extends State<DashboardUserView>
     with AutomaticKeepAliveClientMixin {
   final DashboardUserController _controller = DashboardUserController();
   final PromotionUserController _promoController = PromotionUserController();
+  final NotificationUserController _notifController = NotificationUserController();
+  final RetailProfileController _profileController = RetailProfileController();
 
   String userName = 'Retailer';
   bool isLoading = true;
@@ -110,7 +116,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
             maxHeight: MediaQuery.of(context).size.height * 0.8,
           ),
           decoration: BoxDecoration(
-            color: const Color(0xFF1B8A3A),
+            color: AppColors.primary,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Stack(
@@ -225,7 +231,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                           onPressed: () => Navigator.pop(ctx),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF1B8A3A),
+                            foregroundColor: AppColors.primary,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -278,15 +284,13 @@ class _DashboardUserViewState extends State<DashboardUserView>
   Widget build(BuildContext context) {
     super.build(context);
 
-    if (isLoading && userName == 'Retailer') {
-      return const SafeArea(child: DashboardUserShimmer());
-    }
+    // Removed initial shimmer check to render dashboard structure immediately
 
     return SafeArea(
       child: Container(
         color: const Color(0xFFF8F9FA),
         child: RefreshIndicator(
-          color: const Color(0xFF00903D),
+          color: AppColors.primary,
           onRefresh: _onRefresh,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -338,38 +342,44 @@ class _DashboardUserViewState extends State<DashboardUserView>
                   );
                 },
               ),
-              if (_activePromos.isNotEmpty)
-                Stack(
-                  children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.notifications_outlined,
-                        color: Colors.black87,
-                      ),
-                      onPressed: () {},
-                    ),
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
+              StreamBuilder<int>(
+                stream: _notifController.getUnreadCount(),
+                builder: (context, snapshot) {
+                  final unreadCount = snapshot.data ?? 0;
+                  return Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.black87,
                         ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationUserView(),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  ],
-                )
-              else
-                IconButton(
-                  icon: const Icon(
-                    Icons.notifications_outlined,
-                    color: Colors.black87,
-                  ),
-                  onPressed: () {},
-                ),
+                      if (unreadCount > 0)
+                        Positioned(
+                          right: 12,
+                          top: 12,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
             ],
           ),
         ],
@@ -379,23 +389,29 @@ class _DashboardUserViewState extends State<DashboardUserView>
 
   // ── GREETING ──────────────────────────────────────────────
   Widget _buildGreetingSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          isLoading ? 'Selamat Datang' : 'Selamat Datang, $userName!',
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          DateFormat('EEEE, MMMM d, y').format(DateTime.now()),
-          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-        ),
-      ],
+    return StreamBuilder<Map<String, dynamic>?>(
+      stream: _profileController.getRetailProfileStream(),
+      builder: (context, snapshot) {
+        final name = snapshot.data?['fullName'] ?? userName;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Selamat Datang, $name!',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              DateFormat('EEEE, MMMM d, y').format(DateTime.now()),
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -446,7 +462,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                 height: 8,
                 decoration: BoxDecoration(
                   color: _currentBannerIndex == i
-                      ? const Color(0xFF1B8A3A)
+                      ? AppColors.primary
                       : Colors.grey[300],
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -471,7 +487,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
         bannerColor = const Color(0xFFD97706);
         break;
       default:
-        bannerColor = const Color(0xFF1B8A3A);
+        bannerColor = AppColors.primary;
     }
 
     final bool hasImage = promo.imageUrl != null && promo.imageUrl!.isNotEmpty;
@@ -594,7 +610,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                       onPressed: () => _showPromoPopup(promo),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF1B8A3A),
+                        foregroundColor: AppColors.primary,
                         elevation: 4,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -689,12 +705,11 @@ class _DashboardUserViewState extends State<DashboardUserView>
           stream: _recentOrdersStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Column(
-                children: const [
-                  OrderCardShimmer(),
-                  SizedBox(height: 12),
-                  OrderCardShimmer(),
-                ],
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
               );
             }
             if (snapshot.hasError) {
@@ -891,17 +906,11 @@ class _DashboardUserViewState extends State<DashboardUserView>
           stream: _recommendedProductsStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.65,
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 ),
-                itemCount: 2,
-                itemBuilder: (context, index) => const ProductCardShimmer(),
               );
             }
             if (snapshot.hasError) {

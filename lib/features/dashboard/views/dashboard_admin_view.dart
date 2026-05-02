@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../authentication/views/profile_admin_view.dart';
 import '../controllers/dashboard_admin_controller.dart';
 import '../../admin/view/admin_master_view.dart';
-import '../../admin/view/admin_cs_view.dart';
 import '../../promotion/views/form_promotion_admin_view.dart';
 import '../../promotion/models/promotion.dart';
-import '../../complaint/views/complaint_history_admin_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../shared/main_navigation_admin.dart';
 import '../../shared/widgets/shimmer_loading.dart';
+import '../../notification/views/notif_admin_view.dart';
+import '../../notification/controllers/notif_admin_controller.dart';
+
 
 class DashboardAdminView extends StatefulWidget {
   const DashboardAdminView({super.key});
@@ -20,6 +20,7 @@ class DashboardAdminView extends StatefulWidget {
 
 class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticKeepAliveClientMixin {
   final DashboardAdminController _controller = DashboardAdminController();
+  final NotificationAdminController _notifController = NotificationAdminController();
   final NumberFormat _currencyFormat = NumberFormat.currency(
     locale: 'id_ID',
     symbol: 'Rp ',
@@ -146,11 +147,45 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
 
 
 
+
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Image.asset('assets/images/logo.png', height: 35),
+        StreamBuilder<int>(
+          stream: _notifController.getUnreadCount(),
+          builder: (context, snapshot) {
+            final unreadCount = snapshot.data ?? 0;
+            return Stack(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const NotificationAdminView()),
+                    );
+                  },
+                  icon: const Icon(Icons.notifications_none_outlined, color: Colors.black87),
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ],
     );
   }

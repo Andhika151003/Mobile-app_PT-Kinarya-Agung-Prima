@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/order.dart';
 
 class OrderStatsHelper {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;

@@ -5,6 +5,8 @@ import '../models/order.dart';
 import '../controllers/order_user_controller.dart';
 import 'order_detail_user_view.dart';
 import '../../shared/widgets/shimmer_loading.dart';
+import '../../notification/views/notif_user_view.dart';
+import '../../notification/controllers/notif_user_controller.dart';
 
 class OrderUserView extends StatefulWidget {
   const OrderUserView({super.key});
@@ -15,6 +17,7 @@ class OrderUserView extends StatefulWidget {
 
 class _OrderUserViewState extends State<OrderUserView>
     with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  final NotificationUserController _notifController = NotificationUserController();
   @override
   bool get wantKeepAlive => true;
 
@@ -111,10 +114,41 @@ class _OrderUserViewState extends State<OrderUserView>
             ],
           ),
           if (!_isSearching)
-            IconButton(
-              icon: const Icon(Icons.notifications_none_outlined,
-                  color: Colors.black87, size: 24),
-              onPressed: () {},
+            StreamBuilder<int>(
+              stream: _notifController.getUnreadCount(),
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.data ?? 0;
+                return Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none_outlined,
+                          color: Colors.black87, size: 24),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationUserView(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           const SizedBox(width: 8),
         ],

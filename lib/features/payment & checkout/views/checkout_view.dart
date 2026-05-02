@@ -254,15 +254,30 @@ class _CheckoutViewState extends State<CheckoutView> {
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: FutureBuilder<List<PromotionModel>>(
-                  future: _promoController.getActivePromotions(),
+                child: FutureBuilder<Map<String, dynamic>>(
+                  future: () async {
+                    final user = FirebaseAuth.instance.currentUser;
+                    final results = await Future.wait([
+                      _promoController.getActivePromotions(),
+                      if (user != null)
+                        _promoController.getUsedPromoIds(user.uid)
+                      else
+                        Future.value(<String>{}),
+                    ]);
+                    return {
+                      'promos': results[0] as List<PromotionModel>,
+                      'usedIds': results[1] as Set<String>,
+                    };
+                  }(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    final allPromos = snapshot.data ?? [];
+                    final data = snapshot.data ?? {};
+                    final allPromos = (data['promos'] as List<PromotionModel>?) ?? [];
+                    final usedIds = (data['usedIds'] as Set<String>?) ?? {};
                     final promos = allPromos.where((p) => p.isActive).toList();
-                    
+
                     if (promos.isEmpty) {
                       return const Center(
                         child: Text('Tidak ada promo aktif saat ini.'),
@@ -273,23 +288,42 @@ class _CheckoutViewState extends State<CheckoutView> {
                       itemBuilder: (ctx, i) {
                         final p = promos[i];
                         final isSelected = _appliedPromo?.id == p.id;
-                        
+                        final isUsed = usedIds.contains(p.id);
+
                         bool isEligible = true;
                         if (p.productIds.isNotEmpty) {
-                          final cartProductIds = _cartController.items.map((item) => item.id).toSet();
+                          final cartProductIds =
+                              _cartController.items.map((item) => item.id).toSet();
                           if (p.discountType == 'bundle') {
-                            isEligible = p.productIds.every((id) => cartProductIds.contains(id));
+                            isEligible = p.productIds.every(
+                              (id) => cartProductIds.contains(id),
+                            );
                           } else {
-                            isEligible = p.productIds.any((id) => cartProductIds.contains(id));
+                            isEligible = p.productIds.any(
+                              (id) => cartProductIds.contains(id),
+                            );
                           }
                         }
 
                         return InkWell(
                           onTap: () async {
+                            if (isUsed) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Anda sudah pernah menggunakan promo ini.',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
                             if (!isEligible) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Promo tidak berlaku untuk produk di keranjang Anda.'),
+                                  content: Text(
+                                    'Promo tidak berlaku untuk produk di keranjang Anda.',
+                                  ),
                                   backgroundColor: Colors.orange,
                                 ),
                               );
@@ -299,22 +333,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                             final user = FirebaseAuth.instance.currentUser;
                             if (user == null) return;
 
-                            final messenger = ScaffoldMessenger.of(context);
                             final navigator = Navigator.of(context);
-
-                            final alreadyUsed = await _promoController.checkIfPromoUsed(user.uid, p.id ?? '');
-                            
-                            if (alreadyUsed) {
-                              if (mounted) {
-                                messenger.showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Anda sudah pernah menggunakan promo ini.'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                              return;
-                            }
 
                             setState(() {
                               _appliedPromo = p;
@@ -323,7 +342,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                             if (mounted) navigator.pop();
                           },
                           child: Opacity(
-                            opacity: isEligible ? 1.0 : 0.5,
+                            opacity: (isEligible && !isUsed) ? 1.0 : 0.5,
                             child: Container(
                               margin: const EdgeInsets.only(bottom: 12),
                               padding: const EdgeInsets.all(12),
@@ -383,6 +402,15 @@ class _CheckoutViewState extends State<CheckoutView> {
                                             fontSize: 12,
                                           ),
                                         ),
+                                        if (isUsed)
+                                          const Text(
+                                            'Sudah digunakan',
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),
@@ -474,13 +502,29 @@ class _CheckoutViewState extends State<CheckoutView> {
         }
       } else if (_appliedPromo!.discountType == 'bundle') {
         if (hasSpecificProducts) {
-          final cartProductIds = _cartController.items.map((item) => item.id).toSet();
-          bool allProductsPresent = _appliedPromo!.productIds.every(
-            (id) => cartProductIds.contains(id)
-          );
+          int minSets = -1;
+          for (var pid in _appliedPromo!.productIds) {
+            // Find item in cart
+            int qty = 0;
+            for (var item in _cartController.items) {
+              if (item.id == pid) {
+                qty = item.quantity;
+                break;
+              }
+            }
 
-          if (allProductsPresent) {
-            discountAmount = _appliedPromo!.discountValue;
+            if (qty == 0) {
+              minSets = 0;
+              break;
+            }
+
+            if (minSets == -1 || qty < minSets) {
+              minSets = qty;
+            }
+          }
+
+          if (minSets > 0) {
+            discountAmount = _appliedPromo!.discountValue * minSets;
           }
         }
       } else if (_appliedPromo!.discountType == 'bogo') {
@@ -498,6 +542,11 @@ class _CheckoutViewState extends State<CheckoutView> {
             }
           }
         }
+      }
+
+      if (_appliedPromo!.maxDiscount != null &&
+          discountAmount > _appliedPromo!.maxDiscount!) {
+        discountAmount = _appliedPromo!.maxDiscount!;
       }
 
       if (discountAmount > _cartController.subtotal) {

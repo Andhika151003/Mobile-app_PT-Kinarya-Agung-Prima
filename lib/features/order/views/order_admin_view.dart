@@ -4,6 +4,8 @@ import '../models/order.dart';
 import '../controllers/order_admin_controller.dart'; 
 import 'order_detail_admin_view.dart';
 import 'all_order_admin_view.dart';
+import '../../notification/views/notif_admin_view.dart';
+import '../../notification/controllers/notif_admin_controller.dart';
 
 class OrderAdminView extends StatefulWidget {
   const OrderAdminView({super.key});
@@ -19,6 +21,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
   static const _green = Color(0xFF34A853); 
 
   final OrderAdminController _adminController = OrderAdminController();
+  final NotificationAdminController _notifController = NotificationAdminController();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -26,6 +29,16 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
   List<OrderModel> _filteredOrders = [];
   bool _isLoading = true;
   String _selectedSort = 'Newest';
+  String _selectedFilter = 'All';
+  final List<String> _filters = [
+    'All',
+    'Ordered',
+    'Paid',
+    'Shipped',
+    'Delivered',
+    'Cancelled',
+    'Expired'
+  ];
 
   int _currentPage = 1;
   static const int _pageSize = 5;
@@ -68,7 +81,11 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
     setState(() {
       _searchQuery = query;
       final mapList = _allOrders.map((e) => e.toMap()).toList();
-      final filteredMaps = _adminController.filterAndSearchOrders(mapList, 'All Transactions', query);
+      final filteredMaps = _adminController.filterAndSearchOrders(
+        mapList, 
+        _selectedFilter == 'All' ? 'All Transactions' : _selectedFilter, 
+        query
+      );
       _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
       _applySortInternal();
       _currentPage = 1;
@@ -84,9 +101,9 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
           (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
     } else if (_selectedSort == 'Status') {
       final priority = {
-        'Ordered': 0,
-        'Paid': 1,
-        'Shipped': 2,
+        'Paid': 0,
+        'Shipped': 1,
+        'Ordered': 2,
         'Delivered': 3,
         'Cancelled': 4,
         'Expired': 5,
@@ -132,7 +149,41 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                     errorBuilder: (ctx, err, st) => const Icon(Icons.change_history, color: _green, size: 36), 
                   ),
                   const Spacer(),
-                  IconButton(icon: const Icon(Icons.notifications_none_outlined, color: Colors.black87), onPressed: () {}),
+                  StreamBuilder<int>(
+                    stream: _notifController.getUnreadCount(),
+                    builder: (context, snapshot) {
+                      final unreadCount = snapshot.data ?? 0;
+                      return Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.notifications_none_outlined,
+                                color: Colors.black87),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const NotificationAdminView()),
+                              );
+                            },
+                          ),
+                          if (unreadCount > 0)
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
                   IconButton(
                     icon: const Icon(Icons.receipt_long_outlined, color: Colors.black87),
                     onPressed: () {
@@ -211,6 +262,47 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                 ],
               ),
             ),
+            // Status Filter Chips
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              child: Row(
+                children: _filters.map((filter) {
+                  final isSelected = _selectedFilter == filter;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedFilter = filter;
+                          _applySearch(_searchController.text.trim());
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.black : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected ? Colors.black : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Text(
+                          filter,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black87,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 12),
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: _green))
@@ -277,7 +369,18 @@ class _OrderCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(order.orderId, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                Expanded(
+                  child: Text(
+                    order.orderId,
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 _StatusBadge(status: order.status),
               ],
             ),

@@ -80,4 +80,27 @@ class PromotionUserController {
       return false;
     }
   }
+
+  Future<Set<String>> getUsedPromoIds(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('orders')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      final usedIds = snapshot.docs
+          .where((doc) {
+            final data = doc.data();
+            final status = data['status']?.toString();
+            return status != 'Cancelled' && data['promoId'] != null;
+          })
+          .map((doc) => doc.data()['promoId'].toString())
+          .toSet();
+
+      return usedIds;
+    } catch (e) {
+      debugPrint('Error getting used promo IDs: $e');
+      return {};
+    }
+  }
 }

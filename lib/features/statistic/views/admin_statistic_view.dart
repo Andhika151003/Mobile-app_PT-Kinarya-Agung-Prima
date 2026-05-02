@@ -7,6 +7,7 @@ import '../../product/views/product_detail_admin_view.dart';
 import '../../product/models/product.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../shared/widgets/shimmer_loading.dart';
+import '../../shared/services/pdf_service.dart';
 
 class AdminStatisticView extends StatefulWidget {
   const AdminStatisticView({super.key});
@@ -43,6 +44,21 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
             ),
             centerTitle: true,
             actions: [
+              IconButton(
+                icon: Icon(Icons.download_outlined, color: Colors.grey[600]),
+                onPressed: controller.isLoading
+                    ? null
+                    : () => PdfService.generateAnalyticsReport(
+                          filterName: _filterLabel(controller.currentFilter),
+                          totalRevenue: controller.totalRevenue,
+                          totalOrders: controller.totalOrders,
+                          completedOrders: controller.completedOrders,
+                          cancelledOrders: controller.cancelledOrders,
+                          totalComplaints: controller.totalComplaints,
+                          topProducts: controller.topProducts,
+                          topRetailers: controller.topRetailers,
+                        ),
+              ),
               IconButton(
                 icon: Icon(Icons.refresh, color: Colors.grey[600]),
                 onPressed: controller.isLoading
@@ -201,7 +217,6 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
       case StatFilter.today: return 'Today';
       case StatFilter.week: return 'Last 7 Days';
       case StatFilter.month: return 'Last 30 Days';
-      case StatFilter.all: return 'All Time';
     }
   }
 
@@ -253,6 +268,7 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
       ),
       child: LineChart(
         LineChartData(
+          minY: 0,
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
               getTooltipColor: (touchedSpot) => const Color(0xFF2E7D32),
@@ -285,26 +301,49 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
           ),
           gridData: const FlGridData(show: false),
           titlesData: FlTitlesData(
-            leftTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 45,
+                getTitlesWidget: (val, meta) {
+                  if (val == meta.max || val == meta.min) return const Text('');
+                  String text = '';
+                  if (val >= 1000000) {
+                    text = '${(val / 1000000).toStringAsFixed(1)}M';
+                  } else if (val >= 1000) {
+                    text = '${(val / 1000).toStringAsFixed(0)}K';
+                  } else {
+                    text = val.toStringAsFixed(0);
+                  }
+                  return Text(text, style: TextStyle(fontSize: 9, color: Colors.grey[500]));
+                },
+              ),
+            ),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (val, meta) {
                   int index = val.toInt();
-                  if (index < 0 || index >= trend.length)
-                    return const Text('');
-                  if (trend.length > 7 && index % (trend.length ~/ 4) != 0)
-                    return const Text('');
+                  if (index < 0 || index >= trend.length) return const Text('');
+                  
+                  // Logic to skip labels if there are too many
+                  bool shouldShow = false;
+                  if (trend.length <= 7) {
+                    shouldShow = true;
+                  } else if (trend.length <= 15) {
+                    shouldShow = index % 2 == 0;
+                  } else {
+                    shouldShow = index % (trend.length ~/ 4) == 0;
+                  }
+                  
+                  if (!shouldShow) return const Text('');
+                  
                   return Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(trend[index]['date'],
-                        style:
-                            TextStyle(fontSize: 10, color: Colors.grey[500])),
+                        style: TextStyle(fontSize: 10, color: Colors.grey[500])),
                   );
                 },
                 reservedSize: 30,
@@ -461,11 +500,11 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
 
     List<PieChartSectionData> sections = [];
     int i = 0;
-    categories.forEach((name, count) {
+    categories.forEach((name, value) {
       sections.add(PieChartSectionData(
         color: colors[i % colors.length],
-        value: count.toDouble(),
-        title: '$count',
+        value: value.toDouble(),
+        title: '$value',
         radius: 50,
         titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
       ));

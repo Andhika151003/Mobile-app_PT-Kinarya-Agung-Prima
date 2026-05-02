@@ -321,6 +321,8 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
               _InfoRow('Discount Type',
                   _discountTypeLabel(_promotion.discountType)),
               _InfoRow('Discount Amount', _promotion.discountText),
+              if (_promotion.maxDiscount != null && _promotion.maxDiscount! > 0)
+                _InfoRow('Max Discount', _formatPrice(_promotion.maxDiscount)),
             ]),
 
             const SizedBox(height: 24),

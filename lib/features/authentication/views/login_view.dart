@@ -1,3 +1,4 @@
+import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:ecommerce/features/shared/main_navigation_admin.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -306,7 +307,7 @@ class _LoginViewState extends State<LoginView> {
                             );
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFF2E7D32),
+                          foregroundColor: AppColors.primary,
                           ),
                           child: const Text(
                             'Forgot Password?',
@@ -332,7 +333,7 @@ class _LoginViewState extends State<LoginView> {
                               ? null
                               : () => _handleLogin(controller),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E7D32),
+                            backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -437,7 +438,7 @@ class _LoginViewState extends State<LoginView> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

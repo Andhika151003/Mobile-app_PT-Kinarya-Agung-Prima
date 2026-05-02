@@ -1,9 +1,9 @@
+import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/product.dart';
 import '../controllers/product_admin_controller.dart';
 import 'product_detail_admin_view.dart';
-import '../../authentication/views/profile_admin_view.dart';
 import 'form_add_product_admin_view.dart';
 import 'see_all_product_admin_view.dart';
 
@@ -20,7 +20,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
   bool get wantKeepAlive => true;
 
   final AdminProductController _productController = AdminProductController();
-  final Color primaryGreen = const Color(0xFF00903D);
+  final Color primaryGreen = AppColors.primary;
 
   String _selectedCategory = 'All';
   String _sortBy = 'Best Selling';
@@ -85,6 +85,18 @@ class _ProductAdminViewState extends State<ProductAdminView>
                 _buildSearchBar(),
                 const SizedBox(height: 16),
 
+                const Text(
+                  'Quick Filters',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildCategoriesRow(),
+                const SizedBox(height: 24),
+
                 _buildFilterRow(),
                 const SizedBox(height: 24),
 
@@ -101,7 +113,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Popular Products',
+                        'Most Popular',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -132,21 +144,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                 const SizedBox(height: 16),
 
                 _buildProductStream(),
-
-                const SizedBox(height: 30),
-
-                const Text(
-                  'Categories',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                _buildCategoriesRow(),
-                const SizedBox(height: 80),
+                const SizedBox(height: 100),
               ],
             ),
           ),
@@ -164,7 +162,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
         Image.asset('assets/images/logo.png', height: 35),
         IconButton(
           onPressed: () => setState(() {}),
-          icon: const Icon(Icons.refresh, color: Colors.black54),
+          icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
           tooltip: 'Refresh Product',
         ),
       ],
@@ -227,13 +225,13 @@ class _ProductAdminViewState extends State<ProductAdminView>
               });
             },
             child: Text(
-              'All Categories',
+              'Reset',
               style: TextStyle(
                 fontSize: 13,
-                color: _selectedCategory == 'All'
+                color: _selectedCategory == 'All' && !_filterInStock
                     ? primaryGreen
                     : Colors.black87,
-                fontWeight: _selectedCategory == 'All'
+                fontWeight: _selectedCategory == 'All' && !_filterInStock
                     ? FontWeight.bold
                     : FontWeight.normal,
               ),
@@ -319,7 +317,8 @@ class _ProductAdminViewState extends State<ProductAdminView>
           _sortBy,
         );
 
-        final products = filteredProducts.take(7).toList();
+        // If sorting by Best Selling, ensure they are top items
+        final products = filteredProducts.take(10).toList();
 
         if (products.isEmpty) {
           return Center(
@@ -442,16 +441,21 @@ class _ProductAdminViewState extends State<ProductAdminView>
                     ),
                     decoration: BoxDecoration(
                       color: isInStock
-                          ? Colors.green.shade100
-                          : Colors.yellow.shade100,
+                          ? Colors.green.shade50
+                          : Colors.red.shade50,
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isInStock
+                            ? Colors.green.shade200
+                            : Colors.red.shade200,
+                      ),
                     ),
                     child: Text(
-                      isInStock ? 'In Stock' : 'Low Stock',
+                      isInStock ? 'In Stock' : 'Low Stock Alert',
                       style: TextStyle(
                         color: isInStock
                             ? primaryGreen
-                            : Colors.orange.shade700,
+                            : Colors.red.shade700,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
@@ -500,7 +504,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: primaryGreen,
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Row(
@@ -529,6 +533,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
 
   Widget _buildCategoriesRow() {
     final categories = [
+      {'icon': Icons.all_inclusive, 'label': 'All'},
       {'icon': Icons.face_retouching_natural, 'label': 'Beauty Care'},
       {'icon': Icons.pets, 'label': 'Pet Care'},
       {'icon': Icons.health_and_safety_outlined, 'label': 'Health'},
@@ -611,7 +616,7 @@ class AddStockDialog extends StatefulWidget {
 class _AddStockDialogState extends State<AddStockDialog> {
   int _quantity = 1;
   bool _isLoading = false;
-  final Color primaryGreen = const Color(0xFF4C7D3E);
+  final Color primaryGreen = AppColors.primary;
 
   void _increment() => setState(() => _quantity++);
   void _decrement() {

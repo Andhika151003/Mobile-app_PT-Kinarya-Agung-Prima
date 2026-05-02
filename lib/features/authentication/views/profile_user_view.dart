@@ -1,3 +1,4 @@
+import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
@@ -126,7 +127,7 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
 
   // --- FUNGSI POP-UP LOGOUT ---
   void _showLogoutDialog(BuildContext context) {
-    const primaryGreen = Color(0xFF458833);
+    const primaryGreen = AppColors.primary;
 
     showDialog(
       context: context,
@@ -250,7 +251,7 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF458833), width: 1.5),
+            border: Border.all(color: AppColors.primary, width: 1.5),
           ),
           child: CircleAvatar(
             radius: 35,
@@ -299,7 +300,7 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF458833),
+            backgroundColor: AppColors.primary,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
@@ -388,7 +389,7 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
         children: [
           Row(
             children: [
-              Icon(icon, color: const Color(0xFF458833), size: 18),
+              Icon(icon, color: AppColors.primary, size: 18),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -414,7 +415,7 @@ class _ProfileUserViewState extends State<ProfileUserView> with AutomaticKeepAli
           _showLogoutDialog(context);
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF458833),
+          backgroundColor: AppColors.primary,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(6),

@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/promotion_admin_controller.dart';
@@ -5,6 +6,7 @@ import '../models/promotion.dart';
 import 'form_promotion_admin_view.dart';
 import 'promotion_detail_admin_view.dart';
 import '../../shared/widgets/shimmer_loading.dart';
+import '../../../core/theme/app_colors.dart';
 
 class PromotionAdminView extends StatefulWidget {
   const PromotionAdminView({super.key});
@@ -69,85 +71,36 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
                     backgroundColor: Color(0xFFE8F5E9),
                     minHeight: 3,
                   ),
-                // ── Search Bar ──────────────────────────────────────
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search Promotions',
-                      hintStyle: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[400],
-                      ),
-                      suffixIcon: Container(
-                        margin: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1F2937),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.search,
-                            color: Colors.white, size: 20),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide:
-                            const BorderSide(color: Color(0xFFE5E7EB)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide:
-                            const BorderSide(color: Color(0xFFE5E7EB)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                            color: Color(0xFF2E7D32), width: 1.5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                    ),
-                    onChanged: controller.searchPromotions,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // ── List Promotions ─────────────────────────────────
+                _buildFilters(controller),
+                const SizedBox(height: 16),
                 Expanded(
                   child: controller.filteredPromotions.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.local_offer_outlined,
-                                  size: 64, color: Colors.grey[300]),
+                              Icon(
+                                Icons.local_offer_outlined,
+                                size: 64,
+                                color: Colors.grey[300],
+                              ),
                               const SizedBox(height: 16),
                               Text(
                                 'No promotions found',
                                 style: TextStyle(
-                                    fontSize: 14, color: Colors.grey[400]),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Tap + to add a new promotion',
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.grey[400]),
+                                  fontSize: 14,
+                                  color: Colors.grey[400],
+                                ),
                               ),
                             ],
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: controller.filteredPromotions.length,
                           itemBuilder: (context, index) {
-                            final promo =
-                                controller.filteredPromotions[index];
-                            return _promotionCard(
-                                context, promo, controller);
+                            final promo = controller.filteredPromotions[index];
+                            return _promotionCard(context, promo, controller);
                           },
                         ),
                 ),
@@ -155,24 +108,140 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
             );
           },
         ),
-
-        // ── FAB ──────────────────────────────────────────────────
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
             await Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => const FormPromotionAdminView(),
-              ),
+              MaterialPageRoute(builder: (_) => const FormPromotionAdminView()),
             );
             _controller.fetchAllPromotions();
           },
-            backgroundColor: const Color(0xFF2E7D32),
-            shape: const CircleBorder(),
-            elevation: 4,
-            child:
-                const Icon(Icons.add, color: Colors.white, size: 28),
+          backgroundColor: const Color(0xFF2E7D32),
+          shape: const CircleBorder(),
+          elevation: 4,
+          child: const Icon(Icons.add, color: Colors.white, size: 28),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(PromotionAdminController controller) {
+    return TextField(
+      controller: _searchController,
+      onChanged: controller.searchPromotions,
+      decoration: InputDecoration(
+        hintText: 'Search Promotions',
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        prefixIcon: const Icon(Icons.search),
+      ),
+    );
+  }
+
+  Widget _buildFilters(PromotionAdminController controller) {
+    final statuses = [
+      {'label': 'All', 'value': 'all'},
+      {'label': 'Active', 'value': 'active'},
+      {'label': 'Upcoming', 'value': 'upcoming'},
+      {'label': 'Ending', 'value': 'ending_soon'},
+      {'label': 'Expired', 'value': 'expired'},
+    ];
+
+    final types = [
+      {'label': 'All Types', 'value': 'all'},
+      {'label': 'Percentage', 'value': 'percentage'},
+      {'label': 'BOGO', 'value': 'bogo'},
+      {'label': 'Bundle', 'value': 'bundle'},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.white,
+      child: Column(
+        children: [
+          _buildSearchBar(controller),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ...statuses.map((status) {
+                  bool isSelected =
+                      controller.selectedStatus == status['value'];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: FilterChip(
+                      selected: isSelected,
+                      label: Text(status['label']!),
+                      onSelected: (_) =>
+                          controller.filterByStatus(status['value']!),
+                      selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                      checkmarkColor: AppColors.primary,
+                      showCheckmark: false,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      labelStyle: TextStyle(
+                        color: isSelected ? AppColors.primary : Colors.black54,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 11,
+                      ),
+                      backgroundColor: Colors.grey.shade50,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.transparent,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
           ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ...types.map((type) {
+                  bool isSelected = controller.selectedType == type['value'];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      selected: isSelected,
+                      label: Text(type['label']!),
+                      onSelected: (_) =>
+                          controller.filterByType(type['value']!),
+                      selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      labelStyle: TextStyle(
+                        color: isSelected ? AppColors.primary : Colors.black54,
+                        fontSize: 11,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      backgroundColor: Colors.grey.shade50,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.transparent,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -183,20 +252,19 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
     PromotionAdminController controller,
   ) {
     String statusText;
-    Color statusColor;
-    Color statusBgColor;
+    Color statusColor, statusBgColor;
 
     if (promo.isUpcoming) {
       statusText = 'Upcoming';
-      statusColor = const Color(0xFF0891B2); // Cyan 600
-      statusBgColor = const Color(0xFFECFEFF); // Cyan 50
+      statusColor = const Color(0xFF0891B2);
+      statusBgColor = const Color(0xFFECFEFF);
     } else if (promo.isEndingSoon) {
       statusText = 'Ending Soon';
       statusColor = const Color(0xFFD97706);
       statusBgColor = const Color(0xFFFEF3C7);
     } else if (promo.isActive) {
       statusText = 'Active';
-      statusColor = const Color(0xFF2E7D32); // Green
+      statusColor = const Color(0xFF2E7D32);
       statusBgColor = const Color(0xFFE8F5E9);
     } else {
       statusText = 'Expired';
@@ -204,38 +272,15 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
       statusBgColor = const Color(0xFFF3F4F6);
     }
 
-    Color discountColor;
-    Color discountBgColor;
-    switch (promo.discountType) {
-      case 'bogo':
-        discountColor = const Color(0xFF6366F1);
-        discountBgColor = const Color(0xFFEEF2FF);
-        break;
-      case 'fixed':
-        discountColor = const Color(0xFFEA580C);
-        discountBgColor = const Color(0xFFFFF7ED);
-        break;
-      case 'bundle':
-        discountColor = const Color(0xFFD97706);
-        discountBgColor = const Color(0xFFFEF3C7);
-        break;
-      default:
-        discountColor = const Color(0xFF16A34A);
-        discountBgColor = const Color(0xFFDCFCE7);
-    }
-
-    final isExpired = !promo.isActive && !promo.isEndingSoon && !promo.isUpcoming;
-
     return GestureDetector(
       onTap: () async {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                PromotionDetailAdminView(promotion: promo),
+            builder: (_) => PromotionDetailAdminView(promotion: promo),
           ),
         );
-        _controller.fetchAllPromotions();
+        controller.fetchAllPromotions();
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -243,24 +288,37 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Baris 1: Status + SKU
             Row(
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'SKU: ${promo.sku}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusBgColor,
                     borderRadius: BorderRadius.circular(20),
@@ -274,67 +332,46 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  promo.sku,
-                  style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF6B7280)),
-                ),
               ],
             ),
             const SizedBox(height: 10),
-
-            // Judul
             Text(
               promo.title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: isExpired
-                    ? const Color(0xFF9CA3AF)
-                    : const Color(0xFF1F2937),
-                decoration:
-                    isExpired ? TextDecoration.lineThrough : null,
-              ),
-            ),
-            const SizedBox(height: 4),
-
-            // Valid date
-            Text(
-              'Valid: ${promo.formattedDateRange}',
-              style: TextStyle(
-                fontSize: 12,
-                color: isExpired
-                    ? const Color(0xFFD1D5DB)
-                    : const Color(0xFF6B7280),
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
-
-            // SKU + Discount badge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'SKU: ${promo.sku.replaceAll('#PRM-', '')}',
+                  'Valid: ${promo.formattedDateRange}',
                   style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF6B7280)),
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: discountBgColor,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    promo.discountText,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: discountColor,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      promo.discountText,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2E7D32),
+                      ),
                     ),
-                  ),
+                    if (promo.discountType == 'bogo' &&
+                        promo.maxDiscount != null)
+                      Text(
+                        'Up to ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(promo.maxDiscount)}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.orange.shade800,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),

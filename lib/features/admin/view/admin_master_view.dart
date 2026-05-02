@@ -1,3 +1,4 @@
+import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/admin_master_controller.dart';
@@ -34,7 +35,7 @@ class _AdminMasterViewState extends State<AdminMasterView> {
           builder: (context, controller, child) {
             if (controller.isLoading && controller.retailers.isEmpty) {
               return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                child: CircularProgressIndicator(color: AppColors.primary),
               );
             }
 
@@ -112,7 +113,7 @@ class _AdminMasterViewState extends State<AdminMasterView> {
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: 'Inter',
-                                color: Color(0xFF1F2937),
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ],
@@ -187,7 +188,7 @@ class _AdminMasterViewState extends State<AdminMasterView> {
             const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF8FAF8F)
+              ? AppColors.accent
               : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(30),
         ),
@@ -502,7 +503,7 @@ class _StatusDropdownButtonState extends State<_StatusDropdownButton>
                         padding:
                             const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF3A6B1F),
+                          color: AppColors.primaryDark,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Center(

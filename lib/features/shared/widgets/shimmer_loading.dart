@@ -51,7 +51,6 @@ class ProductCardShimmer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Expanded(
-            flex: 5,
             child: Padding(
               padding: EdgeInsets.all(12.0),
               child: ShimmerLoading(
@@ -60,36 +59,17 @@ class ProductCardShimmer extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-            flex: 5,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const ShimmerLoading(height: 16, width: double.infinity),
-                      const SizedBox(height: 6),
-                      const ShimmerLoading(height: 12, width: 80),
-                      const SizedBox(height: 4),
-                      const ShimmerLoading(height: 12, width: 60),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const ShimmerLoading(height: 16, width: 70),
-                      const ShimmerLoading(
-                          height: 24,
-                          width: 24,
-                          borderRadius: BorderRadius.all(Radius.circular(6))),
-                    ],
-                  ),
-                ],
-              ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ShimmerLoading(height: 16, width: double.infinity),
+                const SizedBox(height: 12),
+                const ShimmerLoading(height: 12, width: 80),
+                const SizedBox(height: 8),
+                const ShimmerLoading(height: 16, width: 60),
+              ],
             ),
           ),
         ],
@@ -154,7 +134,7 @@ class StatisticShimmer extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: List.generate(
-                  4,
+                  3,
                   (index) => const Padding(
                         padding: EdgeInsets.only(right: 8.0),
                         child: ShimmerLoading(
@@ -165,9 +145,9 @@ class StatisticShimmer extends StatelessWidget {
                       )),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
-          // Summary Cards Shimmer
+          // Summary Cards Shimmer (Row 1)
           Row(
             children: [
               Expanded(
@@ -180,6 +160,7 @@ class StatisticShimmer extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          // Summary Cards Shimmer (Row 2)
           Row(
             children: [
               Expanded(
@@ -191,26 +172,33 @@ class StatisticShimmer extends StatelessWidget {
                       height: 100, borderRadius: BorderRadius.circular(16))),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
 
-          // Chart Shimmer
+          // Sales Trend Shimmer
           const ShimmerLoading(width: 120, height: 20),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           ShimmerLoading(height: 220, borderRadius: BorderRadius.circular(16)),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
 
-          // List Shimmer
+          // Top Products Shimmer
           const ShimmerLoading(width: 120, height: 20),
-          const SizedBox(height: 16),
-          Column(
-            children: List.generate(
-                3,
-                (index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: ShimmerLoading(
-                          height: 70, borderRadius: BorderRadius.circular(16)),
-                    )),
-          ),
+          const SizedBox(height: 12),
+          ShimmerLoading(height: 200, borderRadius: BorderRadius.circular(16)),
+          const SizedBox(height: 24),
+
+          // Top Retailers Shimmer
+          const ShimmerLoading(width: 120, height: 20),
+          const SizedBox(height: 12),
+          ShimmerLoading(height: 150, borderRadius: BorderRadius.circular(16)),
+          const SizedBox(height: 24),
+
+          // Category Popularity Shimmer
+          const ShimmerLoading(width: 140, height: 20),
+          const SizedBox(height: 4),
+          const ShimmerLoading(width: 250, height: 12),
+          const SizedBox(height: 12),
+          ShimmerLoading(height: 300, borderRadius: BorderRadius.circular(16)),
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -361,32 +349,37 @@ class DashboardUserShimmer extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const ShimmerLoading(width: 120, height: 40),
-              const ShimmerLoading(width: 40, height: 40, borderRadius: BorderRadius.all(Radius.circular(20))),
+              const ShimmerLoading(width: 100, height: 40),
+              Row(
+                children: const [
+                  ShimmerLoading(width: 40, height: 40, borderRadius: BorderRadius.all(Radius.circular(20))),
+                  SizedBox(width: 8),
+                  ShimmerLoading(width: 40, height: 40, borderRadius: BorderRadius.all(Radius.circular(20))),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 20),
 
           // Greeting
-          const ShimmerLoading(width: 150, height: 24),
+          const ShimmerLoading(width: 180, height: 24),
           const SizedBox(height: 8),
-          const ShimmerLoading(width: 200, height: 16),
+          const ShimmerLoading(width: 140, height: 16),
           const SizedBox(height: 20),
 
           // Banner
-          ShimmerLoading(height: 180, width: double.infinity, borderRadius: BorderRadius.circular(20)),
+          ShimmerLoading(height: 160, width: double.infinity, borderRadius: BorderRadius.circular(20)),
           const SizedBox(height: 24),
 
-          // Quick Actions
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(4, (index) => Column(
+          // Quick Actions (Matching single Support button)
+          Center(
+            child: Column(
               children: [
                 const ShimmerLoading(width: 55, height: 55, borderRadius: BorderRadius.all(Radius.circular(30))),
                 const SizedBox(height: 8),
-                const ShimmerLoading(width: 45, height: 12),
+                const ShimmerLoading(width: 60, height: 12),
               ],
-            )),
+            ),
           ),
           const SizedBox(height: 24),
 

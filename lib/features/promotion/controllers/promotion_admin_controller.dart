@@ -32,6 +32,9 @@ class PromotionAdminController extends ChangeNotifier {
   String _selectedStatus = 'all';
   String get selectedStatus => _selectedStatus;
 
+  String _selectedType = 'all';
+  String get selectedType => _selectedType;
+
   Future<void> fetchAllPromotions() async {
     _setLoading(true);
     _clearError();
@@ -65,6 +68,11 @@ class PromotionAdminController extends ChangeNotifier {
     _applyFilters();
   }
 
+  void filterByType(String type) {
+    _selectedType = type;
+    _applyFilters();
+  }
+
   void _applyFilters() {
     var filtered = List<PromotionModel>.from(_promotions);
 
@@ -80,9 +88,16 @@ class PromotionAdminController extends ChangeNotifier {
     if (_selectedStatus != 'all') {
       filtered = filtered.where((promo) {
         if (_selectedStatus == 'active') return promo.isActive;
-        if (_selectedStatus == 'expired') return promo.status == 'expired';
+        if (_selectedStatus == 'upcoming') return promo.isUpcoming;
+        if (_selectedStatus == 'expired') return promo.isExpired;
         if (_selectedStatus == 'ending_soon') return promo.isEndingSoon;
         return promo.status == _selectedStatus;
+      }).toList();
+    }
+
+    if (_selectedType != 'all') {
+      filtered = filtered.where((promo) {
+        return promo.discountType == _selectedType;
       }).toList();
     }
 
@@ -102,6 +117,7 @@ class PromotionAdminController extends ChangeNotifier {
     required String startTime,
     required String endTime,
     required String sku,
+    double? maxDiscount,
     File? imageFile,
   }) async {
     _setLoading(true);
@@ -132,6 +148,7 @@ class PromotionAdminController extends ChangeNotifier {
         status: 'active',
         imageUrl: imageUrl,
         sku: sku,
+        maxDiscount: maxDiscount,
         createdAt: DateTime.now(),
         createdBy: user.uid,
       );
@@ -163,6 +180,7 @@ class PromotionAdminController extends ChangeNotifier {
     required String endTime,
     required String status,
     required String sku,
+    double? maxDiscount,
     File? imageFile,
     String? currentImageUrl,
   }) async {
@@ -193,6 +211,7 @@ class PromotionAdminController extends ChangeNotifier {
         'status': status,
         'imageUrl': imageUrl,
         'sku': sku,
+        'maxDiscount': maxDiscount,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 

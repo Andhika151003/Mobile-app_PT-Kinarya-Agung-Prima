@@ -7,6 +7,7 @@ import 'product_detail_user_view.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../../cart/views/cart_view.dart';
 import '../../shared/widgets/shimmer_loading.dart';
+import '../../promotion/models/promotion.dart';
 
 class ProductUserView extends StatefulWidget {
   const ProductUserView({super.key});
@@ -16,7 +17,8 @@ class ProductUserView extends StatefulWidget {
 }
 
 class _ProductUserViewState extends State<ProductUserView> {
-  final AdminProductController _productController = AdminProductController();
+  final AdminProductController _adminProductController = AdminProductController();
+  final ProductUserController _productUserController = ProductUserController();
   final CartController _cartController = CartController();
 
   final NumberFormat currencyFormatter = NumberFormat.currency(
@@ -236,76 +238,94 @@ class _ProductUserViewState extends State<ProductUserView> {
   }
 
   Widget _buildProductGridStream() {
-    return StreamBuilder<List<ProductModel>>(
-      key: ValueKey(_refreshKey), 
-      stream: _productController.getSupplyProducts(), 
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.65,
-            ),
-            itemCount: 6,
-            itemBuilder: (context, index) => const ProductCardShimmer(),
-          );
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(40.0),
-              child: Text(
-                'Catalog is currently empty.', 
-                style: TextStyle(color: Colors.grey.shade500),
+    return StreamBuilder<List<PromotionModel>>(
+      stream: _productUserController.getActivePromotionsStream(),
+      builder: (context, promoSnapshot) {
+        final activePromotions = promoSnapshot.data ?? [];
+
+        return StreamBuilder<List<ProductModel>>(
+          key: ValueKey(_refreshKey),
+          stream: _adminProductController.getSupplyProducts(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.65,
+                ),
+                itemCount: 6,
+                itemBuilder: (context, index) => const ProductCardShimmer(),
+              );
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40.0),
+                  child: Text(
+                    'Catalog is currently empty.',
+                    style: TextStyle(color: Colors.grey.shade500),
+                  ),
+                ),
+              );
+            }
+
+            final allProducts = snapshot.data!;
+            final displayProducts =
+                _productUserController.filterAndSortProducts(
+                    allProducts,
+                    _selectedCategory,
+                    _searchController.text,
+                    _sortBy);
+
+            if (displayProducts.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40.0),
+                  child: Text('No products match your search/filter.',
+                      style: TextStyle(color: Colors.grey.shade500)),
+                ),
+              );
+            }
+
+            // --- GRID VIEW ---
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.65,
               ),
-            ),
-          );
-        }
+              itemCount: displayProducts.length,
+              itemBuilder: (context, index) {
+                final product = displayProducts[index];
+                final bestPromo = _productUserController
+                    .getBestPromotionForProduct(product, activePromotions);
 
-        final allProducts = snapshot.data!;
-        final displayProducts = ProductUserController().filterAndSortProducts(
-          allProducts, 
-          _selectedCategory, 
-          _searchController.text, 
-          _sortBy
-        );
-
-        if (displayProducts.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(40.0),
-              child: Text('No products match your search/filter.', style: TextStyle(color: Colors.grey.shade500)),
-            ),
-          );
-        }
-
-        // --- GRID VIEW ---
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 0.65,
-          ),
-          itemCount: displayProducts.length,
-          itemBuilder: (context, index) {
-            return _buildProductCard(context, displayProducts[index], currencyFormatter);
+                return _buildProductCard(
+                    context, product, currencyFormatter, bestPromo);
+              },
+            );
           },
         );
       },
     );
   }
 
-  Widget _buildProductCard(BuildContext context, ProductModel product, NumberFormat currencyFormatter) {
+  Widget _buildProductCard(BuildContext context, ProductModel product,
+      NumberFormat currencyFormatter, PromotionModel? activePromo) {
+    double discountedPrice =
+        _productUserController.calculateDiscountedPrice(product, activePromo);
+    bool hasPromo = activePromo != null;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -331,18 +351,45 @@ class _ProductUserViewState extends State<ProductUserView> {
             // 1. Gambar Produk
             Expanded(
               flex: 5,
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                  color: Colors.white,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: product.imageUrl.isNotEmpty
-                      ? Image.network(product.imageUrl, fit: BoxFit.contain)
-                      : Icon(Icons.image_outlined, size: 50, color: Colors.grey.shade300),
-                ),
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(16)),
+                      color: Colors.white,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: product.imageUrl.isNotEmpty
+                          ? Image.network(product.imageUrl, fit: BoxFit.contain)
+                          : Icon(Icons.image_outlined,
+                              size: 50, color: Colors.grey.shade300),
+                    ),
+                  ),
+                  if (hasPromo)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          activePromo.discountText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             
@@ -386,9 +433,22 @@ class _ProductUserViewState extends State<ProductUserView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              if (hasPromo && activePromo.discountType != 'bogo')
+                                Text(
+                                  currencyFormatter.format(product.price),
+                                  style: TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Colors.grey.shade400,
+                                    fontSize: 10,
+                                  ),
+                                ),
                               Text(
-                                currencyFormatter.format(product.price),
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
+                                currencyFormatter.format(discountedPrice),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: Colors.black,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),

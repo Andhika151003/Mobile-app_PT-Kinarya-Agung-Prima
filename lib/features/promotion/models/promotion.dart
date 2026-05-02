@@ -18,6 +18,7 @@ class PromotionModel {
   final String sku;
   final DateTime createdAt;
   final String createdBy;
+  final double? maxDiscount;
 
   PromotionModel({
     this.id,
@@ -36,6 +37,7 @@ class PromotionModel {
     required this.sku,
     required this.createdAt,
     required this.createdBy,
+    this.maxDiscount,
   });
 
   Map<String, dynamic> toMap() {
@@ -55,6 +57,7 @@ class PromotionModel {
       'sku': sku,
       'createdAt': Timestamp.fromDate(createdAt),
       'createdBy': createdBy,
+      'maxDiscount': maxDiscount,
     };
   }
 
@@ -85,6 +88,7 @@ class PromotionModel {
       sku: map['sku'] ?? '',
       createdAt: parseDate(map['createdAt']),
       createdBy: map['createdBy'] ?? '',
+      maxDiscount: map['maxDiscount'] != null ? (map['maxDiscount'] as num).toDouble() : null,
     );
   }
 
@@ -117,6 +121,14 @@ class PromotionModel {
     final now = DateTime.now();
     final threeDaysFromNow = now.add(const Duration(days: 3));
     return isActive && endDate.isBefore(threeDaysFromNow);
+  }
+
+  bool get isExpired {
+    if (status == 'expired') return true;
+    final now = DateTime.now();
+    final inclusiveEndDate =
+        DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+    return now.isAfter(inclusiveEndDate);
   }
 
   String get discountText {

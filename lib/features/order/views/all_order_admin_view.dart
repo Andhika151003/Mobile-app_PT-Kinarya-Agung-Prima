@@ -22,7 +22,17 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
   bool _isLoading = true;
 
   String _selectedFilter = 'All Transactions';
-  final List<String> _filters = ['All Transactions', 'Today', 'This Week'];
+  final List<String> _filters = [
+    'All Transactions', 
+    'Today', 
+    'This Week',
+    'Ordered',
+    'Paid',
+    'Shipped',
+    'Delivered',
+    'Cancelled',
+    'Expired'
+  ];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedSort = 'Newest';
@@ -90,9 +100,9 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
           (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
     } else if (_selectedSort == 'Status') {
       final priority = {
-        'Ordered': 0,
-        'Paid': 1,
-        'Shipped': 2,
+        'Paid': 0,
+        'Shipped': 1,
+        'Ordered': 2,
         'Delivered': 3,
         'Cancelled': 4,
         'Expired': 5,
@@ -334,10 +344,18 @@ class _TransactionCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  order.orderId,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
+                Expanded(
+                  child: Text(
+                    order.orderId,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
+                const SizedBox(width: 8),
                 _buildStatusBadge(order.status),
               ],
             ),

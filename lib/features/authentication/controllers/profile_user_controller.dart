@@ -28,6 +28,21 @@ class RetailProfileController {
     }
   }
 
+  /// Stream for real-time profile updates
+  Stream<Map<String, dynamic>?> getRetailProfileStream() {
+    final user = _auth.currentUser;
+    if (user == null) return Stream.value(null);
+
+    return _firestore.collection('users').doc(user.uid).snapshots().map((doc) {
+      if (doc.exists) {
+        var data = doc.data() as Map<String, dynamic>;
+        data['uid'] = user.uid;
+        return data;
+      }
+      return null;
+    });
+  }
+
   // Menyimpan pembaruan khusus Retail
   Future<void> updateRetailProfile({
     required String storeName,

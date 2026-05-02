@@ -1,19 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce/features/statistic/controllers/statistic_controller.dart';
-
 
 void main() {
   late AdminStatisticController controller;
   late FakeFirebaseFirestore firestore;
-  late MockFirebaseAuth auth;
 
   setUp(() {
     firestore = FakeFirebaseFirestore();
-    auth = MockFirebaseAuth();
-    controller = AdminStatisticController(firestore: firestore, auth: auth);
+    controller = AdminStatisticController(firestore: firestore);
   });
 
   group('Enhanced AdminStatisticController Tests', () {
@@ -74,7 +70,7 @@ void main() {
       expect(controller.totalOrders, equals(2)); // Only the 2 recent ones
 
       // Test All Filter
-      controller.setFilter(StatFilter.all);
+      controller.setFilter(StatFilter.month);
       await controller.fetchAnalyticsData();
       expect(controller.totalOrders, equals(3));
       expect(controller.totalRevenue, equals(450000.0));
