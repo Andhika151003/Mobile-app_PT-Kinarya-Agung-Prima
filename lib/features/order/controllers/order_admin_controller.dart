@@ -83,15 +83,13 @@ class OrderAdminController {
 
         if (productId != null && productId.isNotEmpty && quantity > 0) {
           final productRef = _firestore.collection('products').doc(productId);
-          transaction.update(productRef, {
-            'stock': FieldValue.increment(quantity),
-          });
-
+          
           if (statsRecorded) {
             final int price = (itemMap['price'] as num?)?.toInt() ?? 0;
             final int revenue = price * quantity;
             
             transaction.update(productRef, {
+              'stock': FieldValue.increment(quantity),
               'monthlySales': FieldValue.increment(-quantity),
               'revenue': FieldValue.increment(-revenue),
             });

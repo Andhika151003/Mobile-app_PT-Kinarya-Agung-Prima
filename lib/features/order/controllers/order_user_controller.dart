@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'order_stats_helper.dart';
 
 class OrderUserController {
   final FirebaseFirestore _firestore;
@@ -44,10 +45,7 @@ class OrderUserController {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['status'] == 'Paid') {
-          await _firestore.collection('orders').doc(orderId).update({
-            'status': 'Paid',
-            'paidAt': FieldValue.serverTimestamp(),
-          });
+          await OrderStatsHelper.markOrderAsPaid(orderId);
           return true;
         }
       }
@@ -60,10 +58,7 @@ class OrderUserController {
   
   Future<bool> receiveOrder(String orderId) async {
     try {
-      await _firestore.collection('orders').doc(orderId).update({
-        'status': 'Delivered',
-        'deliveredAt': FieldValue.serverTimestamp(),
-      });
+      await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: 'Delivered');
       return true;
     } catch (e) {
       debugPrint("Error updating order status: $e");

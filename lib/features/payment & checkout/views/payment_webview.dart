@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+import '../../order/controllers/order_stats_helper.dart';
 
 class PaymentWebView extends StatefulWidget {
   final String paymentUrl;
@@ -89,13 +90,7 @@ class _PaymentWebViewState extends State<PaymentWebView> {
 
     try {
       if (!alreadyUpdated) {
-        await FirebaseFirestore.instance
-            .collection('orders')
-            .doc(widget.orderId)
-            .update({
-          'status': 'Paid', 
-          'paidAt': FieldValue.serverTimestamp(),
-        });
+        await OrderStatsHelper.markOrderAsPaid(widget.orderId);
         debugPrint('Order ${widget.orderId} updated via Duitku Redirect');
       }
     } catch (e) {

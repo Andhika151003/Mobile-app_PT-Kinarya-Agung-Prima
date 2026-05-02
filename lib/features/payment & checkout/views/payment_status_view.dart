@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../order/controllers/order_stats_helper.dart';
 
 class PaymentStatusView extends StatefulWidget {
   final String orderId;
@@ -79,13 +80,7 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
 
         if (duitkuStatus == '00') {
           // Status Berhasil
-          await FirebaseFirestore.instance
-              .collection('orders')
-              .doc(widget.orderId)
-              .update({
-                'status': 'Paid',
-                'paidAt': FieldValue.serverTimestamp(),
-              });
+          await OrderStatsHelper.markOrderAsPaid(widget.orderId);
           _syncMessage = 'Status diperbarui: Pembayaran Berhasil';
         } else if (duitkuStatus == '02') {
           // Status Expired atau Cancelled

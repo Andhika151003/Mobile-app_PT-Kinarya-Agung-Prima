@@ -55,6 +55,13 @@ class _AllProductAdminViewState extends State<AllProductAdminView> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.black87),
+            onPressed: () => setState(() {}),
+            tooltip: 'Refresh',
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -169,40 +176,48 @@ class _AllProductAdminViewState extends State<AllProductAdminView> {
           
           // --- BAGIAN LIST PRODUK (STREAM) ---
           Expanded(
-            child: StreamBuilder<List<ProductModel>>(
-              stream: _adminController.getSupplyProducts(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator(color: primaryGreen));
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('Belum ada produk di database.'));
-                }
-
-                final filteredProducts = _adminController.filterAndSortProducts(
-                  snapshot.data!,
-                  _selectedCategory,
-                  _searchController.text,
-                  _inStockOnly,
-                  _sortBy,
-                );
-
-                if (filteredProducts.isEmpty) {
-                  return const Center(child: Text('Tidak ada produk yang sesuai filter.'));
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filteredProducts.length,
-                  itemBuilder: (context, index) {
-                    final product = filteredProducts[index];
-                    return _buildAdminProductCard(context, product);
-                  },
-                );
+            child: RefreshIndicator(
+              color: primaryGreen,
+              onRefresh: () async {
+                setState(() {});
+                await Future.delayed(const Duration(milliseconds: 500));
               },
+              child: StreamBuilder<List<ProductModel>>(
+                stream: _adminController.getSupplyProducts(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator(color: primaryGreen));
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('Belum ada produk di database.'));
+                  }
+              
+                  final filteredProducts = _adminController.filterAndSortProducts(
+                    snapshot.data!,
+                    _selectedCategory,
+                    _searchController.text,
+                    _inStockOnly,
+                    _sortBy,
+                  );
+              
+                  if (filteredProducts.isEmpty) {
+                    return const Center(child: Text('Tidak ada produk yang sesuai filter.'));
+                  }
+              
+                  return ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filteredProducts.length,
+                    itemBuilder: (context, index) {
+                      final product = filteredProducts[index];
+                      return _buildAdminProductCard(context, product);
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ],

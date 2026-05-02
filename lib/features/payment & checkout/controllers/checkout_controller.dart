@@ -92,24 +92,6 @@ class CheckoutController {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      WriteBatch batch = _firestore.batch();
-
-      for (var item in items) {
-        String? productId =
-            item['productId']?.toString() ?? item['id']?.toString();
-        int quantityBought = (item['quantity'] as num?)?.toInt() ?? 1;
-
-        if (productId != null && productId.isNotEmpty) {
-          DocumentReference productRef = _firestore
-              .collection('products')
-              .doc(productId);
-
-          batch.update(productRef, {
-            'stock': FieldValue.increment(-quantityBought),
-          });
-        }
-      }
-
       final String apiUrl = '$_backendUrl/create-transaction';
 
       final response = await _client.post(
