@@ -99,22 +99,6 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
     } else if (_selectedSort == 'Oldest') {
       _filteredOrders.sort((a, b) =>
           (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
-    } else if (_selectedSort == 'Status') {
-      final priority = {
-        'Paid': 0,
-        'Shipped': 1,
-        'Ordered': 2,
-        'Delivered': 3,
-        'Cancelled': 4,
-        'Expired': 5,
-      };
-      _filteredOrders.sort((a, b) {
-        int pA = priority[a.status] ?? 99;
-        int pB = priority[b.status] ?? 99;
-        if (pA != pB) return pA.compareTo(pB);
-        return (b.createdAt ?? DateTime(0))
-            .compareTo(a.createdAt ?? DateTime(0));
-      });
     } else if (_selectedSort == 'Price (High-Low)') {
       _filteredOrders.sort((a, b) => b.total.compareTo(a.total));
     } else if (_selectedSort == 'Price (Low-High)') {
@@ -252,7 +236,6 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                       itemBuilder: (BuildContext context) => [
                         const PopupMenuItem(value: 'Newest', child: Text('Newest')),
                         const PopupMenuItem(value: 'Oldest', child: Text('Oldest')),
-                        const PopupMenuItem(value: 'Status', child: Text('Status Priority')),
                         const PopupMenuItem(value: 'Price (High-Low)', child: Text('Price: High to Low')),
                         const PopupMenuItem(value: 'Price (Low-High)', child: Text('Price: Low to High')),
                       ],

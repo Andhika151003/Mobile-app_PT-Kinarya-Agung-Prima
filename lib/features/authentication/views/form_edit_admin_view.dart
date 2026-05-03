@@ -18,7 +18,6 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _typeController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
   final TextEditingController _contactController = TextEditingController();
 
   bool _isLoading = true;
@@ -48,8 +47,6 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
   void dispose() {
     _nameController.dispose();
     _typeController.dispose();
-    _locationController.dispose();
-    _contactController.dispose();
     _contactController.dispose();
     super.dispose();
   }
@@ -63,7 +60,6 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
           final data = doc.data() as Map<String, dynamic>;
           setState(() {
             _nameController.text = data['fullName'] ?? '';
-            _locationController.text = data['address'] ?? '';
             _contactController.text = data['phoneNumber'] ?? '';
             _typeController.text = data['businessType'] ?? 'Distributor';
             _existingPhotoUrl = data['photoUrl'];
@@ -86,7 +82,6 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
     try {
       await _controller.updateAdminProfile(
         fullName: _nameController.text.trim(),
-        address: _locationController.text.trim(),
         phoneNumber: _contactController.text.trim(),
         businessType: _typeController.text.trim(),
         profileImage: _newProfileImage,
@@ -137,7 +132,6 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
                     
                     _buildTextField('Business Name', 'Enter Your Name', _nameController),
                     _buildTextField('Business Type', 'Enter Your Business Type', _typeController),
-                    _buildTextField('Location', 'Enter Your Location', _locationController, maxLines: 3),
                     _buildTextField('Contact', 'Enter Your Number', _contactController, isNumber: true),
                     
                     const SizedBox(height: 32),

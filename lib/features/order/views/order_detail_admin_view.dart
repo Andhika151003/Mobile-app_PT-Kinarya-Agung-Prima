@@ -256,6 +256,19 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                     order.shippingAddress, 
                     style: TextStyle(fontSize: 13, height: 1.4, color: order.shippingAddress.contains('tidak tersedia') ? Colors.red : Colors.black87)
                   ),
+                  if (order.phoneNumber != null && order.phoneNumber!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.phone_outlined, size: 14, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Text(
+                          order.phoneNumber!,
+                          style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

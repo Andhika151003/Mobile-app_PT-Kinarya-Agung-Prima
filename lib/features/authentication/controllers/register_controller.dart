@@ -48,15 +48,6 @@ class RegisterController extends ChangeNotifier {
     return null;
   }
 
-  String? validateAddress(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter your current address';
-    }
-    if (value.trim().length < 5) {
-      return 'Please enter a complete address';
-    }
-    return null;
-  }
 
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
@@ -84,7 +75,6 @@ class RegisterController extends ChangeNotifier {
     required String fullName,
     required String email,
     required String phoneNumber,
-    required String address,
     required String businessType,
     required String password,
   }) async {
@@ -104,7 +94,6 @@ class RegisterController extends ChangeNotifier {
         'fullName': fullName.trim(),
         'email': email.trim(),
         'phoneNumber': phoneNumber.trim(),
-        'address': address.trim(),
         'businessType': businessType,
         'role': 'retailer',
         'isActive': true,

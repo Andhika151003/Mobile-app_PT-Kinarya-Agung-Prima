@@ -31,7 +31,6 @@ class AdminProfileController {
 
   Future<void> updateAdminProfile({
     required String fullName,
-    required String address,
     required String phoneNumber,
     required String businessType,
     File? profileImage,
@@ -49,7 +48,6 @@ class AdminProfileController {
 
         final updateData = {
           'fullName': fullName,
-          'address': address,
           'phoneNumber': phoneNumber,
           'businessType': businessType,
         };

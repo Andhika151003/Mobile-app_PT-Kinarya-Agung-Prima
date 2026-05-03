@@ -1,7 +1,7 @@
 import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
+import '../../../core/utils/format_util.dart';
 import 'login_view.dart';
 import 'form_edit_user_view.dart';
 import '../controllers/profile_user_controller.dart';
@@ -23,7 +23,6 @@ class _ProfileUserViewState extends State<ProfileUserView>
   final RetailProfileController _retailController = RetailProfileController();
 
   String storeName = 'Loading...';
-  String location = 'Loading...';
   String contact = 'Loading...';
   String businessType = 'Loading...';
   String email = 'Loading...';
@@ -49,7 +48,6 @@ class _ProfileUserViewState extends State<ProfileUserView>
       if (data != null && mounted) {
         setState(() {
           storeName = data['fullName'] ?? 'No Name';
-          location = data['address'] ?? 'No Location';
           contact = data['phoneNumber'] ?? 'No Contact';
           businessType = data['businessType'] ?? 'No Business Type';
           email = data['email'] ?? 'No Email';
@@ -111,17 +109,13 @@ class _ProfileUserViewState extends State<ProfileUserView>
                   _buildStatsCard(
                     icon: Icons.inventory_2_outlined,
                     title: 'Total Orders',
-                    value: totalOrders.toString(),
+                    value: FormatUtil.formatCompact(totalOrders),
                   ),
                   const SizedBox(height: 16),
                   _buildStatsCard(
                     icon: Icons.account_balance_wallet_outlined,
                     title: 'Total Spent',
-                    value: NumberFormat.currency(
-                      locale: 'id_ID',
-                      symbol: 'Rp ',
-                      decimalDigits: 0,
-                    ).format(totalSpent),
+                    value: FormatUtil.formatCompact(totalSpent, isCurrency: true),
                   ),
                   _buildLogoutButton(context),
                   const SizedBox(height: 20),
@@ -343,8 +337,6 @@ class _ProfileUserViewState extends State<ProfileUserView>
         _buildDetailRow('Email', email),
         const SizedBox(height: 16),
         _buildDetailRow('Business Type', businessType),
-        const SizedBox(height: 16),
-        _buildDetailRow('Location', location),
         const SizedBox(height: 16),
         _buildDetailRow('Contact', contact),
       ],

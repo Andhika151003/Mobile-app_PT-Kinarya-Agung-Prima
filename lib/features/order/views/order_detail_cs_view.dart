@@ -488,6 +488,19 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
             style: const TextStyle(
                 fontSize: 13, fontFamily: 'Inter', color: Color(0xFF374151)),
           ),
+          if (_order.phoneNumber != null && _order.phoneNumber!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.phone_outlined, size: 14, color: Color(0xFF6B7280)),
+                const SizedBox(width: 6),
+                Text(
+                  _order.phoneNumber!,
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563), fontFamily: 'Inter'),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

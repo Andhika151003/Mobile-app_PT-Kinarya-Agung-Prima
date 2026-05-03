@@ -21,7 +21,6 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
 
   final AdminProfileController _adminController = AdminProfileController();
   String adminName = 'Loading...';
-  String location = 'Loading...';
   String contact = 'Loading...';
   String distributorId = '-';
   String? photoUrl;
@@ -41,7 +40,6 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
       if (data != null && mounted) {
         setState(() {
           adminName = data['fullName'] ?? 'No Name';
-          location = data['address'] ?? 'No Location';
           contact = data['phoneNumber'] ?? 'No Contact';
           distributorId = '#DS${data['uid'].substring(0, 6).toUpperCase()}';
           photoUrl = data['photoUrl'];
@@ -505,8 +503,6 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
         ),
         const SizedBox(height: 16),
         _buildDetailRow('Distributor ID', distributorId),
-        const SizedBox(height: 16),
-        _buildDetailRow('Location', location),
         const SizedBox(height: 16),
         _buildDetailRow('Contact', contact),
       ],

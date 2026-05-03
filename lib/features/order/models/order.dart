@@ -45,6 +45,7 @@ class OrderModel {
   final String userId;
   final String fullName;
   final String shippingAddress;
+  final String? phoneNumber;
   
   final String paymentMethod;
   final String? paymentMethodCode;
@@ -71,6 +72,7 @@ class OrderModel {
     required this.userId,
     required this.fullName,
     required this.shippingAddress,
+    this.phoneNumber,
     required this.paymentMethod,
     this.paymentMethodCode,
     this.promoId,
@@ -106,6 +108,7 @@ class OrderModel {
       userId: map['userId']?.toString() ?? '',
       fullName: map['fullName']?.toString() ?? '',
       shippingAddress: map['shippingAddress']?.toString() ?? '',
+      phoneNumber: map['phoneNumber']?.toString(),
       paymentMethod: map['paymentMethod']?.toString() ?? '',
       paymentMethodCode: map['paymentMethodCode']?.toString(),
       promoId: map['promoId']?.toString(),
@@ -131,6 +134,7 @@ class OrderModel {
       'userId': userId,
       'fullName': fullName,
       'shippingAddress': shippingAddress,
+      if (phoneNumber != null) 'phoneNumber': phoneNumber,
       'paymentMethod': paymentMethod,
       if (paymentMethodCode != null) 'paymentMethodCode': paymentMethodCode,
       if (promoId != null) 'promoId': promoId,
@@ -161,6 +165,7 @@ class OrderModel {
       userId: userId,
       fullName: fullName,
       shippingAddress: shippingAddress,
+      phoneNumber: phoneNumber,
       paymentMethod: paymentMethod,
       paymentMethodCode: paymentMethodCode,
       promoCode: promoCode,

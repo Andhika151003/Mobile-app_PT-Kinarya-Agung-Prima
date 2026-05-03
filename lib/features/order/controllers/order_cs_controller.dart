@@ -108,22 +108,6 @@ class OrderCsController extends ChangeNotifier {
     } else if (_selectedSort == 'Oldest') {
       filtered.sort((a, b) =>
           (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
-    } else if (_selectedSort == 'Status') {
-      final priority = {
-        'Ordered': 0,
-        'Paid': 1,
-        'Shipped': 2,
-        'Delivered': 3,
-        'Cancelled': 4,
-        'Expired': 5,
-      };
-      filtered.sort((a, b) {
-        int pA = priority[a.status] ?? 99;
-        int pB = priority[b.status] ?? 99;
-        if (pA != pB) return pA.compareTo(pB);
-        return (b.createdAt ?? DateTime(0))
-            .compareTo(a.createdAt ?? DateTime(0));
-      });
     } else if (_selectedSort == 'Price (High-Low)') {
       filtered.sort((a, b) => b.total.compareTo(a.total));
     } else if (_selectedSort == 'Price (Low-High)') {

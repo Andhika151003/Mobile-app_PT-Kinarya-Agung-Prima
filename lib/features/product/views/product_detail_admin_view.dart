@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/product.dart';
 import '../controllers/product_admin_controller.dart';
 import '../views/form_edit_product_admin_view.dart';
+import '../../../core/utils/format_util.dart';
 
 class ProductDetailAdminView extends StatefulWidget {
   final ProductModel product;
@@ -132,7 +133,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                       Expanded(
                         child: _buildStatCard(
                           title: 'Monthly Sales',
-                          value: '${_currentProduct.monthlySales ?? 0}',
+                          value: FormatUtil.formatCompact(_currentProduct.monthlySales ?? 0),
                           percentage: _currentProduct.monthlySalesTrend ?? 0.0, 
                           titleColor: Colors.blue.shade600,
                           bgColor: const Color(0xFFF0F6FF),
@@ -142,7 +143,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                       Expanded(
                         child: _buildStatCard(
                           title: 'Revenue',
-                          value: _productController.formatRevenue(_currentProduct.revenue ?? 0),
+                          value: FormatUtil.formatCompact(_currentProduct.revenue ?? 0, isCurrency: true),
                           percentage: _currentProduct.revenueTrend ?? 0.0, 
                           titleColor: Colors.purple.shade400,
                           bgColor: const Color(0xFFF7F0FF),

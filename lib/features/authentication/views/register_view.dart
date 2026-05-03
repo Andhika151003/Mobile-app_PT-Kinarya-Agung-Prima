@@ -19,7 +19,6 @@ class _RegisterViewState extends State<RegisterView> {
   final _emailController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -43,7 +42,6 @@ class _RegisterViewState extends State<RegisterView> {
         fullName: _fullNameController.text,
         email: _emailController.text,
         phoneNumber: _phoneController.text,
-        address: _addressController.text,
         businessType: _selectedBusinessType ?? 'Lainnya',
         password: _passwordController.text,
       );
@@ -254,29 +252,6 @@ class _RegisterViewState extends State<RegisterView> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Address Field
-                    const Text(
-                      'Address',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Inter',
-                        color: Color(0xFF374151),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Semantics(
-                      label: 'input_register_address',
-                      child: TextFormField(
-                        controller: _addressController,
-                        maxLines: 3,
-                        maxLength: 255,
-                        decoration: _inputDecoration('Enter your address'),
-                        validator: controller.validateAddress,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
 
                     // Password Field
                     const Text(
@@ -494,7 +469,6 @@ class _RegisterViewState extends State<RegisterView> {
     _emailController.dispose();
     _fullNameController.dispose();
     _phoneController.dispose();
-    _addressController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();

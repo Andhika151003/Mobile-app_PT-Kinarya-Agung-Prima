@@ -61,6 +61,10 @@ class PdfService {
                         pw.SizedBox(height: 4),
                         pw.Text('Alamat Pengiriman:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
                         pw.Text(order.shippingAddress, style: const pw.TextStyle(fontSize: 10), maxLines: 3),
+                        if (order.phoneNumber != null && order.phoneNumber!.isNotEmpty) ...[
+                          pw.SizedBox(height: 2),
+                          pw.Text('Telp: ${order.phoneNumber!}', style: const pw.TextStyle(fontSize: 10)),
+                        ],
                       ],
                     ),
                   ),

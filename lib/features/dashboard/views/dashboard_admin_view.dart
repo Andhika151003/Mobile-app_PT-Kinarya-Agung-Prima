@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../../../core/utils/format_util.dart';
 import '../controllers/dashboard_admin_controller.dart';
 import '../../admin/view/admin_master_view.dart';
 import '../../promotion/views/form_promotion_admin_view.dart';
@@ -21,11 +21,6 @@ class DashboardAdminView extends StatefulWidget {
 class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticKeepAliveClientMixin {
   final DashboardAdminController _controller = DashboardAdminController();
   final NotificationAdminController _notifController = NotificationAdminController();
-  final NumberFormat _currencyFormat = NumberFormat.currency(
-    locale: 'id_ID',
-    symbol: 'Rp ',
-    decimalDigits: 0,
-  );
 
   Map<String, dynamic> overviewStats = {};
   List<Map<String, dynamic>> promotions = [];
@@ -198,7 +193,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
             Expanded(
               child: _buildSingleCard(
                 title: 'Total Sales',
-                value: _currencyFormat.format(overviewStats['totalSales'] ?? 0),
+                value: FormatUtil.formatCompact(overviewStats['totalSales'] ?? 0, isCurrency: true),
                 subtitle: 'Real-time revenue',
                 subtitleColor: Colors.blue.shade300,
                 icon: Icons.attach_money,
@@ -209,7 +204,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
             Expanded(
               child: _buildSingleCard(
                 title: 'Orders',
-                value: '${overviewStats['totalOrders'] ?? 0}',
+                value: FormatUtil.formatCompact(overviewStats['totalOrders'] ?? 0),
                 subtitle: 'Paid orders',
                 subtitleColor: Colors.green,
                 icon: Icons.shopping_basket_outlined,
@@ -224,7 +219,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
             Expanded(
               child: _buildSingleCard(
                 title: 'Customers',
-                value: '${overviewStats['totalCustomers'] ?? 0}',
+                value: FormatUtil.formatCompact(overviewStats['totalCustomers'] ?? 0),
                 subtitle: 'Registered Retailers',
                 subtitleColor: Colors.orange.shade300,
                 icon: Icons.people_outline,
@@ -520,7 +515,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
             children: [
               _buildRetailerItem(
                 title: retailer['fullName'] ?? 'Retailer',
-                location: retailer['address'] ?? 'No location',
                 phoneNumber: retailer['phoneNumber'] ?? '',
               ),
               if (!isLast) ...[
@@ -538,7 +532,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
 
   Widget _buildRetailerItem({
     required String title,
-    required String location,
     required String phoneNumber,
   }) {
     return Row(
@@ -558,7 +551,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
               ),
               const SizedBox(height: 4),
               Text(
-                location,
+                phoneNumber,
                 style: const TextStyle(color: Colors.grey, fontSize: 13),
               ),
             ],

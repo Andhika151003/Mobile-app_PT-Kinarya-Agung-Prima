@@ -52,7 +52,6 @@ void main() {
 
       await adminController.updateAdminProfile(
         fullName: 'New Admin',
-        address: 'New HQ',
         phoneNumber: '08123456789',
         businessType: 'Distributor',
       );

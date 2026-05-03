@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/utils/format_util.dart';
 import 'login_view.dart';
 import '../controllers/profile_cs_controller.dart';
 import '../../notification/services/push_notification_service.dart';
@@ -15,7 +16,6 @@ class _ProfileCsViewState extends State<ProfileCsView> {
   final ProfileCsController _csController = ProfileCsController();
 
   String csName = 'Loading...';
-  String location = 'Loading...';
   String contact = 'Loading...';
   String csId = '-';
   int totalTickets = 0;
@@ -34,7 +34,6 @@ class _ProfileCsViewState extends State<ProfileCsView> {
       if (data != null && mounted) {
         setState(() {
           csName = data['fullName'] ?? 'No Name';
-          location = data['address'] ?? 'No Location';
           contact = data['phoneNumber'] ?? 'No Contact';
           csId = '#CS${data['uid'].substring(0, 6).toUpperCase()}';
 
@@ -77,7 +76,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
                       return _buildStatsCard(
                         icon: Icons.inventory_2_outlined,
                         title: 'Total Tickets',
-                        value: count.toString(),
+                        value: FormatUtil.formatCompact(count),
                       );
                     }
                   ),
@@ -299,8 +298,6 @@ class _ProfileCsViewState extends State<ProfileCsView> {
         _buildDetailRow('Department', 'Technical Support'),
         const SizedBox(height: 16),
         _buildDetailRow('Contact', contact),
-        const SizedBox(height: 16),
-        _buildDetailRow('Location', location),
       ],
     );
   }

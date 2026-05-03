@@ -6,6 +6,7 @@ import '../controllers/product_admin_controller.dart';
 import 'product_detail_admin_view.dart';
 import 'form_add_product_admin_view.dart';
 import 'see_all_product_admin_view.dart';
+import '../../../core/utils/format_util.dart';
 
 class ProductAdminView extends StatefulWidget {
   const ProductAdminView({super.key});
@@ -427,7 +428,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Stock: ${product.stock}',
+                    'Stock: ${FormatUtil.formatCompact(product.stock)}',
                     style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                   ),
                   const SizedBox(height: 12),

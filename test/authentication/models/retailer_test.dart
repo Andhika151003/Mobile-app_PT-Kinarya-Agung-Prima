@@ -12,7 +12,6 @@ void main() {
         email: 'amirul@mail.com',
         password: 'passwordRahasia',
         phoneNumber: '08123456789',
-        address: 'Surabaya',
         createdAt: testDate,
       );
 
@@ -46,7 +45,6 @@ void main() {
       expect(retailer.email, 'maju@mail.com');
       expect(retailer.password, '');
       expect(retailer.phoneNumber, '08987654321');
-      expect(retailer.address, 'Jakarta');
       expect(retailer.role, 'retailer');
       expect(retailer.createdAt, testDate);
     });

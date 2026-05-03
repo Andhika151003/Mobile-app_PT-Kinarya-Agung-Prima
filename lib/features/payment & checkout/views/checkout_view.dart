@@ -8,6 +8,9 @@ import '../views/payment_status_view.dart';
 import '../../authentication/controllers/profile_user_controller.dart';
 import '../../promotion/controllers/promotion_user_controller.dart';
 import '../../promotion/models/promotion.dart';
+import '../../address/views/address_list_view.dart';
+import '../../address/controllers/address_controller.dart';
+import '../../address/models/address_model.dart';
 
 class CheckoutView extends StatefulWidget {
   const CheckoutView({super.key});
@@ -20,11 +23,13 @@ class _CheckoutViewState extends State<CheckoutView> {
   final CartController _cartController = CartController();
   final CheckoutController _checkoutController = CheckoutController();
   final PromotionUserController _promoController = PromotionUserController();
+  final AddressController _addressController = AddressController();
 
   bool _isLoadingProfile = true;
   bool _isProcessing = false;
 
   String shippingAddress = 'Memuat alamat...';
+  String? shippingPhone;
   String fullname = 'Customer';
 
   String paymentMethod = 'Pilih Metode Pembayaran';
@@ -60,34 +65,41 @@ class _CheckoutViewState extends State<CheckoutView> {
     _loadRetailerAddress();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> _loadRetailerAddress() async {
     try {
-      final data = await RetailProfileController().getRetailProfile();
       final user = FirebaseAuth.instance.currentUser;
       final String fallbackName =
           user?.displayName ?? user?.email?.split('@').first ?? 'Customer Baru';
 
-      if (data != null &&
-          data['address'] != null &&
-          data['address'].toString().isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            shippingAddress = data['address'];
-            fullname =
-                data['storeName']?.toString() ??
-                data['fullName']?.toString() ??
-                fallbackName;
-            _isLoadingProfile = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            shippingAddress = 'Alamat belum diatur';
-            fullname = fallbackName;
-            _isLoadingProfile = false;
-          });
-        }
+      // 1. Get user profile for fullname
+      final profile = await RetailProfileController().getRetailProfile();
+      if (profile != null && mounted) {
+        setState(() {
+          fullname = profile['storeName']?.toString() ??
+              profile['fullName']?.toString() ??
+              fallbackName;
+        });
+      }
+
+      // 2. Get default address from new system
+      final defaultAddress = await _addressController.getDefaultAddress();
+
+      if (mounted) {
+        setState(() {
+          if (defaultAddress != null) {
+            shippingAddress = defaultAddress.fullAddress;
+            fullname = defaultAddress.recipientName;
+            shippingPhone = defaultAddress.phoneNumber;
+          } else {
+            shippingAddress = 'Alamat belum diatur (Klik untuk menambah)';
+          }
+          _isLoadingProfile = false;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -96,6 +108,23 @@ class _CheckoutViewState extends State<CheckoutView> {
           _isLoadingProfile = false;
         });
       }
+    }
+  }
+
+  Future<void> _selectAddress() async {
+    final result = await Navigator.push<AddressModel>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddressListView(isSelecting: true),
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        shippingAddress = result.fullAddress;
+        fullname = result.recipientName;
+        shippingPhone = result.phoneNumber;
+      });
     }
   }
 
@@ -597,7 +626,12 @@ class _CheckoutViewState extends State<CheckoutView> {
                     margin: const EdgeInsets.only(top: 8),
                     child: Column(
                       children: [
-                        _buildActionRow('SHIPPING', shippingAddress, true),
+                        _buildActionRow(
+                          'SHIPPING',
+                          shippingAddress,
+                          true,
+                          onTap: _selectAddress,
+                        ),
                         const Divider(height: 1, color: Colors.black12),
                         _buildActionRow(
                           'PAYMENT',
@@ -895,6 +929,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                     final result = await _checkoutController.processCheckout(
                       fullName: fullname,
                       shippingAddress: shippingAddress,
+                      phoneNumber: shippingPhone,
                       paymentMethod: paymentMethod,
                       paymentMethodCode: _paymentMethodCode,
                       promoId: _appliedPromo?.id,

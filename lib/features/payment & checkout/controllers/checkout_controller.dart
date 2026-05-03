@@ -26,6 +26,7 @@ class CheckoutController {
   Future<Map<String, String>> processCheckout({
     required String fullName,
     required String shippingAddress,
+    required String? phoneNumber,
     required String paymentMethod,
     required String paymentMethodCode,
     String? promoId,
@@ -81,6 +82,7 @@ class CheckoutController {
         'userId': uid,
         'fullName': fullName,
         'shippingAddress': shippingAddress,
+        'phoneNumber': phoneNumber,
         'paymentMethod': paymentMethod,
         'promoId': promoId,
         'promoCode': promoCode,

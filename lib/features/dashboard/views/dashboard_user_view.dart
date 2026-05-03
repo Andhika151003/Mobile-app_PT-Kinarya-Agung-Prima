@@ -1,6 +1,7 @@
 import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/utils/format_util.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../controllers/dashboard_user_controller.dart';
 import '../../promotion/controllers/promotion_user_controller.dart';
@@ -759,11 +760,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                 return _buildOrderItem(
                   orderIdRaw.toString(),
                   status,
-                  NumberFormat.currency(
-                    locale: 'id_ID',
-                    symbol: 'Rp ',
-                    decimalDigits: 0,
-                  ).format(amount),
+                  FormatUtil.formatCompact(amount, isCurrency: true),
                   dateStr,
                 );
               },

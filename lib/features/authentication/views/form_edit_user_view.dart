@@ -18,7 +18,6 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _typeController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
   final TextEditingController _contactController = TextEditingController();
 
   bool _isLoading = true;
@@ -60,7 +59,6 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
   void dispose() {
     _nameController.dispose();
     _typeController.dispose();
-    _locationController.dispose();
     _contactController.dispose();
     super.dispose();
   }
@@ -74,7 +72,6 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
           final data = doc.data() as Map<String, dynamic>;
           setState(() {
             _nameController.text = data['fullName'] ?? '';
-            _locationController.text = data['address'] ?? '';
             _contactController.text = data['phoneNumber'] ?? '';
             _currentEmail = data['email'] ?? '';
             _selectedBusinessType = data['businessType'];
@@ -103,7 +100,6 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
     try {
       await _controller.updateRetailProfile(
         storeName: _nameController.text.trim(),
-        location: _locationController.text.trim(),
         contact: _contactController.text.trim(),
         businessType: _selectedBusinessType ?? 'Lainnya',
         profileImage: _newProfileImage,
@@ -217,7 +213,6 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                       ),
                     ),
 
-                    _buildTextField('Location', 'Enter Your Location', _locationController, maxLines: 3, semanticLabel: 'input_edit_profile_location'),
                     _buildTextField('Contact', 'Enter Your Number', _contactController, isNumber: true, semanticLabel: 'input_edit_profile_contact'),
                     
                     const SizedBox(height: 32),

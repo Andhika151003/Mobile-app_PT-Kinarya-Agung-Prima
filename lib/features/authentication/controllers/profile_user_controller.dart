@@ -46,7 +46,6 @@ class RetailProfileController {
   // Menyimpan pembaruan khusus Retail
   Future<void> updateRetailProfile({
     required String storeName,
-    required String location,
     required String contact,
     required String businessType,
     File? profileImage,
@@ -64,7 +63,6 @@ class RetailProfileController {
 
         final updateData = {
           'fullName': storeName,
-          'address': location,
           'phoneNumber': contact,
           'businessType': businessType,
         };

@@ -108,7 +108,6 @@ class _OrderUserViewState extends State<OrderUserView>
             itemBuilder: (BuildContext context) => [
               const PopupMenuItem(value: 'Newest', child: Text('Newest')),
               const PopupMenuItem(value: 'Oldest', child: Text('Oldest')),
-              const PopupMenuItem(value: 'Status', child: Text('Status Priority')),
               const PopupMenuItem(value: 'Price (High-Low)', child: Text('Price: High to Low')),
               const PopupMenuItem(value: 'Price (Low-High)', child: Text('Price: Low to High')),
             ],
@@ -267,21 +266,6 @@ class _OrderList extends StatelessWidget {
           allOrders.sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
         } else if (selectedSort == 'Oldest') {
           allOrders.sort((a, b) => (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
-        } else if (selectedSort == 'Status') {
-          final priority = {
-            'Ordered': 0,
-            'Paid': 1,
-            'Shipped': 2,
-            'Delivered': 3,
-            'Cancelled': 4,
-            'Expired': 5,
-          };
-          allOrders.sort((a, b) {
-            int pA = priority[a.status] ?? 99;
-            int pB = priority[b.status] ?? 99;
-            if (pA != pB) return pA.compareTo(pB);
-            return (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0));
-          });
         } else if (selectedSort == 'Price (High-Low)') {
           allOrders.sort((a, b) => b.total.compareTo(a.total));
         } else if (selectedSort == 'Price (Low-High)') {

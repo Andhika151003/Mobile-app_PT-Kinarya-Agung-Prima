@@ -1,6 +1,7 @@
 import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/utils/format_util.dart';
 import '../controller/admin_master_controller.dart';
 
 class AdminMasterView extends StatefulWidget {
@@ -108,7 +109,7 @@ class _AdminMasterViewState extends State<AdminMasterView> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${controller.retailers.length}',
+                              FormatUtil.formatCompact(controller.retailers.length),
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -262,15 +263,6 @@ class _AdminMasterViewState extends State<AdminMasterView> {
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Inter',
                         color: Color(0xFF1F2937),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      retailer['address'] ?? '-',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontFamily: 'Inter',
-                        color: Color(0xFF9CA3AF),
                       ),
                     ),
                     const SizedBox(height: 2),
