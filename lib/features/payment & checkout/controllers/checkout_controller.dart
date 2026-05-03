@@ -11,17 +11,19 @@ class CheckoutController {
   final FirebaseAuth _auth;
   final http.Client _client;
   final String _backendUrl;
-  final PushNotificationService _pushNotificationService = PushNotificationService();
+  final PushNotificationService _pushNotificationService;
 
   CheckoutController({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
     http.Client? client,
     String? backendUrl,
+    PushNotificationService? pushNotificationService,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
        _auth = auth ?? FirebaseAuth.instance,
        _client = client ?? http.Client(),
-       _backendUrl = backendUrl ?? dotenv.get('BACKEND_URL');
+       _backendUrl = backendUrl ?? dotenv.get('BACKEND_URL'),
+       _pushNotificationService = pushNotificationService ?? PushNotificationService();
 
   Future<Map<String, String>> processCheckout({
     required String fullName,

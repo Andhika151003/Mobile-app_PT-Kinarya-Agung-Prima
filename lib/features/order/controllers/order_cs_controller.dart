@@ -4,7 +4,10 @@ import '../models/order.dart';
 import 'order_stats_helper.dart';
 
 class OrderCsController extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+
+  OrderCsController({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -124,7 +127,7 @@ class OrderCsController extends ChangeNotifier {
 
     try {
       if (newStatus == 'Paid' || newStatus == 'Shipped' || newStatus == 'Delivered') {
-        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus);
+        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus, firestore: _firestore);
       } else {
         final updateData = {
           'status': newStatus,

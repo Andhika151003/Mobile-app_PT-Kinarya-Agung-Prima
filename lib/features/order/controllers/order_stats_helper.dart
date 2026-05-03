@@ -1,12 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OrderStatsHelper {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  static Future<void> markOrderAsPaid(String orderId, {String? targetStatus}) async {
-    final orderRef = _firestore.collection('orders').doc(orderId);
+  static Future<void> markOrderAsPaid(String orderId, {String? targetStatus, FirebaseFirestore? firestore}) async {
+    final db = firestore ?? FirebaseFirestore.instance;
+    final orderRef = db.collection('orders').doc(orderId);
     
-    await _firestore.runTransaction((transaction) async {
+    await db.runTransaction((transaction) async {
       // 1. ALL READS FIRST
       final orderDoc = await transaction.get(orderRef);
       if (!orderDoc.exists) return;
@@ -19,7 +18,7 @@ class OrderStatsHelper {
       for (var itemMap in itemsData) {
         final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
         if (productId != null && productId.isNotEmpty && !productDocs.containsKey(productId)) {
-          final pRef = _firestore.collection('products').doc(productId);
+          final pRef = db.collection('products').doc(productId);
           productDocs[productId] = await transaction.get(pRef);
         }
       }

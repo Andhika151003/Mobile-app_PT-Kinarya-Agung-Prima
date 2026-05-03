@@ -3,8 +3,14 @@ import '../../notification/services/push_notification_service.dart';
 import 'order_stats_helper.dart';
 
 class OrderAdminController {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final PushNotificationService _pushNotificationService = PushNotificationService();
+  final FirebaseFirestore _firestore;
+  final PushNotificationService _pushNotificationService;
+
+  OrderAdminController({
+    FirebaseFirestore? firestore,
+    PushNotificationService? pushNotificationService,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _pushNotificationService = pushNotificationService ?? PushNotificationService();
 
   Future<List<Map<String, dynamic>>> getAllOrdersAdmin() async {
     try {
@@ -36,7 +42,7 @@ class OrderAdminController {
       final bool statsRecorded = data['statsRecorded'] ?? false;
 
       if (!statsRecorded && (status == 'Paid' || status == 'Shipped' || status == 'Delivered')) {
-        await OrderStatsHelper.markOrderAsPaid(orderId);
+        await OrderStatsHelper.markOrderAsPaid(orderId, firestore: _firestore);
         final updatedDoc = await _firestore.collection('orders').doc(orderId).get();
         return updatedDoc.data();
       }
@@ -56,7 +62,7 @@ class OrderAdminController {
       final userId = orderData['userId']?.toString() ?? '';
 
       if (newStatus == 'Paid' || newStatus == 'Shipped' || newStatus == 'Delivered') {
-        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus);
+        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus, firestore: _firestore);
       } else {
         final updateData = <String, dynamic>{'status': newStatus};
         await _firestore.collection('orders').doc(orderId).update(updateData);

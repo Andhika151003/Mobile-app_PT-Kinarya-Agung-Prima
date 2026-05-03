@@ -10,15 +10,17 @@ class OrderUserController {
   final FirebaseFirestore _firestore;
   final http.Client _client;
   final String _duitkuBackendUrl;
-  final PushNotificationService _pushNotificationService = PushNotificationService();
+  final PushNotificationService _pushNotificationService;
 
   OrderUserController({
     FirebaseFirestore? firestore,
     http.Client? client,
     String? backendUrl,
+    PushNotificationService? pushNotificationService,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
         _client = client ?? http.Client(),
-        _duitkuBackendUrl = backendUrl ?? dotenv.get('BACKEND_URL');
+        _duitkuBackendUrl = backendUrl ?? dotenv.get('BACKEND_URL'),
+        _pushNotificationService = pushNotificationService ?? PushNotificationService();
 
   Stream<QuerySnapshot<Map<String, dynamic>>> getUserOrdersStream(String userId) {
     return _firestore
@@ -47,7 +49,7 @@ class OrderUserController {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['status'] == 'Paid') {
-          await OrderStatsHelper.markOrderAsPaid(orderId);
+          await OrderStatsHelper.markOrderAsPaid(orderId, firestore: _firestore);
           
           await _pushNotificationService.sendNotificationToAdmin(
             title: 'Pembayaran Baru!',
@@ -72,7 +74,7 @@ class OrderUserController {
       final orderData = orderDoc.data();
       final customerName = orderData?['fullName'] ?? 'Customer';
 
-      await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: 'Delivered');
+      await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: 'Delivered', firestore: _firestore);
 
       await _pushNotificationService.sendNotificationToAdmin(
         title: 'Pesanan Diterima!',

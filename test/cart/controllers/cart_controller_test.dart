@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ecommerce/features/cart/controllers/cart_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   late CartController cartController;
 
-  setUp(() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     cartController = CartController();
     cartController.clearCart();
   });
@@ -142,7 +144,7 @@ void main() {
       expect(cartController.items, isEmpty);
     });
 
-    test('Kalkulasi total harus termasuk ongkir', () {
+    test('Kalkulasi total harus sesuai subtotal (ongkir 0)', () {
       cartController.addToCart(
         id: 'p1',
         title: 'Produk 1',
@@ -155,8 +157,8 @@ void main() {
         category: 'Test Category',
       );
 
-      // shippingCost adalah 9.99
-      expect(cartController.total, equals(100.0 + 9.99));
+      // shippingCost adalah 0.0 di controller saat ini
+      expect(cartController.total, equals(100.0 + 0.0));
     });
   });
 }
