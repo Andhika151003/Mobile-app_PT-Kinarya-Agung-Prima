@@ -6,7 +6,13 @@ import '../../shared/services/pdf_service.dart';
 
 class OrderDetailAdminView extends StatefulWidget {
   final String orderId;
-  const OrderDetailAdminView({super.key, required this.orderId});
+  final OrderAdminController? adminController;
+  
+  const OrderDetailAdminView({
+    super.key, 
+    required this.orderId, 
+    this.adminController,
+  });
 
   @override
   State<OrderDetailAdminView> createState() => _OrderDetailAdminViewState();
@@ -16,7 +22,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   static const _primaryColor = Color(0xFF4A7D3C); 
   static const _bgColor = Color(0xFFF7F8FA);
 
-  final OrderAdminController _adminController = OrderAdminController();
+  late final OrderAdminController _adminController;
   
   OrderModel? _order; 
   bool _isLoading = true;
@@ -25,6 +31,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   @override
   void initState() {
     super.initState();
+    _adminController = widget.adminController ?? OrderAdminController();
     _fetchOrder();
   }
 
