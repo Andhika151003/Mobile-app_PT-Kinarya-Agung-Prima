@@ -1,73 +1,86 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OrderStatsHelper {
-  static Future<void> markOrderAsPaid(String orderId, {String? targetStatus, FirebaseFirestore? firestore}) async {
+  static Future<void> markOrderAsPaid(String orderId,
+      {String? targetStatus, FirebaseFirestore? firestore}) async {
     final db = firestore ?? FirebaseFirestore.instance;
     final orderRef = db.collection('orders').doc(orderId);
-    
+
     await db.runTransaction((transaction) async {
-      // 1. ALL READS FIRST
       final orderDoc = await transaction.get(orderRef);
       if (!orderDoc.exists) return;
 
       final data = orderDoc.data() as Map<String, dynamic>;
       final itemsData = data['items'] as List<dynamic>? ?? [];
-      
-      // Get all product references and documents
-      Map<String, DocumentSnapshot> productDocs = {};
-      for (var itemMap in itemsData) {
-        final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
-        if (productId != null && productId.isNotEmpty && !productDocs.containsKey(productId)) {
-          final pRef = db.collection('products').doc(productId);
-          productDocs[productId] = await transaction.get(pRef);
-        }
-      }
 
-      // 2. LOGIC & DATA PREPARATION
-      final currentStatus = data['status']?.toString() ?? '';
+      // 1. Determine Status & Timestamps
+      final updates = _calculateStatusUpdates(data, targetStatus);
+
+      // 2. Process Stats if needed
       final bool statsRecorded = data['statsRecorded'] ?? false;
-
-      Map<String, dynamic> orderUpdates = {};
-      
-      // Determine Status Update
-      if (targetStatus != null) {
-        orderUpdates['status'] = targetStatus;
-        if (targetStatus == 'Paid') orderUpdates['paidAt'] = FieldValue.serverTimestamp();
-        if (targetStatus == 'Shipped') orderUpdates['shippedAt'] = FieldValue.serverTimestamp();
-        if (targetStatus == 'Delivered') orderUpdates['deliveredAt'] = FieldValue.serverTimestamp();
-      } else if (currentStatus != 'Paid' && currentStatus != 'Shipped' && currentStatus != 'Delivered' && currentStatus != 'Cancelled' && currentStatus != 'Expired') {
-        orderUpdates['status'] = 'Paid';
-        orderUpdates['paidAt'] = FieldValue.serverTimestamp();
-      }
-
-      // Record Stats if not already done
       if (!statsRecorded) {
-        for (var itemMap in itemsData) {
-          final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
-          if (productId == null || productId.isEmpty) continue;
-
-          final pDoc = productDocs[productId];
-          if (pDoc != null && pDoc.exists) {
-            final int quantity = (itemMap['quantity'] as num?)?.toInt() ?? 0;
-            final double price = (itemMap['price'] as num?)?.toDouble() ?? 0.0;
-            final int revenue = (price * quantity).toInt();
-
-            if (quantity > 0) {
-              transaction.update(pDoc.reference, {
-                'monthlySales': FieldValue.increment(quantity),
-                'revenue': FieldValue.increment(revenue),
-                'stock': FieldValue.increment(-quantity),
-              });
-            }
-          }
-        }
-        orderUpdates['statsRecorded'] = true;
+        await _recordProductStats(transaction, db, itemsData);
+        updates['statsRecorded'] = true;
       }
 
-      // 3. ALL WRITES LAST
-      if (orderUpdates.isNotEmpty) {
-        transaction.update(orderRef, orderUpdates);
+      // 3. Apply Updates
+      if (updates.isNotEmpty) {
+        transaction.update(orderRef, updates);
       }
     });
+  }
+
+  static Map<String, dynamic> _calculateStatusUpdates(
+      Map<String, dynamic> data, String? targetStatus) {
+    final currentStatus = data['status']?.toString() ?? '';
+    Map<String, dynamic> updates = {};
+
+    if (targetStatus != null) {
+      updates['status'] = targetStatus;
+      _addTimestamp(updates, targetStatus);
+    } else if (_isEligibleForAutoPaid(currentStatus)) {
+      updates['status'] = 'Paid';
+      updates['paidAt'] = FieldValue.serverTimestamp();
+    }
+    return updates;
+  }
+
+  static bool _isEligibleForAutoPaid(String status) {
+    const finalStatuses = ['Paid', 'Shipped', 'Delivered', 'Cancelled', 'Expired'];
+    return !finalStatuses.contains(status);
+  }
+
+  static void _addTimestamp(Map<String, dynamic> updates, String status) {
+    if (status == 'Paid') updates['paidAt'] = FieldValue.serverTimestamp();
+    if (status == 'Shipped') updates['shippedAt'] = FieldValue.serverTimestamp();
+    if (status == 'Delivered') updates['deliveredAt'] = FieldValue.serverTimestamp();
+  }
+
+  static Future<void> _recordProductStats(Transaction transaction,
+      FirebaseFirestore db, List<dynamic> itemsData) async {
+    for (var itemMap in itemsData) {
+      final productId = _extractProductId(itemMap);
+      if (productId == null) continue;
+
+      final pRef = db.collection('products').doc(productId);
+      final pDoc = await transaction.get(pRef);
+
+      if (pDoc.exists) {
+        final int quantity = (itemMap['quantity'] as num?)?.toInt() ?? 0;
+        final double price = (itemMap['price'] as num?)?.toDouble() ?? 0.0;
+        
+        if (quantity > 0) {
+          transaction.update(pRef, {
+            'monthlySales': FieldValue.increment(quantity),
+            'revenue': FieldValue.increment((price * quantity).toInt()),
+            'stock': FieldValue.increment(-quantity),
+          });
+        }
+      }
+    }
+  }
+
+  static String? _extractProductId(dynamic itemMap) {
+    return itemMap['productId']?.toString() ?? itemMap['id']?.toString();
   }
 }

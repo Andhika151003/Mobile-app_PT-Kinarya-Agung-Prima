@@ -55,8 +55,9 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
       final docs = await _adminController.getAllOrdersAdmin();
       if (mounted) {
         setState(() {
-          _allOrders = docs.map((e) => OrderModel.fromMap(e)).toList();
-          _filterItems();
+          _allOrders = docs;
+          _filteredOrders = List.from(_allOrders);
+          _applySortInternal();
           _isLoading = false;
         });
       }
@@ -73,20 +74,18 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
   void _applyFilter(String filter) {
     setState(() {
       _selectedFilter = filter;
-      _filterItems();
+      _applySearch(_searchQuery);
     });
   }
 
-  void _filterItems() {
-    final mapList = _allOrders.map((e) => e.toMap()).toList();
-    final filteredMaps = _adminController.filterAndSearchOrders(
-      mapList, 
-      _selectedFilter == 'All Transactions' ? 'All' : _selectedFilter, 
-      _searchQuery
-    );
-    
+  void _applySearch(String query) {
     setState(() {
-      _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
+      _searchQuery = query;
+      _filteredOrders = _adminController.applyFilters(
+        allOrders: _allOrders,
+        selectedFilter: _selectedFilter == 'All' ? 'All Transactions' : _selectedFilter,
+        searchQuery: query,
+      );
       _applySortInternal();
     });
   }
@@ -162,18 +161,14 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() {
-                                    _searchQuery = '';
-                                    _filterItems();
+                                    _applySearch('');
                                   });
                                 },
                               )
                             : null,
                       ),
                       onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                          _filterItems();
-                        });
+                        _applySearch(value);
                       },
                     ),
                   ),

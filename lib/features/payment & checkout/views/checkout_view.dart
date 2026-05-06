@@ -87,11 +87,12 @@ class _CheckoutViewState extends State<CheckoutView> {
       }
 
       // 2. Get default address from new system
-      final defaultAddress = await _addressController.getDefaultAddress();
+      final result = await _addressController.getDefaultAddress();
 
       if (mounted) {
         setState(() {
-          if (defaultAddress != null) {
+          if (result.isSuccess && result.data != null) {
+            final defaultAddress = result.data!;
             shippingAddress = defaultAddress.fullAddress;
             fullname = defaultAddress.recipientName;
             shippingPhone = defaultAddress.phoneNumber;

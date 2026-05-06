@@ -2,7 +2,6 @@ import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/format_util.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../controllers/dashboard_user_controller.dart';
 import '../../promotion/controllers/promotion_user_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,9 +10,8 @@ import '../../product/models/product.dart';
 import '../../product/views/product_detail_user_view.dart';
 import '../../complaint/views/complaint_form_view.dart';
 import '../../complaint/views/complaint_history_view.dart';
-import '../../authentication/controllers/profile_user_controller.dart';
 import '../../notification/views/notif_user_view.dart';
-import '../../notification/controllers/notif_user_controller.dart';
+import '../../order/models/order.dart';
 
 class DashboardUserView extends StatefulWidget {
   const DashboardUserView({super.key});
@@ -22,26 +20,18 @@ class DashboardUserView extends StatefulWidget {
   State<DashboardUserView> createState() => _DashboardUserViewState();
 }
 
-class _DashboardUserViewState extends State<DashboardUserView>
-    with AutomaticKeepAliveClientMixin {
+class _DashboardUserViewState extends State<DashboardUserView> {
   final DashboardUserController _controller = DashboardUserController();
   final PromotionUserController _promoController = PromotionUserController();
-  final NotificationUserController _notifController =
-      NotificationUserController();
-  final RetailProfileController _profileController = RetailProfileController();
 
-  String userName = 'Retailer';
   bool isLoading = true;
-
+  String userName = 'Retailer';
   List<PromotionModel> _activePromos = [];
   int _currentBannerIndex = 0;
   final PageController _bannerPageController = PageController();
 
-  late Stream<List<Map<String, dynamic>>> _recentOrdersStream;
+  late Stream<List<OrderModel>> _recentOrdersStream;
   late Stream<List<ProductModel>> _recommendedProductsStream;
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -135,24 +125,18 @@ class _DashboardUserViewState extends State<DashboardUserView>
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
-                          image:
-                              promo.imageUrl != null &&
-                                  promo.imageUrl!.isNotEmpty
+                          image: promo.imageUrl != null
                               ? DecorationImage(
                                   image: NetworkImage(promo.imageUrl!),
                                   fit: BoxFit.cover,
                                 )
                               : null,
                         ),
-                        child: promo.imageUrl == null || promo.imageUrl!.isEmpty
-                            ? const Icon(
-                                Icons.card_giftcard,
-                                color: Colors.white,
-                                size: 40,
-                              )
+                        child: promo.imageUrl == null
+                            ? const Icon(Icons.star, color: Colors.white, size: 50)
                             : null,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
 
                       // Title
                       Text(
@@ -160,72 +144,45 @@ class _DashboardUserViewState extends State<DashboardUserView>
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 8),
 
-                      // Description
+                      // Desc
                       Text(
                         promo.description,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 13,
-                          height: 1.4,
+                          fontSize: 14,
                         ),
-                        maxLines: 4,
-                        overflow: TextOverflow.visible,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
 
-                      // Discount badge
+                      // Discount tag
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.5),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Text(
+                          'Save ${promo.discountValue}% Off',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.local_offer,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              promo.discountText,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 24),
 
-                      // Valid until
-                      Text(
-                        'Valid until ${_formatDate(promo.endDate)}',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.8),
-                          fontSize: 11,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Claim button
+                      // CTA Button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -233,45 +190,35 @@ class _DashboardUserViewState extends State<DashboardUserView>
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: AppColors.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 0,
                           ),
-                          child: Text(
-                            promo.isActive ? 'Claim Offer Now' : 'Wait for it!',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
+                          child: const Text(
+                            'CLAIM NOW',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
                             ),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
               ),
 
-              // Close button
+              // Close Button
               Positioned(
-                top: 10,
-                right: 10,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(ctx),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ),
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  icon: const Icon(Icons.close, color: Colors.white),
                 ),
               ),
             ],
@@ -283,409 +230,367 @@ class _DashboardUserViewState extends State<DashboardUserView>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    // Removed initial shimmer check to render dashboard structure immediately
-
-    return SafeArea(
-      child: Container(
-        color: const Color(0xFFF8F9FA),
-        child: RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: _onRefresh,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildAppBar(),
-                const SizedBox(height: 20),
-                _buildGreetingSection(),
-                const SizedBox(height: 20),
-                _buildPromoBanner(),
-                const SizedBox(height: 24),
-                _buildQuickActions(),
-                const SizedBox(height: 24),
-                _buildRecentOrders(),
-                const SizedBox(height: 24),
-                _buildRecommendedProducts(),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── APP BAR ───────────────────────────────────────────────
-  Widget _buildAppBar() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Image.asset(
-            'assets/images/logo.png',
-            height: 40,
-            fit: BoxFit.contain,
-          ),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.history, color: Colors.black87),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ComplaintHistoryView(),
-                    ),
-                  );
-                },
-              ),
-              StreamBuilder<int>(
-                stream: _notifController.getUnreadCount(),
-                builder: (context, snapshot) {
-                  final unreadCount = snapshot.data ?? 0;
-                  return Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.notifications_outlined,
-                          color: Colors.black87,
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const NotificationUserView(),
-                            ),
-                          );
-                        },
-                      ),
-                      if (unreadCount > 0)
-                        Positioned(
-                          right: 12,
-                          top: 12,
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── GREETING ──────────────────────────────────────────────
-  Widget _buildGreetingSection() {
-    return StreamBuilder<Map<String, dynamic>?>(
-      stream: _profileController.getRetailProfileStream(),
-      builder: (context, snapshot) {
-        final name = snapshot.data?['fullName'] ?? userName;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Selamat Datang, $name!',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              DateFormat('EEEE, MMMM d, y').format(DateTime.now()),
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildPromoBanner() {
-    if (_activePromos.isEmpty) {
-      return Container(
-        height: 130,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Center(
-          child: Text(
-            'No active promotions',
-            style: TextStyle(color: Colors.grey),
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        // Banner carousel
-        SizedBox(
-          height: 160,
-          child: PageView.builder(
-            controller: _bannerPageController,
-            itemCount: _activePromos.length,
-            onPageChanged: (index) =>
-                setState(() => _currentBannerIndex = index),
-            itemBuilder: (context, index) {
-              final promo = _activePromos[index];
-              return _buildSingleBanner(promo);
-            },
-          ),
-        ),
-
-        if (_activePromos.length > 1) ...[
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              _activePromos.length,
-              (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: _currentBannerIndex == i ? 20 : 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: _currentBannerIndex == i
-                      ? AppColors.primary
-                      : Colors.grey[300],
-                  borderRadius: BorderRadius.circular(4),
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        displacement: 40,
+        color: AppColors.primary,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            _buildAppBar(),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildBalanceCard(),
+                    const SizedBox(height: 24),
+                    _buildPromoCarousel(),
+                    const SizedBox(height: 32),
+                    _buildCategoryGrid(),
+                    const SizedBox(height: 32),
+                    _buildRecentOrders(),
+                    const SizedBox(height: 32),
+                    _buildRecommendedProducts(),
+                    const SizedBox(height: 100),
+                  ],
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return SliverAppBar(
+      expandedHeight: 120,
+      floating: false,
+      pinned: true,
+      backgroundColor: AppColors.primary,
+      elevation: 0,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          children: [
+            Positioned(
+              right: -50,
+              top: -50,
+              child: CircleAvatar(
+                radius: 100,
+                backgroundColor: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Welcome back,',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    userName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        IconButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationUserView()),
+            );
+          },
+          icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+        ),
+        const SizedBox(width: 8),
       ],
     );
   }
 
-  Widget _buildSingleBanner(PromotionModel promo) {
-    Color bannerColor;
-    switch (promo.discountType) {
-      case 'bogo':
-        bannerColor = const Color(0xFF6366F1);
-        break;
-      case 'fixed':
-        bannerColor = const Color(0xFFEA580C);
-        break;
-      case 'bundle':
-        bannerColor = const Color(0xFFD97706);
-        break;
-      default:
-        bannerColor = AppColors.primary;
-    }
-
-    final bool hasImage = promo.imageUrl != null && promo.imageUrl!.isNotEmpty;
-
-    return GestureDetector(
-      onTap: () => _showPromoPopup(promo),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        decoration: BoxDecoration(
-          color: bannerColor,
-          borderRadius: BorderRadius.circular(16),
-          image: hasImage
-              ? DecorationImage(
-                  image: NetworkImage(promo.imageUrl!),
-                  fit: BoxFit.cover,
-                )
-              : null,
+  Widget _buildBalanceCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, Color(0xFFE67E22)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                Colors.black.withValues(alpha: 0.6),
-                Colors.black.withValues(alpha: 0.2),
-                Colors.transparent,
-              ],
-            ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
-          child: Row(
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Ending soon badge
-                    if (promo.isEndingSoon)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 6),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          '⏰ Ending Soon!',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-
-                    // Upcoming badge
-                    if (promo.isStartingSoon && !promo.isActive)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 6),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.8),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          '🚀 Upcoming!',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-
-                    Text(
-                      promo.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 4,
-                            color: Colors.black45,
-                            offset: Offset(2, 2),
-                          ),
-                        ],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Available Balance',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 14,
                     ),
-                    const SizedBox(height: 4),
-                    if (promo.discountType != 'percentage')
-                      Text(
-                        promo.discountText,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          shadows: [
-                            Shadow(
-                              blurRadius: 2,
-                              color: Colors.black45,
-                              offset: Offset(1, 1),
-                            ),
-                          ],
-                        ),
-                      ),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: () => _showPromoPopup(promo),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColors.primary,
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: const Text(
-                        'Claim Now',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Rp 12.500.000',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              if (!hasImage) ...[
-                const SizedBox(width: 12),
-                Icon(
-                  promo.discountType == 'bogo'
-                      ? Icons.shopping_bag_outlined
-                      : promo.discountType == 'bundle'
-                      ? Icons.inventory_2_outlined
-                      : Icons.card_giftcard,
-                  color: Colors.white,
-                  size: 56,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              ],
+                child: const Icon(Icons.account_balance_wallet, color: Colors.white),
+              ),
             ],
           ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              _buildBalanceAction(Icons.add_circle_outline, 'Top Up'),
+              const SizedBox(width: 16),
+              _buildBalanceAction(Icons.history, 'History'),
+              const SizedBox(width: 16),
+              _buildBalanceAction(Icons.qr_code_scanner, 'Scan'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBalanceAction(IconData icon, String label) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildQuickActions() {
+  Widget _buildPromoCarousel() {
+    if (_activePromos.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView.builder(
+            controller: _bannerPageController,
+            onPageChanged: (idx) => setState(() => _currentBannerIndex = idx),
+            itemCount: _activePromos.length,
+            itemBuilder: (context, index) {
+              final promo = _activePromos[index];
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  image: promo.imageUrl != null
+                      ? DecorationImage(
+                          image: NetworkImage(promo.imageUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.black.withValues(alpha: 0.6),
+                        Colors.transparent,
+                      ],
+                      begin: Alignment.bottomLeft,
+                      end: Alignment.topRight,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${promo.discountValue}% OFF',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        promo.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Valid until ${DateFormat('yyyy-MM-dd').format(promo.endDate)}',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            _activePromos.length,
+            (index) => Container(
+              width: _currentBannerIndex == index ? 24 : 8,
+              height: 8,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: _currentBannerIndex == index
+                    ? AppColors.primary
+                    : Colors.grey[300],
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryGrid() {
+    final categories = [
+      {'icon': Icons.shopping_bag_outlined, 'label': 'Products', 'color': Colors.blue},
+      {'icon': Icons.local_offer_outlined, 'label': 'Promos', 'color': Colors.orange},
+      {'icon': Icons.receipt_long_outlined, 'label': 'Orders', 'color': Colors.green},
+      {'icon': Icons.support_agent_outlined, 'label': 'Support', 'color': Colors.purple},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Quick Menu',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: categories
+              .map((cat) => _buildCategoryItem(
+                    cat['icon'] as IconData,
+                    cat['label'] as String,
+                    cat['color'] as Color,
+                  ))
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryItem(IconData icon, String label, Color color) {
     return Column(
       children: [
         GestureDetector(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ComplaintFormView(
-                  orderId: 'Bantuan Umum',
-                  orderDate: '-',
+            if (label == 'Support') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ComplaintFormView(
+                    orderId: 'Bantuan Umum',
+                    orderDate: 'Bantuan Umum',
+                  ),
                 ),
-              ),
-            );
+              );
+            } else if (label == 'Orders') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ComplaintHistoryView()),
+              );
+            }
           },
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.purple.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.support_agent, color: Colors.purple.shade300),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Support',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-              ),
-            ],
+          child: Container(
+            width: 65,
+            height: 65,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.grey[700],
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -694,43 +599,47 @@ class _DashboardUserViewState extends State<DashboardUserView>
 
   Widget _buildRecentOrders() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
               'Recent Orders',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            TextButton(
+              onPressed: () {},
+              child: const Text('View All', style: TextStyle(color: AppColors.primary)),
             ),
           ],
         ),
-        StreamBuilder<List<Map<String, dynamic>>>(
+        StreamBuilder<List<OrderModel>>(
           stream: _recentOrdersStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
-            if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            }
+
             final orders = snapshot.data ?? [];
             if (orders.isEmpty) {
               return Container(
-                padding: const EdgeInsets.all(20),
+                width: double.infinity,
+                padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.grey[200]!),
                 ),
-                child: const Center(
-                  child: Text(
-                    'No recent orders found',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                child: Column(
+                  children: [
+                    Icon(Icons.shopping_basket_outlined, color: Colors.grey[300], size: 64),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No recent orders yet',
+                      style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                    ),
+                  ],
                 ),
               );
             }
@@ -742,20 +651,13 @@ class _DashboardUserViewState extends State<DashboardUserView>
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final order = orders[index];
-                final status = order['status']?.toString() ?? 'Unknown';
-                final amount = (order['total'] as num?)?.toDouble() ?? 0.0;
-                DateTime? date;
-                if (order['createdAt'] is Timestamp) {
-                  date = (order['createdAt'] as Timestamp).toDate();
-                } else if (order['createdAt'] is String) {
-                  date = DateTime.tryParse(order['createdAt']);
-                }
+                final status = order.status;
+                final amount = order.total;
+                final date = order.createdAt;
 
-                final dateStr = date != null
-                    ? DateFormat('MMM dd, yyyy').format(date)
-                    : '-';
+                final dateStr = date != null ? DateFormat('MMM dd, yyyy').format(date) : '-';
 
-                final orderIdRaw = order['orderId'] ?? order['id'] ?? '-';
+                final orderIdRaw = order.orderId;
 
                 return _buildOrderItem(
                   orderIdRaw.toString(),
@@ -771,116 +673,85 @@ class _DashboardUserViewState extends State<DashboardUserView>
     );
   }
 
-  Widget _buildOrderItem(
-    String orderId,
-    String status,
-    String total,
-    String date,
-  ) {
+  Widget _buildOrderItem(String id, String status, String price, String date) {
+    Color statusColor;
+    switch (status.toLowerCase()) {
+      case 'paid':
+        statusColor = Colors.green;
+        break;
+      case 'pending':
+        statusColor = Colors.orange;
+        break;
+      case 'shipped':
+        statusColor = Colors.blue;
+        break;
+      default:
+        statusColor = Colors.grey;
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                orderId,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              _buildStatusBadge(status),
-            ],
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.receipt_outlined, color: statusColor, size: 20),
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Order $id',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                Text(
+                  date,
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'Total: $total',
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
+                price,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  status.toUpperCase(),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              Text(
-                date,
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
-              ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(String status) {
-    Color bg;
-    Color fg;
-    IconData icon;
-    String label;
-
-    if (status == 'Delivered') {
-      bg = const Color(0xFFE6F4EA);
-      fg = const Color(0xFF1E8E3E);
-      icon = Icons.check_circle_outline;
-      label = 'Delivered';
-    } else if (status == 'Expired' || status == 'Cancelled') {
-      bg = const Color(0xFFFCE8E6);
-      fg = const Color(0xFFD93025);
-      icon = Icons.cancel_outlined;
-      label = 'Cancelled';
-    } else if (status == 'Ordered') {
-      bg = const Color(0xFFFEF7E0);
-      fg = const Color(0xFFF9AB00);
-      icon = Icons.access_time;
-      label = 'Ordered';
-    } else if (status == 'Shipped') {
-      bg = const Color(0xFFE3F2FD);
-      fg = const Color(0xFF1976D2);
-      icon = Icons.local_shipping_outlined;
-      label = 'Shipped';
-    } else if (status == 'Paid') {
-      bg = const Color(0xFFE8EAF6);
-      fg = const Color(0xFF3949AB);
-      icon = Icons.payment;
-      label = 'Paid';
-    } else {
-      bg = const Color(0xFFE8EAF6);
-      fg = const Color(0xFF3949AB);
-      icon = Icons.info_outline;
-      label = status;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: fg),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: fg,
-            ),
           ),
         ],
       ),
@@ -889,201 +760,96 @@ class _DashboardUserViewState extends State<DashboardUserView>
 
   Widget _buildRecommendedProducts() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Recommended for You',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ],
+        const Text(
+          'Recommended for You',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-
         StreamBuilder<List<ProductModel>>(
           stream: _recommendedProductsStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
-            if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            }
+
             final products = snapshot.data ?? [];
             if (products.isEmpty) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: Text('No recommended products found.'),
-                ),
-              );
+              return const Center(child: Text('No products available'));
             }
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.65,
-              ),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ProductDetailUserView(product: products[index]),
+
+            return SizedBox(
+              height: 220,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: products.length,
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ProductDetailUserView(product: product),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 160,
+                      margin: const EdgeInsets.only(right: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.grey[100]!),
                       ),
-                    );
-                  },
-                  child: _buildProductCard(products[index]),
-                );
-              },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                image: DecorationImage(
+                                  image: NetworkImage(product.imageUrl),
+                                  fit: BoxFit.cover,
+                                ),
+                                color: Colors.grey[100],
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  product.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  FormatUtil.formatCompact(product.price, isCurrency: true),
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             );
           },
         ),
       ],
     );
-  }
-
-  Widget _buildProductCard(ProductModel product) {
-    final currencyFormatter = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
-
-    // Find best promotion for this product to show badge
-    PromotionModel? bestPromo;
-    final matchingPromos = _activePromos.where((promo) => 
-      promo.applicableTo == 'all' || promo.productIds.contains(product.id)
-    ).toList();
-    
-    if (matchingPromos.isNotEmpty) {
-      matchingPromos.sort((a, b) {
-        if (a.discountType != b.discountType) return b.discountType == 'percentage' ? -1 : 1;
-        return b.discountValue.compareTo(a.discountValue);
-      });
-      bestPromo = matchingPromos.first;
-    }
-
-    bool hasPromo = bestPromo != null;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Stack(
-                children: [
-                  Center(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: product.imageUrl.isNotEmpty
-                            ? Image.network(
-                                product.imageUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(
-                                      Icons.image,
-                                      color: Colors.grey,
-                                      size: 50,
-                                    ),
-                              )
-                            : const Icon(Icons.image, color: Colors.grey, size: 50),
-                      ),
-                    ),
-                  ),
-                  if (hasPromo && bestPromo.discountType != 'percentage')
-                    Positioned(
-                      top: 4,
-                      left: 4,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          bestPromo.discountText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              product.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Min. Order: ${product.moq ?? 1} pcs',
-              style: TextStyle(color: Colors.grey[500], fontSize: 10),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              currencyFormatter.format(product.price),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── HELPERS ───────────────────────────────────────────────
-  String _formatDate(DateTime d) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
 }

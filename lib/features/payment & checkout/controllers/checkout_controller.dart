@@ -1,26 +1,30 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../notification/services/push_notification_service.dart';
+import '../../../core/repositories/product_repository.dart';
+import '../../../core/repositories/order_repository.dart';
+import '../../../core/repositories/auth_repository.dart';
 
 class CheckoutController {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
+  final ProductRepository _productRepository;
+  final OrderRepository _orderRepository;
+  final AuthRepository _authRepository;
   final http.Client _client;
   final String _backendUrl;
   final PushNotificationService _pushNotificationService;
 
   CheckoutController({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
+    ProductRepository? productRepository,
+    OrderRepository? orderRepository,
+    AuthRepository? authRepository,
     http.Client? client,
     String? backendUrl,
     PushNotificationService? pushNotificationService,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _auth = auth ?? FirebaseAuth.instance,
+  }) : _productRepository = productRepository ?? ProductRepository(),
+       _orderRepository = orderRepository ?? OrderRepository(),
+       _authRepository = authRepository ?? AuthRepository(),
        _client = client ?? http.Client(),
        _backendUrl = backendUrl ?? dotenv.get('BACKEND_URL'),
        _pushNotificationService = pushNotificationService ?? PushNotificationService();
@@ -41,7 +45,7 @@ class CheckoutController {
     double discountAmount = 0.0,
   }) async {
     try {
-      final user = _auth.currentUser;
+      final user = _authRepository.currentUser;
       final uid = user?.uid ?? 'guest_user';
       final email = user?.email ?? 'customer@kinarya.com';
       final String customerName = user?.displayName ?? email.split('@').first;
@@ -53,20 +57,16 @@ class CheckoutController {
         String productName = item['title']?.toString() ?? 'Produk';
 
         if (productId != null && productId.isNotEmpty) {
-          DocumentSnapshot productDoc = await _firestore
-              .collection('products')
-              .doc(productId)
-              .get();
+          final productModel = await _productRepository.getProductById(productId);
 
-          if (!productDoc.exists) {
+          if (productModel == null) {
             return {
               'error':
                   'Gagal: Produk "$productName" sudah tidak ada di katalog.',
             };
           }
 
-          int currentStock =
-              (productDoc.data() as Map<String, dynamic>)['stock'] ?? 0;
+          int currentStock = productModel.stock;
 
           if (currentStock < quantityBought) {
             return {
@@ -79,7 +79,7 @@ class CheckoutController {
 
       final String orderId = 'KNY-${DateTime.now().millisecondsSinceEpoch}';
 
-      await _firestore.collection('orders').doc(orderId).set({
+      final orderData = {
         'orderId': orderId,
         'userId': uid,
         'fullName': fullName,
@@ -95,8 +95,9 @@ class CheckoutController {
         'total': total,
         'items': items,
         'status': 'Ordered',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      };
+
+      await _orderRepository.createOrder(orderData);
 
       await _pushNotificationService.sendNotificationToAdmin(
         title: 'Pesanan Baru Masuk!',
@@ -125,7 +126,7 @@ class CheckoutController {
         if (responseData['success'] == true) {
           final String paymentUrl = responseData['paymentUrl'];
 
-          await _firestore.collection('orders').doc(orderId).update({
+          await _orderRepository.updateOrderStatus(orderId, {
             'paymentUrl': paymentUrl,
           });
           return {'paymentUrl': paymentUrl, 'orderId': orderId};

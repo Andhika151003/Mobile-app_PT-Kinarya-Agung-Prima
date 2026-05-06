@@ -161,7 +161,14 @@ class _AddressListViewState extends State<AddressListView> {
             if (!address.isDefault) ...[
               const SizedBox(height: 12),
               TextButton(
-                onPressed: () => _controller.setDefaultAddress(address.id!),
+                onPressed: () async {
+                  final result = await _controller.setDefaultAddress(address.id!);
+                  if (!result.isSuccess && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(result.failure?.message ?? 'Gagal')),
+                    );
+                  }
+                },
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
@@ -188,9 +195,19 @@ class _AddressListViewState extends State<AddressListView> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
           TextButton(
-            onPressed: () {
-              _controller.deleteAddress(address.id!);
+            onPressed: () async {
+              final result = await _controller.deleteAddress(address.id!);
+              if (!context.mounted) return;
+              
               Navigator.pop(context);
+              if (!result.isSuccess) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(result.failure?.message ?? 'Gagal menghapus'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
             child: const Text('Hapus', style: TextStyle(color: Colors.red)),
           ),

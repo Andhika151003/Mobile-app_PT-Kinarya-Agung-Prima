@@ -1,19 +1,34 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import '../../complaint/models/complaint.dart';
+import '../../authentication/services/profile_service.dart';
+import '../../../core/repositories/complaint_repository.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/utils/result.dart';
 
 class DashboardCsController {
+  final ProfileService _profileService;
+  final ComplaintRepository _complaintRepository;
   final FirebaseAuth _auth;
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _firestore; // Kept for some direct calls if needed, but primarily for repo initialization
 
-  DashboardCsController({FirebaseAuth? auth, FirebaseFirestore? firestore})
-    : _auth = auth ?? FirebaseAuth.instance,
-      _firestore = firestore ?? FirebaseFirestore.instance;
+  DashboardCsController({
+    ProfileService? profileService,
+    ComplaintRepository? complaintRepository,
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore,
+        _profileService = profileService ??
+            ProfileService(
+              authRepository: AuthRepository(firestore: firestore),
+              auth: auth ?? FirebaseAuth.instance,
+            ),
+        _complaintRepository =
+            complaintRepository ?? ComplaintRepository(firestore: firestore);
 
   Stream<Map<String, int>> getComplaintStatsStream() {
-    return _firestore.collection('complaints').snapshots().map((snapshot) {
+    return _complaintRepository.getComplaintsSnapshotStream().map((snapshot) {
       final now = DateTime.now();
       final startOfToday = DateTime(now.year, now.month, now.day);
       
@@ -45,14 +60,8 @@ class DashboardCsController {
   }
 
   Stream<List<Map<String, dynamic>>> getRecentComplaintsStream() {
-    return _firestore
-        .collection('complaints')
-        .orderBy('createdAt', descending: true)
-        .limit(20)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final complaint = ComplaintModel.fromMap(doc.id, doc.data());
+    return _complaintRepository.getRecentComplaintsStream().map((complaints) {
+      return complaints.map((complaint) {
         return {
           'id': complaint.id,
           'timeAgo': _formatTimeAgo(complaint.createdAt),
@@ -82,34 +91,19 @@ class DashboardCsController {
   }
 
   Future<Map<String, dynamic>?> getCsInfo() async {
-    try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        final docSnapshot = await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .get();
-
-        if (docSnapshot.exists) {
-          return docSnapshot.data() as Map<String, dynamic>;
-        }
-      }
-      return null;
-    } catch (e) {
-      throw Exception("Error fetching CS info: $e");
-    }
+    final result = await _profileService.getProfile();
+    return result.isSuccess ? result.data : null;
   }
 
   Future<bool> resolveComplaint(String complaintId) async {
     try {
       final user = _auth.currentUser;
-      if (user == null) throw Exception("User not authenticated");
+      if (user == null) return false;
 
-      // Get CS Name
-      final csDoc = await _firestore.collection('users').doc(user.uid).get();
-      final csName = csDoc.data()?['fullName'] ?? 'Customer Service';
+      final Result<Map<String, dynamic>?> csProfileResult = await _profileService.getProfile();
+      final csName = csProfileResult.isSuccess ? (csProfileResult.data?['fullName'] ?? 'CS') : 'CS';
 
-      await _firestore.collection('complaints').doc(complaintId).update({
+      await _complaintRepository.updateComplaint(complaintId, {
         'status': 'resolved',
         'resolvedAt': Timestamp.now(),
         'resolvedBy': user.uid,
@@ -118,20 +112,19 @@ class DashboardCsController {
 
       return true;
     } catch (e) {
-      throw Exception("Error resolving complaint: $e");
+      return false;
     }
   }
 
   Future<bool> rejectComplaint(String complaintId) async {
     try {
       final user = _auth.currentUser;
-      if (user == null) throw Exception("User not authenticated");
+      if (user == null) return false;
 
-      // Get CS Name
-      final csDoc = await _firestore.collection('users').doc(user.uid).get();
-      final csName = csDoc.data()?['fullName'] ?? 'Customer Service';
+      final Result<Map<String, dynamic>?> csProfileResult = await _profileService.getProfile();
+      final csName = csProfileResult.isSuccess ? (csProfileResult.data?['fullName'] ?? 'CS') : 'CS';
 
-      await _firestore.collection('complaints').doc(complaintId).update({
+      await _complaintRepository.updateComplaint(complaintId, {
         'status': 'rejected',
         'resolvedAt': Timestamp.now(),
         'resolvedBy': user.uid,
@@ -140,17 +133,13 @@ class DashboardCsController {
 
       return true;
     } catch (e) {
-      throw Exception("Error rejecting complaint: $e");
+      return false;
     }
   }
 
   Future<Map<String, dynamic>?> getUserProfile(String uid) async {
-    try {
-      final doc = await _firestore.collection('users').doc(uid).get();
-      return doc.data();
-    } catch (e) {
-      debugPrint('Error fetching user profile: $e');
-      return null;
-    }
+    final firestore = _firestore ?? FirebaseFirestore.instance;
+    final doc = await firestore.collection('users').doc(uid).get();
+    return doc.data();
   }
 }

@@ -61,7 +61,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
       final docs = await _adminController.getAllOrdersAdmin();
       if (mounted) {
         setState(() {
-          _allOrders = docs.map((e) => OrderModel.fromMap(e)).toList();
+          _allOrders = docs;
           _filteredOrders = List.from(_allOrders);
           _applySortInternal();
           _isLoading = false;
@@ -80,13 +80,11 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
   void _applySearch(String query) {
     setState(() {
       _searchQuery = query;
-      final mapList = _allOrders.map((e) => e.toMap()).toList();
-      final filteredMaps = _adminController.filterAndSearchOrders(
-        mapList, 
-        _selectedFilter == 'All' ? 'All Transactions' : _selectedFilter, 
-        query
+      _filteredOrders = _adminController.applyFilters(
+        allOrders: _allOrders,
+        selectedFilter: _selectedFilter == 'All' ? 'All Transactions' : _selectedFilter,
+        searchQuery: query,
       );
-      _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
       _applySortInternal();
       _currentPage = 1;
     });

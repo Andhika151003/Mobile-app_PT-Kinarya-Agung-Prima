@@ -55,26 +55,26 @@ class _AddressFormViewState extends State<AddressFormView> {
       isDefault: _isDefault,
     );
 
-    try {
-      if (widget.address == null) {
-        await _controller.addAddress(address);
-      } else {
-        await _controller.updateAddress(address);
-      }
-      if (mounted) {
+    final result = widget.address == null 
+        ? await _controller.addAddress(address)
+        : await _controller.updateAddress(address);
+
+    if (mounted) {
+      setState(() => _isSaving = false);
+      
+      if (result.isSuccess) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Alamat berhasil disimpan'), backgroundColor: AppColors.primary),
         );
-      }
-    } catch (e) {
-      if (mounted) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan alamat: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(result.failure?.message ?? 'Gagal menyimpan alamat'), 
+            backgroundColor: Colors.red,
+          ),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
     }
   }
 

@@ -1,26 +1,30 @@
 import 'package:flutter/foundation.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/promotion.dart';
+import '../../../core/repositories/promotion_repository.dart';
+import '../../../core/repositories/order_repository.dart';
 
 class PromotionUserController {
-  final FirebaseFirestore _firestore;
+  final PromotionRepository _promotionRepository;
+  final OrderRepository _orderRepository;
 
-  PromotionUserController({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  PromotionUserController({
+    PromotionRepository? promotionRepository,
+    OrderRepository? orderRepository,
+  })  : _promotionRepository = promotionRepository ?? PromotionRepository(),
+        _orderRepository = orderRepository ?? OrderRepository();
 
   Future<List<PromotionModel>> getActivePromotions() async {
     try {
-      final snapshot = await _firestore
-          .collection('promotions')
-          .where('status', whereIn: ['active', 'upcoming'])
-          .get();
+      final result = await _promotionRepository.getActiveAndUpcomingPromotions();
+      
+      if (!result.isSuccess) {
+        debugPrint('Error fetching promotions: ${result.failure?.message}');
+        return [];
+      }
 
-      final promos = snapshot.docs
-          .map((doc) => PromotionModel.fromMap(doc.id, doc.data()))
-          .where((promo) {
-            return promo.isActive || promo.isStartingSoon;
-          })
-          .toList();
+      final promos = result.data!.where((promo) {
+        return promo.isActive || promo.isStartingSoon;
+      }).toList();
 
       promos.sort((a, b) {
         // Prioritaskan yang sedang aktif
@@ -38,7 +42,7 @@ class PromotionUserController {
 
       return promos;
     } catch (e) {
-      debugPrint('Error fetching promotions: $e');
+      debugPrint('Error sorting promotions: $e');
       return [];
     }
   }
@@ -56,16 +60,14 @@ class PromotionUserController {
 
   Future<bool> checkIfPromoUsed(String userId, String promoId) async {
     try {
-      final snapshot = await _firestore
-          .collection('orders')
-          .where('userId', isEqualTo: userId)
-          .where('promoId', isEqualTo: promoId)
-          .get();
+      final snapshot = await _orderRepository.getOrdersByUserId(userId);
       
       bool used = snapshot.docs.any((doc) {
         final data = doc.data();
         final status = data['status']?.toString();
-        return status != 'Cancelled';
+        final orderPromoId = data['promoId']?.toString();
+        
+        return status != 'Cancelled' && orderPromoId == promoId;
       });
 
       return used;
@@ -77,10 +79,7 @@ class PromotionUserController {
 
   Future<Set<String>> getUsedPromoIds(String userId) async {
     try {
-      final snapshot = await _firestore
-          .collection('orders')
-          .where('userId', isEqualTo: userId)
-          .get();
+      final snapshot = await _orderRepository.getOrdersByUserId(userId);
 
       final usedIds = snapshot.docs
           .where((doc) {

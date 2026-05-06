@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/error/failures.dart';
+import '../../../core/repositories/order_repository.dart';
+import '../../../core/utils/result.dart';
 import '../models/order.dart';
-import 'order_stats_helper.dart';
+import '../services/order_service.dart';
+import 'order_sort_strategies.dart';
 
 class OrderCsController extends ChangeNotifier {
-  final FirebaseFirestore _firestore;
+  final OrderRepository _orderRepository;
+  final OrderService _orderService;
 
-  OrderCsController({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  OrderCsController({
+    OrderRepository? orderRepository,
+    OrderService? orderService,
+  })  : _orderRepository = orderRepository ?? OrderRepository(),
+        _orderService = orderService ?? OrderService();
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -26,49 +33,37 @@ class OrderCsController extends ChangeNotifier {
   String _selectedSort = 'Newest';
   String get selectedSort => _selectedSort;
 
+  final Map<String, OrderSortStrategy> _sortStrategies = {
+    'Newest': SortByNewest(),
+    'Oldest': SortByOldest(),
+    'Price (High-Low)': SortByPriceHighToLow(),
+    'Price (Low-High)': SortByPriceLowToHigh(),
+  };
+
   Future<void> fetchAllOrders() async {
     _setLoading(true);
     _clearError();
 
+    final result = await getAllOrders();
+    result.fold(
+      (orders) {
+        _orders = orders;
+        _applyFilters();
+        _setLoading(false);
+      },
+      (failure) {
+        _setError(failure.message);
+        _setLoading(false);
+      },
+    );
+  }
+
+  Future<Result<List<OrderModel>>> getAllOrders() async {
     try {
-      debugPrint('Fetching orders from Firestore...');
-      
-      final snapshot = await _firestore
-          .collection('orders')
-          .get(); 
-
-      debugPrint('Jumlah dokumen di Firestore: ${snapshot.docs.length}');
-
-      if (snapshot.docs.isEmpty) {
-        debugPrint('Tidak ada data order di Firestore');
-        _orders = [];
-      } else {
-        for (var doc in snapshot.docs) {
-          debugPrint('Order ID: ${doc.data()['orderId']}');
-        }
-        
-        _orders = snapshot.docs.map((doc) {
-          return OrderModel.fromMap(doc.data());
-        }).toList();
-
-        _orders.sort((a, b) {
-          final aTs = a.createdAt;
-          final bTs = b.createdAt;
-          if (aTs == null && bTs == null) return 0;
-          if (aTs == null) return 1;
-          if (bTs == null) return -1;
-          return bTs.compareTo(aTs);
-        });
-        
-        debugPrint('Total orders loaded: ${_orders.length}');
-      }
-
-      _applyFilters();
-      _setLoading(false);
+      final orders = await _orderRepository.getAllOrders();
+      return Result.success(orders);
     } catch (e) {
-      debugPrint('Error fetching orders: $e');
-      _setError('Gagal mengambil data pesanan');
-      _setLoading(false);
+      return Result.failure(ServerFailure('Gagal memuat pesanan'));
     }
   }
 
@@ -91,141 +86,73 @@ class OrderCsController extends ChangeNotifier {
     var filtered = List<OrderModel>.from(_orders);
 
     if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((order) {
-        final orderId = order.orderId.toLowerCase();
-        final fullName = order.fullName.toLowerCase();
-        final search = _searchQuery.toLowerCase();
-        return orderId.contains(search) || fullName.contains(search);
-      }).toList();
+      final search = _searchQuery.toLowerCase();
+      filtered = filtered.where((order) =>
+          order.orderId.toLowerCase().contains(search) ||
+          order.fullName.toLowerCase().contains(search)).toList();
     }
 
     if (_statusFilter != 'all') {
-      filtered =
-          filtered.where((order) => order.status == _statusFilter).toList();
+      filtered = filtered.where((order) => order.status == _statusFilter).toList();
     }
 
-    // Sort
-    if (_selectedSort == 'Newest') {
-      filtered.sort((a, b) =>
-          (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
-    } else if (_selectedSort == 'Oldest') {
-      filtered.sort((a, b) =>
-          (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
-    } else if (_selectedSort == 'Price (High-Low)') {
-      filtered.sort((a, b) => b.total.compareTo(a.total));
-    } else if (_selectedSort == 'Price (Low-High)') {
-      filtered.sort((a, b) => a.total.compareTo(b.total));
-    }
+    _sortStrategies[_selectedSort]?.sort(filtered);
 
     _filteredOrders = filtered;
     notifyListeners();
   }
 
-  Future<bool> updateOrderStatus(String orderId, String newStatus, {DateTime? shippedAt, DateTime? deliveredAt}) async {
+  Future<Result<void>> updateOrderStatus(String orderId, String newStatus, String userId) async {
     _setLoading(true);
     _clearError();
 
-    try {
-      if (newStatus == 'Paid' || newStatus == 'Shipped' || newStatus == 'Delivered') {
-        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus, firestore: _firestore);
-      } else {
-        final updateData = {
-          'status': newStatus,
-          'updatedAt': FieldValue.serverTimestamp(),
-        };
-        await _firestore.collection('orders').doc(orderId).update(updateData);
-      }
+    final result = await _orderService.updateStatusWithNotification(
+      orderId: orderId,
+      newStatus: newStatus,
+      userId: userId,
+    );
 
-      final index = _orders.indexWhere((o) => o.orderId == orderId);
-      if (index != -1) {
-        final updatedDoc = await _firestore.collection('orders').doc(orderId).get();
-        if (updatedDoc.exists) {
-          _orders[index] = OrderModel.fromMap(updatedDoc.data()!);
-        }
-      }
-      _applyFilters();
-
-      _setLoading(false);
-      return true;
-    } catch (e) {
-      debugPrint('Error updating order status: $e');
-      _setError('Gagal update status pesanan');
-      _setLoading(false);
-      return false;
+    if (result.isSuccess) {
+      await _refreshOrderInList(orderId);
+    } else {
+      _setError(result.failure?.message);
     }
+
+    _setLoading(false);
+    return result;
   }
 
-  Future<void> cancelOrder(String orderId) async {
+  Future<Result<void>> cancelOrder(String orderId, String userId) async {
     _setLoading(true);
     _clearError();
 
-    final orderRef = _firestore.collection('orders').doc(orderId);
-    
-    try {
-      await _firestore.runTransaction((transaction) async {
-        final orderDoc = await transaction.get(orderRef);
-        if (!orderDoc.exists) throw Exception('Pesanan tidak ditemukan');
+    final result = await _orderService.cancelOrderWithNotification(
+      orderId: orderId,
+      userId: userId,
+    );
 
-        final data = orderDoc.data() as Map<String, dynamic>;
-        final String currentStatus = data['status']?.toString() ?? '';
-        final bool statsRecorded = data['statsRecorded'] ?? false;
-        final List<dynamic> itemsData = data['items'] as List<dynamic>? ?? [];
-
-        if (currentStatus == 'Cancelled') throw Exception('Pesanan sudah dibatalkan sebelumnya');
-
-        transaction.update(orderRef, {
-          'status': 'Cancelled',
-          'cancelledAt': FieldValue.serverTimestamp(),
-        });
-
-        for (var itemMap in itemsData) {
-          final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
-          final int quantity = (itemMap['quantity'] as num?)?.toInt() ?? 0;
-
-          if (productId != null && productId.isNotEmpty && quantity > 0) {
-            final productRef = _firestore.collection('products').doc(productId);
-            
-            if (statsRecorded) {
-              final int price = (itemMap['price'] as num?)?.toInt() ?? 0;
-              final int revenue = price * quantity;
-              
-              transaction.update(productRef, {
-                'stock': FieldValue.increment(quantity),
-                'monthlySales': FieldValue.increment(-quantity),
-                'revenue': FieldValue.increment(-revenue),
-              });
-            }
-          }
-        }
-      });
-
-      final index = _orders.indexWhere((o) => o.orderId == orderId);
-      if (index != -1) {
-        final updatedDoc = await _firestore.collection('orders').doc(orderId).get();
-        if (updatedDoc.exists) {
-          _orders[index] = OrderModel.fromMap(updatedDoc.data()!);
-        }
-      }
-      _applyFilters();
-      _setLoading(false);
-    } catch (e) {
-      debugPrint('Error cancelling order: $e');
-      _setError('Gagal membatalkan pesanan: $e');
-      _setLoading(false);
-      rethrow;
+    if (result.isSuccess) {
+      await _refreshOrderInList(orderId);
+    } else {
+      _setError(result.failure?.message);
     }
+
+    _setLoading(false);
+    return result;
   }
 
   Future<OrderModel?> getOrderById(String orderId) async {
-    try {
-      final doc = await _firestore.collection('orders').doc(orderId).get();
-      if (doc.exists) {
-        return OrderModel.fromMap(doc.data()!);
+    return _orderRepository.getOrderById(orderId);
+  }
+
+  Future<void> _refreshOrderInList(String orderId) async {
+    final updatedOrder = await _orderRepository.getOrderById(orderId);
+    if (updatedOrder != null) {
+      final index = _orders.indexWhere((o) => o.orderId == orderId);
+      if (index != -1) {
+        _orders[index] = updatedOrder;
+        _applyFilters();
       }
-      return null;
-    } catch (e) {
-      debugPrint('Error fetching order: $e');
-      return null;
     }
   }
 
@@ -243,4 +170,4 @@ class OrderCsController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
-}
+}

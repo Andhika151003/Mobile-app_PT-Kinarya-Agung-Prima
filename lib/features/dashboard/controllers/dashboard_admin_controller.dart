@@ -1,127 +1,88 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../authentication/services/profile_service.dart';
+import '../../authentication/services/statistic_service.dart';
+import '../../../core/repositories/promotion_repository.dart';
+import '../../../core/repositories/complaint_repository.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/repositories/order_repository.dart';
 import '../../complaint/models/complaint.dart';
 
 class DashboardAdminController {
-  final FirebaseAuth _auth;
-  final FirebaseFirestore _firestore;
+  final ProfileService _profileService;
+  final StatisticService _statisticService;
+  final PromotionRepository _promotionRepository;
+  final ComplaintRepository _complaintRepository;
+  final AuthRepository _authRepository;
 
-  DashboardAdminController({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  DashboardAdminController({
+    ProfileService? profileService,
+    StatisticService? statisticService,
+    PromotionRepository? promotionRepository,
+    ComplaintRepository? complaintRepository,
+    AuthRepository? authRepository,
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _profileService = profileService ??
+            ProfileService(
+              authRepository: AuthRepository(firestore: firestore),
+              auth: auth ?? FirebaseAuth.instance,
+            ),
+        _statisticService = statisticService ??
+            StatisticService(
+              orderRepository: OrderRepository(firestore: firestore),
+            ),
+        _promotionRepository =
+            promotionRepository ?? PromotionRepository(firestore: firestore),
+        _complaintRepository =
+            complaintRepository ?? ComplaintRepository(firestore: firestore),
+        _authRepository = authRepository ?? AuthRepository(firestore: firestore);
 
   Future<Map<String, dynamic>> getOverviewStats() async {
-    try {
-      final user = _auth.currentUser;
-      if (user == null) throw Exception("User not authenticated");
+    final result = await _statisticService.getAdminStats();
+    final stats = result.isSuccess ? result.data! : {'totalRevenue': 0.0, 'monthlySales': 0};
 
-      final ordersSnapshot = await _firestore
-          .collection('orders')
-          .where('status', whereIn: ['Paid', 'Shipped', 'Delivered'])
-          .get();
+    final totalCustomers = await _authRepository.getTotalCustomersCount();
 
-      double totalRevenue = 0;
-      int totalOrders = ordersSnapshot.docs.length;
-
-      for (var doc in ordersSnapshot.docs) {
-        final data = doc.data();
-        totalRevenue += (data['total'] as num?)?.toDouble() ?? 0.0;
-      }
-
-      final customersSnapshot = await _firestore
-          .collection('users')
-          .where('role', isEqualTo: 'retailer')
-          .get();
-      int totalCustomers = customersSnapshot.docs.length;
-
-      return {
-        'totalSales': totalRevenue,
-        'salesChange': '+0%',
-        'totalOrders': totalOrders,
-        'ordersChange': '+0%',
-        'totalCustomers': totalCustomers,
-        'customersChange': '+0%',
-        'conversionRate': totalCustomers > 0 ? (totalOrders / totalCustomers * 100).toStringAsFixed(1) : '0',
-        'conversionChange': '+0%',
-      };
-    } catch (e) {
-      throw Exception("Error fetching overview stats: $e");
-    }
+    return {
+      'totalSales': stats['totalRevenue'],
+      'salesChange': '+0%',
+      'totalOrders': 0, 
+      'ordersChange': '+0%',
+      'totalCustomers': totalCustomers,
+      'customersChange': '+0%',
+      'conversionRate': '0',
+      'conversionChange': '+0%',
+    };
   }
 
   Future<List<Map<String, dynamic>>> getPromotions() async {
-    try {
-      final user = _auth.currentUser;
-      if (user == null) throw Exception("User not authenticated");
-
-      final snapshot = await _firestore
-          .collection('promotions')
-          .where('status', isEqualTo: 'active')
-          .limit(5)
-          .get();
-
-      return snapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data(),
-              })
-          .toList();
-    } catch (e) {
-      throw Exception("Error fetching promotions: $e");
+    final result = await _promotionRepository.getActivePromotions();
+    if (result.isSuccess) {
+      return result.data!.map((promo) => {
+        'id': promo.id,
+        ...promo.toMap(),
+      }).toList();
     }
+    return [];
   }
 
   Future<List<Map<String, dynamic>>> getRetailers() async {
-    try {
-      final user = _auth.currentUser;
-      if (user == null) throw Exception("User not authenticated");
-
-      final snapshot = await _firestore
-          .collection('users')
-          .where('role', isEqualTo: 'retailer')
-          .limit(10)
-          .get();
-
-      return snapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data(),
-              })
-          .toList();
-    } catch (e) {
-      throw Exception("Error fetching retailers: $e");
-    }
+    final snapshot = await _authRepository.getRetailers(limit: 10);
+    return snapshot.docs
+        .map((doc) => {
+              'id': doc.id,
+              ...doc.data(),
+            })
+        .toList();
   }
 
   Future<Map<String, dynamic>?> getAdminInfo() async {
-    try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        final docSnapshot = await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .get();
-
-        if (docSnapshot.exists) {
-          return docSnapshot.data() as Map<String, dynamic>;
-        }
-      }
-      return null;
-    } catch (e) {
-      throw Exception("Error fetching admin info: $e");
-    }
+    final result = await _profileService.getProfile();
+    return result.isSuccess ? result.data : null;
   }
 
   Stream<List<ComplaintModel>> getAllComplaints() {
-    return _firestore
-        .collection('complaints')
-        .snapshots()
-        .map((snapshot) {
-          final complaints = snapshot.docs
-              .map((doc) => ComplaintModel.fromMap(doc.id, doc.data()))
-              .toList();
-          complaints.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          return complaints;
-        });
+    return _complaintRepository.getAllComplaintsStream();
   }
 }

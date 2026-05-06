@@ -1,54 +1,46 @@
 import 'dart:io';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product.dart';
+import '../../../core/repositories/product_repository.dart';
+import '../../../core/repositories/auth_repository.dart';
 import '../../../supabase_storage_service.dart';
 
 class AdminProductController {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
+  final ProductRepository _productRepository;
+  final AuthRepository _authRepository;
 
-  AdminProductController({FirebaseFirestore? firestore, FirebaseAuth? auth})
-      : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
-
-  final String supplyCollection = 'products';
+  AdminProductController({
+    ProductRepository? productRepository,
+    AuthRepository? authRepository,
+  })  : _productRepository = productRepository ?? ProductRepository(),
+        _authRepository = authRepository ?? AuthRepository();
 
   // =========================================================
   // MANAJEMEN BARANG DISTRIBUTOR (SUPPLY)
   // =========================================================
 
   Future<void> addSupplyProduct(ProductModel product) async {
-    final user = _auth.currentUser;
+    final user = _authRepository.currentUser;
     if (user == null) throw Exception("Admin not logged in");
 
     product.retailerId = user.uid;
-    await _firestore.collection(supplyCollection).add(product.toMap());
+    final result = await _productRepository.addProduct(product);
+    if (result.isFailure) {
+      throw Exception(result.failure!.message);
+    }
   }
 
   Stream<List<ProductModel>> getSupplyProducts() {
-    return _firestore
-        .collection(supplyCollection)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => ProductModel.fromMap(doc.data(), doc.id))
-              .toList(),
-        );
+    return _productRepository.getSupplyProductsStream();
   }
 
   Future<void> updateSupplyProduct(ProductModel product) async {
     if (product.id == null) return;
-    Map<String, dynamic> updateData = product.toMap();
-    updateData.remove('createdAt');
-    updateData['updatedAt'] = FieldValue.serverTimestamp();
-
-    await _firestore
-        .collection(supplyCollection)
-        .doc(product.id)
-        .update(updateData);
+    
+    final result = await _productRepository.updateProduct(product);
+    if (result.isFailure) {
+      throw Exception(result.failure!.message);
+    }
   }
 
   Future<void> deleteSupplyProduct(ProductModel product) async {
@@ -59,7 +51,13 @@ class AdminProductController {
     if (allUrls.isNotEmpty) {
       await SupabaseStorageService().deleteImages(allUrls);
     }
-    await _firestore.collection(supplyCollection).doc(product.id).delete();
+    
+    if (product.id != null) {
+      final result = await _productRepository.deleteProduct(product.id!);
+      if (result.isFailure) {
+        throw Exception(result.failure!.message);
+      }
+    }
   }
 
   // =========================================================

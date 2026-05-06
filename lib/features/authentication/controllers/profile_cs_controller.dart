@@ -1,29 +1,28 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/profile_service.dart';
+import '../../../core/repositories/auth_repository.dart';
 
 class ProfileCsController {
+  final ProfileService _profileService;
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
-  ProfileCsController({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  ProfileCsController({
+    ProfileService? profileService,
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _profileService = profileService ??
+            ProfileService(
+              authRepository: AuthRepository(firestore: firestore),
+              auth: auth ?? FirebaseAuth.instance,
+            );
 
   Future<Map<String, dynamic>?> getCsProfile() async {
-    try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        final doc = await _firestore.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          var data = doc.data() as Map<String, dynamic>;
-          data['uid'] = user.uid;
-          return data;
-        }
-      }
-      return null;
-    } catch (e) {
-      throw Exception("Gagal memuat profil CS: $e");
-    }
+    final result = await _profileService.getProfile();
+    return result.isSuccess ? result.data : null;
   }
 
   Stream<int> getResolvedCountStream() {

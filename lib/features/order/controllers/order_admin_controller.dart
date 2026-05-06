@@ -1,198 +1,130 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../notification/services/push_notification_service.dart';
-import 'order_stats_helper.dart';
+import 'package:flutter/material.dart';
+import '../../../core/repositories/order_repository.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/error/failures.dart';
+import '../models/order.dart';
+import '../services/order_service.dart';
 
-class OrderAdminController {
-  final FirebaseFirestore _firestore;
-  final PushNotificationService _pushNotificationService;
+class OrderAdminController extends ChangeNotifier {
+  final OrderRepository _orderRepository;
+  final OrderService _orderService;
 
   OrderAdminController({
-    FirebaseFirestore? firestore,
-    PushNotificationService? pushNotificationService,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _pushNotificationService = pushNotificationService ?? PushNotificationService();
+    OrderRepository? orderRepository,
+    OrderService? orderService,
+  })  : _orderRepository = orderRepository ?? OrderRepository(),
+        _orderService = orderService ?? OrderService();
 
-  Future<List<Map<String, dynamic>>> getAllOrdersAdmin() async {
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  Future<Result<List<OrderModel>>> getAllOrders() async {
     try {
-      final snapshot = await _firestore.collection('orders').get();
-      final docs = snapshot.docs.map((d) => d.data()).toList();
-      
-      docs.sort((a, b) {
-        final aTs = a['createdAt'] as Timestamp?;
-        final bTs = b['createdAt'] as Timestamp?;
-        if (aTs == null && bTs == null) return 0;
-        if (aTs == null) return 1;
-        if (bTs == null) return -1;
-        return bTs.compareTo(aTs);
-      });
-      
-      return docs;
+      final orders = await _orderRepository.getAllOrders();
+      return Result.success(orders);
     } catch (e) {
-      throw Exception('Gagal mengambil seluruh data pesanan: $e');
+      return Result.failure(DatabaseFailure('Gagal memuat pesanan'));
     }
   }
 
-  Future<Map<String, dynamic>?> getOrderById(String orderId) async {
-    try {
-      final doc = await _firestore.collection('orders').doc(orderId).get();
-      if (!doc.exists) return null;
-      
-      final data = doc.data() as Map<String, dynamic>;
-      final String status = data['status']?.toString() ?? '';
-      final bool statsRecorded = data['statsRecorded'] ?? false;
+  Future<Result<void>> updateStatus(String orderId, String newStatus, String userId) async {
+    _setLoading(true);
+    final result = await _orderService.updateStatusWithNotification(
+      orderId: orderId,
+      newStatus: newStatus,
+      userId: userId,
+    );
+    _setLoading(false);
+    return result;
+  }
 
-      if (!statsRecorded && (status == 'Paid' || status == 'Shipped' || status == 'Delivered')) {
-        await OrderStatsHelper.markOrderAsPaid(orderId, firestore: _firestore);
-        final updatedDoc = await _firestore.collection('orders').doc(orderId).get();
-        return updatedDoc.data();
-      }
+  List<OrderModel> applyFilters({
+    required List<OrderModel> allOrders,
+    required String selectedFilter,
+    required String searchQuery,
+  }) {
+    var results = List<OrderModel>.from(allOrders);
 
-      return data;
-    } catch (e) {
-      throw Exception('Gagal mengambil detail pesanan: $e');
+    results = _filterByTime(results, selectedFilter);
+    results = _filterByStatus(results, selectedFilter);
+    results = _filterBySearch(results, searchQuery);
+
+    return results;
+  }
+
+  List<OrderModel> _filterByTime(List<OrderModel> orders, String filter) {
+    final now = DateTime.now();
+    if (filter == 'Today') {
+      return orders.where((o) => _isSameDay(o.createdAt, now)).toList();
+    } else if (filter == 'This Week') {
+      final weekAgo = now.subtract(const Duration(days: 7));
+      return orders.where((o) => o.createdAt?.isAfter(weekAgo) ?? false).toList();
     }
+    return orders;
   }
 
-  Future<void> updateOrderStatus(String orderId, String newStatus) async {
-    try {
-      // Get order data to find userId
-      final orderDoc = await _firestore.collection('orders').doc(orderId).get();
-      if (!orderDoc.exists) return;
-      final orderData = orderDoc.data() as Map<String, dynamic>;
-      final userId = orderData['userId']?.toString() ?? '';
-
-      if (newStatus == 'Paid' || newStatus == 'Shipped' || newStatus == 'Delivered') {
-        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus, firestore: _firestore);
-      } else {
-        final updateData = <String, dynamic>{'status': newStatus};
-        await _firestore.collection('orders').doc(orderId).update(updateData);
-      }
-
-      if (userId.isNotEmpty && userId != 'guest_user') {
-        String title = 'Update Pesanan';
-        String message = 'Status pesanan $orderId Anda berubah menjadi $newStatus.';
-
-        if (newStatus == 'Paid') {
-          title = 'Pembayaran Diterima';
-          message = 'Pembayaran untuk pesanan $orderId telah kami konfirmasi.';
-        } else if (newStatus == 'Shipped') {
-          title = 'Pesanan Sedang Dikirim';
-          message = 'Pesanan $orderId Anda telah diserahkan ke kurir.';
-        } else if (newStatus == 'Delivered') {
-          title = 'Pesanan Telah Tiba';
-          message = 'Pesanan $orderId Anda telah sampai di tujuan.';
-        }
-
-        await _pushNotificationService.sendNotificationToUser(
-          userId: userId,
-          title: title,
-          message: message,
-          type: 'order',
-          relatedId: orderId,
-        );
-      }
-    } catch (e) {
-      throw Exception('Gagal memperbarui status: $e');
+  List<OrderModel> _filterByStatus(List<OrderModel> orders, String filter) {
+    const statuses = ['Ordered', 'Paid', 'Shipped', 'Delivered', 'Cancelled', 'Expired'];
+    if (statuses.contains(filter)) {
+      return orders.where((o) => o.status == filter).toList();
     }
+    return orders;
   }
 
-  Future<void> cancelOrder(String orderId) async {
-    final orderRef = _firestore.collection('orders').doc(orderId);
-    
-    await _firestore.runTransaction((transaction) async {
-      final orderDoc = await transaction.get(orderRef);
-      if (!orderDoc.exists) throw Exception('Pesanan tidak ditemukan');
-
-      final data = orderDoc.data() as Map<String, dynamic>;
-      final String currentStatus = data['status']?.toString() ?? '';
-      final bool statsRecorded = data['statsRecorded'] ?? false;
-      final List<dynamic> itemsData = data['items'] as List<dynamic>? ?? [];
-
-      if (currentStatus == 'Cancelled') throw Exception('Pesanan sudah dibatalkan sebelumnya');
-
-      transaction.update(orderRef, {
-        'status': 'Cancelled',
-        'cancelledAt': FieldValue.serverTimestamp(),
-      });
-
-      final userId = data['userId']?.toString() ?? '';
-      if (userId.isNotEmpty && userId != 'guest_user') {
-        _pushNotificationService.sendNotificationToUser(
-          userId: userId,
-          title: 'Pesanan Dibatalkan',
-          message: 'Mohon maaf, pesanan $orderId Anda telah dibatalkan oleh admin.',
-          type: 'order',
-          relatedId: orderId,
-        );
-      }
-
-      for (var itemMap in itemsData) {
-        final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
-        final int quantity = (itemMap['quantity'] as num?)?.toInt() ?? 0;
-
-        if (productId != null && productId.isNotEmpty && quantity > 0) {
-          final productRef = _firestore.collection('products').doc(productId);
-          
-          if (statsRecorded) {
-            final int price = (itemMap['price'] as num?)?.toInt() ?? 0;
-            final int revenue = price * quantity;
-            
-            transaction.update(productRef, {
-              'stock': FieldValue.increment(quantity),
-              'monthlySales': FieldValue.increment(-quantity),
-              'revenue': FieldValue.increment(-revenue),
-            });
-          }
-        }
-      }
-    });
+  List<OrderModel> _filterBySearch(List<OrderModel> orders, String query) {
+    if (query.isEmpty) return orders;
+    final q = query.toLowerCase();
+    return orders.where((o) {
+      return o.orderId.toLowerCase().contains(q) ||
+             o.fullName.toLowerCase().contains(q) ||
+             o.shippingAddress.toLowerCase().contains(q);
+    }).toList();
   }
 
-  List<Map<String, dynamic>> filterAndSearchOrders(
-    List<Map<String, dynamic>> allOrders,
+  bool _isSameDay(DateTime? d1, DateTime d2) {
+    if (d1 == null) return false;
+    return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
+  }
+
+  // --- Backward Compatibility for Views ---
+  
+  Future<List<OrderModel>> getAllOrdersAdmin() async {
+    final result = await getAllOrders();
+    return result.data ?? [];
+  }
+
+  Future<OrderModel?> getOrderById(String orderId) async {
+    return _orderRepository.getOrderById(orderId);
+  }
+
+  Future<void> updateOrderStatus(String orderId, String newStatus, String userId) async {
+    await updateStatus(orderId, newStatus, userId);
+  }
+
+  List<OrderModel> filterAndSearchOrders(
+    List<OrderModel> allOrders,
     String selectedFilter,
     String searchQuery,
   ) {
-    final now = DateTime.now();
-    List<Map<String, dynamic>> results = List.from(allOrders);
+    return applyFilters(
+      allOrders: allOrders,
+      selectedFilter: selectedFilter,
+      searchQuery: searchQuery,
+    );
+  }
 
-    if (selectedFilter == 'Today') {
-      results = results.where((order) {
-        final createdAt = (order['createdAt'] as Timestamp?)?.toDate();
-        if (createdAt == null) return false;
-        return createdAt.year == now.year &&
-            createdAt.month == now.month &&
-            createdAt.day == now.day;
-      }).toList();
-    } else if (selectedFilter == 'This Week') {
-      final weekAgo = now.subtract(const Duration(days: 7));
-      results = results.where((order) {
-        final createdAt = (order['createdAt'] as Timestamp?)?.toDate();
-        if (createdAt == null) return false;
-        return createdAt.isAfter(weekAgo);
-      }).toList();
-    } else if (['Ordered', 'Paid', 'Shipped', 'Delivered', 'Cancelled', 'Expired'].contains(selectedFilter)) {
-      results = results.where((order) => order['status'] == selectedFilter).toList();
-    }
+  Future<Result<void>> cancelOrder(String orderId, String userId) async {
+    _setLoading(true);
+    final result = await _orderService.cancelOrderWithNotification(
+      orderId: orderId,
+      userId: userId,
+    );
+    _setLoading(false);
+    return result;
+  }
 
-    if (searchQuery.isNotEmpty) {
-      final q = searchQuery.toLowerCase();
-      results = results.where((order) {
-        final orderId = (order['orderId'] ?? '').toString().toLowerCase();
-        final fullName = (order['fullName'] ?? '').toString().toLowerCase();
-        final address = (order['shippingAddress'] ?? '').toString().toLowerCase();
-        final items = (order['items'] as List<dynamic>? ?? []);
-        
-        final matchesId = orderId.contains(q);
-        final matchesName = fullName.contains(q);
-        final matchesAddress = address.contains(q);
-        final matchesItems = items.any((item) => 
-          (item['title'] ?? '').toString().toLowerCase().contains(q));
-          
-        return matchesId || matchesName || matchesAddress || matchesItems;
-      }).toList();
-    }
-
-    return results;
+  void _setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
   }
 }

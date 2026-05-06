@@ -113,8 +113,12 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
 
     setState(() => _isUpdating = true);
     try {
-      await _controller.updateOrderStatus(_order.orderId, newStatus);
-      await _fetchOrder();
+      final result = await _controller.updateOrderStatus(_order.orderId, newStatus, _order.userId);
+      if (result.isSuccess) {
+        await _fetchOrder();
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal update: ${result.failure?.message}'), backgroundColor: Colors.red));
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal update: $e'), backgroundColor: Colors.red));
     } finally {
@@ -144,9 +148,13 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
 
     setState(() => _isUpdating = true);
     try {
-      await _controller.cancelOrder(_order.orderId);
-      await _fetchOrder();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pesanan berhasil dibatalkan dan stok dikembalikan'), backgroundColor: Colors.orange));
+      final result = await _controller.cancelOrder(_order.orderId, _order.userId);
+      if (result.isSuccess) {
+        await _fetchOrder();
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pesanan berhasil dibatalkan dan stok dikembalikan'), backgroundColor: Colors.orange));
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal pembatalan: ${result.failure?.message}'), backgroundColor: Colors.red));
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal pembatalan: $e'), backgroundColor: Colors.red));
     } finally {

@@ -1,40 +1,21 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../../../core/utils/validators.dart';
+import '../services/auth_service.dart';
 
 class ForgotPasswordController extends ChangeNotifier {
-  final FirebaseAuth _auth;
-  final FirebaseFirestore _firestore;
+  final AuthService _authService;
+  
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  ForgotPasswordController({FirebaseAuth? auth, FirebaseFirestore? firestore}) 
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  ForgotPasswordController({AuthService? authService}) 
+      : _authService = authService ?? AuthService();
 
-  String? validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    }
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value)) {
-      return 'Enter a valid email address';
-    }
-    return null;
-  }
+  String? validateEmail(String? value) => Validators.validateEmail(value);
 
   Future<bool> isEmailRegistered(String email) async {
-    try {
-      final querySnapshot = await _firestore
-          .collection('users')
-          .where('email', isEqualTo: email.trim())
-          .get();
-      
-      return querySnapshot.docs.isNotEmpty;
-    } catch (e) {
-      debugPrint('Error checking email: $e');
-      return false;
-    }
+    final result = await _authService.isEmailRegistered(email);
+    return result.isSuccess && (result.data ?? false);
   }
 
   Future<void> sendPasswordReset(String email) async {
@@ -42,9 +23,10 @@ class ForgotPasswordController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _auth.sendPasswordResetEmail(email: email.trim());
-    } catch (e) {
-      rethrow;
+      final result = await _authService.forgotPassword(email);
+      if (!result.isSuccess) {
+        throw Exception(result.failure?.message ?? 'Gagal mengirim email reset');
+      }
     } finally {
       _isLoading = false;
       notifyListeners();

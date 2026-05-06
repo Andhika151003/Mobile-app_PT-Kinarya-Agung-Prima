@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/cart.dart';
+import '../../../core/repositories/product_repository.dart';
 
 class CartController extends ChangeNotifier {
   static final CartController _instance = CartController._internal();
   factory CartController() => _instance;
+  
+  final ProductRepository _productRepository = ProductRepository();
+  
   CartController._internal() {
     _loadFromPrefs();
   }
@@ -56,22 +59,14 @@ class CartController extends ChangeNotifier {
     if (_items.isEmpty) return;
     try {
       final ids = _items.map((e) => e.id).toList();
-      final List<DocumentSnapshot> docs = [];
-      for (int i = 0; i < ids.length; i += 10) {
-        final chunk = ids.sublist(i, i + 10 > ids.length ? ids.length : i + 10);
-        final snap = await FirebaseFirestore.instance
-            .collection('products')
-            .where(FieldPath.documentId, whereIn: chunk)
-            .get();
-        docs.addAll(snap.docs);
-      }
+      final products = await _productRepository.getProductsByIds(ids);
 
       bool changed = false;
-      for (final doc in docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final stock = (data['stock'] as num?)?.toInt() ?? 0;
-        final moq = (data['moq'] as num?)?.toInt() ?? 1;
-        final index = _items.indexWhere((item) => item.id == doc.id);
+      for (final product in products) {
+        final stock = product.stock;
+        final moq = product.moq ?? 1;
+        
+        final index = _items.indexWhere((item) => item.id == product.id);
         if (index == -1) continue;
 
         final item = _items[index];

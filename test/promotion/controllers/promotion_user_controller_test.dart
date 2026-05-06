@@ -2,14 +2,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:ecommerce/features/promotion/controllers/promotion_user_controller.dart';
 
+import 'package:ecommerce/core/repositories/promotion_repository.dart';
+import 'package:ecommerce/core/repositories/order_repository.dart';
+
 void main() {
   late PromotionUserController userPromotionController;
   late FakeFirebaseFirestore fakeFirestore;
+  late PromotionRepository promotionRepository;
+  late OrderRepository orderRepository;
 
   setUp(() {
     fakeFirestore = FakeFirebaseFirestore();
+    promotionRepository = PromotionRepository(firestore: fakeFirestore);
+    orderRepository = OrderRepository(firestore: fakeFirestore);
+    
     userPromotionController = PromotionUserController(
-      firestore: fakeFirestore,
+      promotionRepository: promotionRepository,
+      orderRepository: orderRepository,
     );
   });
 

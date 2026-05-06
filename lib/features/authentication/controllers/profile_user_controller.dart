@@ -1,34 +1,39 @@
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/profile_service.dart';
+import '../services/statistic_service.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/repositories/order_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../supabase_storage_service.dart';
 
 class RetailProfileController {
+  final ProfileService _profileService;
+  final StatisticService _statisticService;
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
-  RetailProfileController({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  RetailProfileController({
+    ProfileService? profileService,
+    StatisticService? statisticService,
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _profileService = profileService ??
+            ProfileService(
+              authRepository: AuthRepository(firestore: firestore),
+              auth: auth ?? FirebaseAuth.instance,
+            ),
+        _statisticService = statisticService ??
+            StatisticService(
+              orderRepository: OrderRepository(firestore: firestore),
+            );
 
   Future<Map<String, dynamic>?> getRetailProfile() async {
-    try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        final doc = await _firestore.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          var data = doc.data() as Map<String, dynamic>;
-          data['uid'] = user.uid;
-          return data;
-        }
-      }
-      return null;
-    } catch (e) {
-      throw Exception("Gagal memuat profil Retail: $e");
-    }
+    final result = await _profileService.getProfile();
+    return result.isSuccess ? result.data : null;
   }
 
-  /// Stream for real-time profile updates
   Stream<Map<String, dynamic>?> getRetailProfileStream() {
     final user = _auth.currentUser;
     if (user == null) return Stream.value(null);
@@ -43,86 +48,37 @@ class RetailProfileController {
     });
   }
 
-  // Menyimpan pembaruan khusus Retail
   Future<void> updateRetailProfile({
     required String storeName,
     required String contact,
     required String businessType,
     File? profileImage,
   }) async {
-    try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        String? uploadedImageUrl;
-
-        if (profileImage != null) {
-          final storageService = SupabaseStorageService();
-          final fileName = 'retail_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          uploadedImageUrl = await storageService.uploadRetailProfileImage(profileImage, fileName);
-        }
-
-        final updateData = {
-          'fullName': storeName,
-          'phoneNumber': contact,
-          'businessType': businessType,
-        };
-
-        if (uploadedImageUrl != null) {
-          updateData['photoUrl'] = uploadedImageUrl;
-        }
-
-        await _firestore.collection('users').doc(user.uid).update(updateData);
-      }
-    } catch (e) {
-      throw Exception("Gagal update profil Retail: $e");
+    final result = await _profileService.updateProfile(
+      fullName: storeName,
+      phoneNumber: contact,
+      businessType: businessType,
+      profileImage: profileImage,
+      role: 'retail',
+    );
+    
+    if (!result.isSuccess) {
+      throw Exception(result.failure?.message ?? 'Gagal update profil');
     }
   }
 
-  // --- FUNGSI UNTUK TOGGLE STATUS ---
   Future<void> updateStoreStatus(bool isActive) async {
-    try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        await _firestore.collection('users').doc(user.uid).update({
-          'isActive': isActive, // Update field boolean di Firestore
-        });
-      }
-    } catch (e) {
-      throw Exception("Gagal mengubah status toko: $e");
+    final result = await _profileService.updateStatus(isActive);
+    if (!result.isSuccess) {
+      throw Exception(result.failure?.message ?? 'Gagal mengubah status');
     }
   }
 
-  /// Get Retailer Stats (Total Orders & Total Spent)
   Future<Map<String, dynamic>> getRetailStats() async {
-    try {
-      final user = _auth.currentUser;
-      if (user == null) throw Exception("User not authenticated");
-
-      // 1. Get all orders for this user
-      final ordersSnapshot = await _firestore
-          .collection('orders')
-          .where('userId', isEqualTo: user.uid)
-          .get();
-
-      double totalSpent = 0;
-      int totalOrders = ordersSnapshot.docs.length;
-
-      for (var doc in ordersSnapshot.docs) {
-        final data = doc.data();
-        final status = data['status']?.toString() ?? '';
-
-        // Hanya hitung spent untuk order yang sudah dibayar/selesai
-        if (['Paid', 'Shipped', 'Delivered'].contains(status)) {
-          totalSpent += (data['total'] as num?)?.toDouble() ?? 0.0;
-        }
-      }
-
-      return {
-        'totalOrders': totalOrders,
-        'totalSpent': totalSpent,
-      };
-    } catch (e) {
-      throw Exception("Gagal memuat statistik Retail: $e");
-    }
+    final user = _auth.currentUser;
+    if (user == null) return {'totalOrders': 0, 'totalSpent': 0.0};
+    
+    final result = await _statisticService.getRetailStats(user.uid);
+    return result.isSuccess ? result.data! : {'totalOrders': 0, 'totalSpent': 0.0};
   }
 }

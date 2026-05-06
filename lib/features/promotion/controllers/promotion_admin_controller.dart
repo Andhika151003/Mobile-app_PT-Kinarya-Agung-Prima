@@ -1,20 +1,20 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import '../models/promotion.dart';
+import '../../../core/repositories/promotion_repository.dart';
 import '../../../supabase_storage_service.dart';
 import '../../notification/services/push_notification_service.dart';
 
 class PromotionAdminController extends ChangeNotifier {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
-  final PushNotificationService _pushNotificationService = PushNotificationService();
+  final PromotionRepository _promotionRepository;
+  final PushNotificationService _pushNotificationService;
 
-  PromotionAdminController({FirebaseFirestore? firestore, FirebaseAuth? auth})
-      : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  PromotionAdminController({
+    PromotionRepository? promotionRepository,
+    PushNotificationService? pushNotificationService,
+  })  : _promotionRepository = promotionRepository ?? PromotionRepository(),
+        _pushNotificationService = pushNotificationService ?? PushNotificationService();
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -41,23 +41,16 @@ class PromotionAdminController extends ChangeNotifier {
     _setLoading(true);
     _clearError();
 
-    try {
-      final snapshot = await _firestore
-          .collection('promotions')
-          .orderBy('createdAt', descending: true)
-          .get();
+    final result = await _promotionRepository.getAllPromotions();
 
-      _promotions = snapshot.docs.map((doc) {
-        return PromotionModel.fromMap(doc.id, doc.data());
-      }).toList();
-
+    if (result.isSuccess) {
+      _promotions = result.data!;
       _applyFilters();
-      _setLoading(false);
-    } catch (e) {
-      debugPrint('Error fetching promotions: $e');
-      _setError('Gagal mengambil data promo');
-      _setLoading(false);
+    } else {
+      _setError('Gagal mengambil data promo: ${result.failure?.message}');
     }
+
+    _setLoading(false);
   }
 
   void searchPromotions(String query) {
@@ -139,8 +132,8 @@ class PromotionAdminController extends ChangeNotifier {
         return false;
       }
 
-      final user = _auth.currentUser;
-      if (user == null) throw Exception('User not authenticated');
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) throw Exception('User not authenticated');
 
       String? imageUrl;
       if (imageFile != null) {
@@ -165,21 +158,27 @@ class PromotionAdminController extends ChangeNotifier {
         sku: sku,
         maxDiscount: maxDiscount,
         createdAt: DateTime.now(),
-        createdBy: user.uid,
+        createdBy: userId,
       );
 
-      final docRef = await _firestore.collection('promotions').add(newPromo.toMap());
+      final result = await _promotionRepository.createPromotion(newPromo);
 
-      await _pushNotificationService.broadcastNotification(
-        title: 'Promo Spesial Hari Ini!',
-        message: 'Jangan lewatkan: $title. Cek sekarang sebelum kehabisan!',
-        type: 'promo',
-        relatedId: docRef.id,
-      );
+      if (result.isSuccess) {
+        await _pushNotificationService.broadcastNotification(
+          title: 'Promo Spesial Hari Ini!',
+          message: 'Jangan lewatkan: $title. Cek sekarang sebelum kehabisan!',
+          type: 'promo',
+          relatedId: result.data!,
+        );
 
-      await fetchAllPromotions();
-      _setLoading(false);
-      return true;
+        await fetchAllPromotions();
+        _setLoading(false);
+        return true;
+      } else {
+        _setError('Gagal membuat promo: ${result.failure?.message}');
+        _setLoading(false);
+        return false;
+      }
     } catch (e) {
       debugPrint('Error creating promotion: $e');
       _setError('Gagal membuat promo: ${e.toString()}');
@@ -226,36 +225,48 @@ class PromotionAdminController extends ChangeNotifier {
         }
       }
 
-      final promotionRef = _firestore.collection('promotions').doc(promotionId);
-      
       String? imageUrl = currentImageUrl;
       if (imageFile != null) {
         final storageService = SupabaseStorageService();
         final fileName = 'promo_${DateTime.now().millisecondsSinceEpoch}.jpg';
         imageUrl = await storageService.uploadPromotionImage(imageFile, fileName);
       }
+      
+      final promoUpdateMap = PromotionModel(
+        id: promotionId,
+        title: title,
+        description: description,
+        discountType: discountType,
+        discountValue: discountValue,
+        productIds: productIds,
+        applicableTo: applicableTo,
+        startDate: startDate,
+        endDate: endDate,
+        startTime: startTime,
+        endTime: endTime,
+        status: status,
+        imageUrl: imageUrl,
+        sku: sku,
+        maxDiscount: maxDiscount,
+        createdAt: DateTime.now(), // Ignored in update
+        createdBy: '', // Ignored
+      ).toMap();
 
-      await promotionRef.update({
-        'title': title,
-        'description': description,
-        'discountType': discountType,
-        'discountValue': discountValue,
-        'productIds': productIds,
-        'applicableTo': applicableTo,
-        'startDate': Timestamp.fromDate(startDate),
-        'endDate': Timestamp.fromDate(endDate),
-        'startTime': startTime,
-        'endTime': endTime,
-        'status': status,
-        'imageUrl': imageUrl,
-        'sku': sku,
-        'maxDiscount': maxDiscount,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      // Remove createdAt/createdBy to avoid overwriting them
+      promoUpdateMap.remove('createdAt');
+      promoUpdateMap.remove('createdBy');
 
-      await fetchAllPromotions();
-      _setLoading(false);
-      return true;
+      final result = await _promotionRepository.updatePromotion(promotionId, promoUpdateMap);
+
+      if (result.isSuccess) {
+        await fetchAllPromotions();
+        _setLoading(false);
+        return true;
+      } else {
+        _setError('Gagal update promo: ${result.failure?.message}');
+        _setLoading(false);
+        return false;
+      }
     } catch (e) {
       debugPrint('Error updating promotion: $e');
       _setError('Gagal update promo: ${e.toString()}');
@@ -265,37 +276,31 @@ class PromotionAdminController extends ChangeNotifier {
   }
 
   Future<bool> deletePromotion(String promotionId) async {
-  debugPrint('DELETE CALLED with ID: $promotionId'); 
-  _setLoading(true);
-  _clearError();
+    debugPrint('DELETE CALLED with ID: $promotionId'); 
+    _setLoading(true);
+    _clearError();
 
-  try {
-    final docRef = _firestore.collection('promotions').doc(promotionId);
-    debugPrint('Document reference: ${docRef.path}'); 
-    
-    final doc = await docRef.get();
-    debugPrint('Document exists: ${doc.exists}'); 
-    
-    if (!doc.exists) {
-      debugPrint('Document not found!');
-      _setError('Promotion not found');
+    try {
+      final result = await _promotionRepository.deletePromotion(promotionId);
+      
+      if (result.isSuccess) {
+        debugPrint('Delete successful');
+        await fetchAllPromotions();
+        _setLoading(false);
+        return true;
+      } else {
+        debugPrint('Delete error: ${result.failure?.message}');
+        _setError('Gagal menghapus promo: ${result.failure?.message}');
+        _setLoading(false);
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Delete exception: $e');
+      _setError('Gagal menghapus promo: ${e.toString()}');
       _setLoading(false);
       return false;
     }
-    
-    await docRef.delete();
-    debugPrint('Delete successful');
-    
-    await fetchAllPromotions();
-    _setLoading(false);
-    return true;
-  } catch (e) {
-    debugPrint('Delete error: $e');
-    _setError('Gagal menghapus promo: ${e.toString()}');
-    _setLoading(false);
-    return false;
   }
-}
 
   List<PromotionModel> getActivePromotions() {
     final now = DateTime.now();
@@ -360,18 +365,5 @@ class PromotionAdminController extends ChangeNotifier {
     }
 
     return conflicts;
-  }
-
-  Future<List<Map<String, dynamic>>> getAllProducts() async {
-    try {
-      final snapshot = await _firestore.collection('products').get();
-      return snapshot.docs.map((doc) => {
-        'id': doc.id,
-        ...doc.data(),
-      }).toList();
-    } catch (e) {
-      debugPrint('Error getting products: $e');
-      return [];
-    }
   }
 }

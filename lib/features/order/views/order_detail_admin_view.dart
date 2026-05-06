@@ -33,7 +33,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
       final data = await _adminController.getOrderById(widget.orderId);
       if (data != null && mounted) {
         setState(() {
-          _order = OrderModel.fromMap(data);
+          _order = data;
           _isLoading = false;
         });
       }
@@ -86,8 +86,12 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
 
     setState(() => _isUpdating = true);
     try {
-      await _adminController.updateOrderStatus(widget.orderId, newStatus);
-      await _fetchOrder();
+      final result = await _adminController.updateStatus(widget.orderId, newStatus, _order!.userId);
+      if (result.isSuccess) {
+        await _fetchOrder();
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal update: ${result.failure?.message}'), backgroundColor: Colors.red));
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal update: $e'), backgroundColor: Colors.red));
     } finally {
@@ -125,9 +129,13 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
 
     setState(() => _isUpdating = true);
     try {
-      await _adminController.cancelOrder(widget.orderId);
-      await _fetchOrder();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pesanan berhasil dibatalkan dan stok dikembalikan'), backgroundColor: Colors.orange));
+      final result = await _adminController.cancelOrder(widget.orderId, _order!.userId);
+      if (result.isSuccess) {
+        await _fetchOrder();
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pesanan berhasil dibatalkan dan stok dikembalikan'), backgroundColor: Colors.orange));
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal pembatalan: ${result.failure?.message}'), backgroundColor: Colors.red));
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal pembatalan: $e'), backgroundColor: Colors.red));
     } finally {

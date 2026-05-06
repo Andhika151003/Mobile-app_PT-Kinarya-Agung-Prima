@@ -1,21 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product.dart';
 import '../../promotion/models/promotion.dart';
+import '../../../core/repositories/promotion_repository.dart';
 
 class ProductUserController {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PromotionRepository _promotionRepository;
+
+  ProductUserController({PromotionRepository? promotionRepository})
+      : _promotionRepository = promotionRepository ?? PromotionRepository();
 
   Stream<List<PromotionModel>> getActivePromotionsStream() {
-    return _firestore
-        .collection('promotions')
-        .where('status', isEqualTo: 'active')
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => PromotionModel.fromMap(doc.id, doc.data()))
-          .where((promo) => promo.isActive)
-          .toList();
-    });
+    return _promotionRepository.getActivePromotionsStream();
   }
 
   PromotionModel? getBestPromotionForProduct(

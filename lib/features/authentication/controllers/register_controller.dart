@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/utils/validators.dart';
+import '../services/auth_service.dart';
 
 class RegisterController extends ChangeNotifier {
-  FirebaseAuth get _auth => FirebaseAuth.instance;
-  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  final AuthService _authService;
+
+  RegisterController({AuthService? authService}) 
+      : _authService = authService ?? AuthService();
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -14,62 +16,16 @@ class RegisterController extends ChangeNotifier {
 
   bool _isDisposed = false;
 
-  // ==================== VALIDATORS ====================
+  // ==================== VALIDATORS (DELEGATED) ====================
 
-  String? validateFullName(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Full Name is required';
-    }
-    if (value.trim().length < 3) {
-      return 'Please enter a full name';
-    }
-    return null;
-  }
+  String? validateFullName(String? value) => Validators.validateFullName(value);
+  String? validateEmail(String? value) => Validators.validateEmail(value);
+  String? validatePhoneNumber(String? value) => Validators.validatePhoneNumber(value);
+  String? validatePassword(String? value) => Validators.validatePassword(value, minLength: 8);
+  String? validateConfirmPassword(String? value, String password) => 
+      Validators.validateConfirmPassword(value, password);
 
-  String? validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    }
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value)) {
-      return 'Please enter a valid email address';
-    }
-    return null;
-  }
-
-  String? validatePhoneNumber(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Phone Number is required';
-    }
-    final phoneDigits = value.replaceAll(RegExp(r'\D'), '');
-    if (phoneDigits.length < 10 || phoneDigits.length > 13) {
-      return 'Please enter valid phone number';
-    }
-    return null;
-  }
-
-
-  String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters';
-    }
-    return null;
-  }
-
-  String? validateConfirmPassword(String? value, String password) {
-    if (value == null || value.isEmpty) {
-      return 'Please confirm your password';
-    }
-    if (value != password) {
-      return 'Passwords do not match';
-    }
-    return null;
-  }
-
-  // ==================== REGISTER WITH FIREBASE ====================
+  // ==================== REGISTER ====================
 
   Future<bool> register({
     required String fullName,
@@ -81,53 +37,19 @@ class RegisterController extends ChangeNotifier {
     _setLoading(true);
     _clearError();
 
-    try {
-      final userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
-      );
+    final result = await _authService.register(
+      fullName: fullName,
+      email: email,
+      phoneNumber: phoneNumber,
+      businessType: businessType,
+      password: password,
+    );
 
-      await userCredential.user!.sendEmailVerification();
-
-      await _firestore.collection('users').doc(userCredential.user!.uid).set({
-        'uid': userCredential.user!.uid,
-        'fullName': fullName.trim(),
-        'email': email.trim(),
-        'phoneNumber': phoneNumber.trim(),
-        'businessType': businessType,
-        'role': 'retailer',
-        'isActive': true,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
+    if (result.isSuccess) {
       _setLoading(false);
       return true;
-    } on FirebaseAuthException catch (e) {
-      String message;
-      switch (e.code) {
-        case 'email-already-in-use':
-          message = 'Email already registered';
-          break;
-        case 'invalid-email':
-          message = 'Please enter a valid email address';
-          break;
-        case 'weak-password':
-          message = 'Password must be at least 8 characters';
-          break;
-        case 'too-many-requests':
-          message = 'Firebase is blocking requests due to too many attempts. Please try again later.';
-          break;
-        case 'network-request-failed':
-          message = 'Network error. Please check your internet connection.';
-          break;
-        default:
-          message = 'Registration failed: ${e.message}';
-      }
-      _setError(message);
-      _setLoading(false);
-      return false;
-    } catch (e) {
-      _setError('Registration failed: ${e.toString()}');
+    } else {
+      _setError(result.failure?.message ?? 'Registrasi gagal');
       _setLoading(false);
       return false;
     }
@@ -159,4 +81,4 @@ class RegisterController extends ChangeNotifier {
     _isDisposed = true;
     super.dispose();
   }
-}
+}
