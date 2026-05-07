@@ -265,6 +265,29 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
           ),
           const SizedBox(height: 4),
           Text(date != null ? DateFormat('MMMM dd, yyyy • hh:mm a').format(date) : '-', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+          if (status == 'Ordered' && date != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.red.shade100),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.timer_outlined, size: 14, color: Colors.red.shade700),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Bayar sebelum ${DateFormat('hh:mm a').format(date.add(const Duration(minutes: 30)))} (Masa berlaku 30 menit)',
+                      style: TextStyle(fontSize: 11, color: Colors.red.shade700, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1)),
           
           Row(

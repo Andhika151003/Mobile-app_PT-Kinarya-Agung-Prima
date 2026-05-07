@@ -2,17 +2,30 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/cart.dart';
 
 class CartController extends ChangeNotifier {
   static final CartController _instance = CartController._internal();
   factory CartController() => _instance;
+
+  String? _currentUid;
+  final List<CartItem> _items = [];
+
   CartController._internal() {
-    _loadFromPrefs();
+    _listenToAuthChanges();
   }
 
-  final List<CartItem> _items = [];
-  static const _prefKey = 'cart_items';
+  void _listenToAuthChanges() {
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (_currentUid != user?.uid) {
+        _currentUid = user?.uid;
+        _loadFromPrefs();
+      }
+    });
+  }
+
+  String get _prefKey => _currentUid != null ? 'cart_items_$_currentUid' : 'cart_items_guest';
 
   List<CartItem> get items => _items;
 
@@ -27,15 +40,18 @@ class CartController extends ChangeNotifier {
   Future<void> _loadFromPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_prefKey);
+      final key = _prefKey;
+      final raw = prefs.getString(key);
+      
+      _items.clear(); 
+      
       if (raw != null) {
         final List<dynamic> decoded = jsonDecode(raw);
-        _items.clear();
         _items.addAll(decoded
             .map((e) => CartItem.fromMap(Map<String, dynamic>.from(e)))
             .toList());
-        notifyListeners();
       }
+      notifyListeners();
     } catch (e) {
       debugPrint('CartController: gagal load cart dari prefs: $e');
     }

@@ -80,7 +80,8 @@ class _CheckoutViewState extends State<CheckoutView> {
       final profile = await RetailProfileController().getRetailProfile();
       if (profile != null && mounted) {
         setState(() {
-          fullname = profile['storeName']?.toString() ??
+          fullname =
+              profile['storeName']?.toString() ??
               profile['fullName']?.toString() ??
               fallbackName;
         });
@@ -303,7 +304,8 @@ class _CheckoutViewState extends State<CheckoutView> {
                       return const Center(child: CircularProgressIndicator());
                     }
                     final data = snapshot.data ?? {};
-                    final allPromos = (data['promos'] as List<PromotionModel>?) ?? [];
+                    final allPromos =
+                        (data['promos'] as List<PromotionModel>?) ?? [];
                     final usedIds = (data['usedIds'] as Set<String>?) ?? {};
                     final promos = allPromos.where((p) => p.isActive).toList();
 
@@ -321,8 +323,9 @@ class _CheckoutViewState extends State<CheckoutView> {
 
                         bool isEligible = true;
                         if (p.productIds.isNotEmpty) {
-                          final cartProductIds =
-                              _cartController.items.map((item) => item.id).toSet();
+                          final cartProductIds = _cartController.items
+                              .map((item) => item.id)
+                              .toSet();
                           if (p.discountType == 'bundle') {
                             isEligible = p.productIds.every(
                               (id) => cartProductIds.contains(id),
@@ -871,134 +874,168 @@ class _CheckoutViewState extends State<CheckoutView> {
           border: Border(top: BorderSide(color: Colors.black12, width: 1)),
         ),
         child: SafeArea(
-          child: ElevatedButton(
-            onPressed: _isProcessing
-                ? null
-                : () async {
-                    if (_cartController.items.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Keranjang Anda kosong!')),
-                      );
-                      return;
-                    }
-
-                    if (paymentMethod == 'Pilih Metode Pembayaran') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Pilih metode pembayaran terlebih dahulu',
-                          ),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                      return;
-                    }
-
-                    if (shippingAddress.contains('belum diatur') ||
-                        shippingAddress.contains('Gagal memuat')) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Harap atur alamat pengiriman Anda terlebih dahulu.',
-                          ),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                      return;
-                    }
-
-                    setState(() => _isProcessing = true);
-
-                    List<Map<String, dynamic>> orderItems = _cartController
-                        .items
-                        .map((item) {
-                          return {
-                            'productId': item.id,
-                            'title': item.title,
-                            'variant': item.variant,
-                            'category': item.category,
-                            'quantity': item.quantity,
-                            'price': item.price,
-                            'imageUrl': item.imageUrl,
-                          };
-                        })
-                        .toList();
-
-                    final messenger = ScaffoldMessenger.of(context);
-                    final navigator = Navigator.of(context);
-                    final result = await _checkoutController.processCheckout(
-                      fullName: fullname,
-                      shippingAddress: shippingAddress,
-                      phoneNumber: shippingPhone,
-                      paymentMethod: paymentMethod,
-                      paymentMethodCode: _paymentMethodCode,
-                      promoId: _appliedPromo?.id,
-                      promoCode: _appliedPromo != null ? _appliedPromo!.title : '-',
-                      subtotal: _cartController.subtotal,
-                      shippingCost: _cartController.shippingCost,
-                      tax: tax,
-                      total: finalTotal,
-                      items: orderItems,
-                      discountAmount: discountAmount,
-                    );
-
-                    if (!mounted) return;
-                    setState(() => _isProcessing = false);
-
-                    if (result.containsKey('error')) {
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(result['error']!),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    } else {
-                      _cartController.clearCart();
-                      await navigator.push<bool>(
-                        MaterialPageRoute(
-                          builder: (_) => PaymentWebView(
-                            paymentUrl: result['paymentUrl']!,
-                            orderId: result['orderId']!,
-                          ),
-                        ),
-                      );
-
-                      if (!context.mounted) return;
-                      _cartController.clearCart();
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              PaymentStatusView(orderId: result['orderId']!),
-                        ),
-                      );
-                    }
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF458833),
-              disabledBackgroundColor: Colors.grey.shade400,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Batas waktu pembayaran adalah 30 menit setelah pesanan dibuat.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              elevation: 0,
-            ),
-            child: _isProcessing
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isProcessing
+                      ? null
+                      : () async {
+                          if (_cartController.items.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Keranjang Anda kosong!'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (paymentMethod == 'Pilih Metode Pembayaran') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Pilih metode pembayaran terlebih dahulu',
+                                ),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (shippingAddress.contains('belum diatur') ||
+                              shippingAddress.contains('Gagal memuat')) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Harap atur alamat pengiriman Anda terlebih dahulu.',
+                                ),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                            return;
+                          }
+
+                          setState(() => _isProcessing = true);
+
+                          List<Map<String, dynamic>> orderItems =
+                              _cartController.items.map((item) {
+                                return {
+                                  'productId': item.id,
+                                  'title': item.title,
+                                  'variant': item.variant,
+                                  'category': item.category,
+                                  'quantity': item.quantity,
+                                  'price': item.price,
+                                  'imageUrl': item.imageUrl,
+                                };
+                              }).toList();
+
+                          final messenger = ScaffoldMessenger.of(context);
+                          final navigator = Navigator.of(context);
+                          final result = await _checkoutController
+                              .processCheckout(
+                                fullName: fullname,
+                                shippingAddress: shippingAddress,
+                                phoneNumber: shippingPhone,
+                                paymentMethod: paymentMethod,
+                                paymentMethodCode: _paymentMethodCode,
+                                promoId: _appliedPromo?.id,
+                                promoCode: _appliedPromo != null
+                                    ? _appliedPromo!.title
+                                    : '-',
+                                subtotal: _cartController.subtotal,
+                                shippingCost: _cartController.shippingCost,
+                                tax: tax,
+                                total: finalTotal,
+                                items: orderItems,
+                                discountAmount: discountAmount,
+                              );
+
+                          if (!mounted) return;
+                          setState(() => _isProcessing = false);
+
+                          if (result.containsKey('error')) {
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(result['error']!),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          } else {
+                            _cartController.clearCart();
+                            await navigator.push<bool>(
+                              MaterialPageRoute(
+                                builder: (_) => PaymentWebView(
+                                  paymentUrl: result['paymentUrl']!,
+                                  orderId: result['orderId']!,
+                                ),
+                              ),
+                            );
+
+                            if (!context.mounted) return;
+                            _cartController.clearCart();
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (_) => PaymentStatusView(
+                                  orderId: result['orderId']!,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF458833),
+                    disabledBackgroundColor: Colors.grey.shade400,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  )
-                : const Text(
-                    'Place order',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    elevation: 0,
                   ),
+                  child: _isProcessing
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Place order',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
