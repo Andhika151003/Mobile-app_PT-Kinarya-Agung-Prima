@@ -25,7 +25,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
 
     final email = _emailController.text.trim();
     
-    // Manual Check
     final isRegistered = await controller.isEmailRegistered(email);
     
     if (!isRegistered) {

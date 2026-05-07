@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import '../../notification/services/push_notification_service.dart';
 import '../../../core/repositories/product_repository.dart';
 import '../../../core/repositories/order_repository.dart';
@@ -14,6 +15,7 @@ class CheckoutController {
   final http.Client _client;
   final String _backendUrl;
   final PushNotificationService _pushNotificationService;
+  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
   CheckoutController({
     ProductRepository? productRepository,
@@ -107,16 +109,33 @@ class CheckoutController {
       );
 
       final String apiUrl = '$_backendUrl/create-transaction';
+      
+      // Track Event: Checkout Started
+      await _analytics.logEvent(
+        name: 'begin_checkout',
+        parameters: {
+          'order_id': orderId,
+          'value': total,
+          'currency': 'IDR',
+        },
+      );
+
+      // Ambil Firebase ID Token untuk otentikasi di backend (Security)
+      final String? idToken = await user?.getIdToken();
 
       final response = await _client.post(
         Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          if (idToken != null) 'Authorization': 'Bearer $idToken',
+        },
         body: jsonEncode({
           'orderId': orderId,
           'amount': total.toInt(),
           'customerEmail': email,
           'customerName': customerName,
           'paymentMethod': paymentMethodCode,
+          'expiryPeriod': 60, // Waktu kedaluwarsa dalam menit (60 menit = 1 jam)
         }),
       );
 
@@ -129,6 +148,16 @@ class CheckoutController {
           await _orderRepository.updateOrderStatus(orderId, {
             'paymentUrl': paymentUrl,
           });
+
+          // Track Event: Payment Info Generated
+          await _analytics.logEvent(
+            name: 'generate_payment_info',
+            parameters: {
+              'order_id': orderId,
+              'payment_method': paymentMethod,
+            },
+          );
+
           return {'paymentUrl': paymentUrl, 'orderId': orderId};
         } else {
           return {'error': 'Duitku ditolak: ${responseData['message']}'};

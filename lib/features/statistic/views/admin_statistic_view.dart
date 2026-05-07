@@ -4,8 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../controllers/statistic_controller.dart';
 import '../../product/views/product_detail_admin_view.dart';
-import '../../product/models/product.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../shared/widgets/shimmer_loading.dart';
 import '../../shared/services/pdf_service.dart';
 
@@ -406,9 +404,8 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
 
                   return ListTile(
                     onTap: productId != null ? () async {
-                      final doc = await FirebaseFirestore.instance.collection('products').doc(productId).get();
-                      if (doc.exists && context.mounted) {
-                        final product = ProductModel.fromMap(doc.data()!, doc.id);
+                      final product = await Provider.of<AdminStatisticController>(context, listen: false).getProduct(productId);
+                      if (product != null && context.mounted) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(

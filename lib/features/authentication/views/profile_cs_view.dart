@@ -358,13 +358,11 @@ class _ProfileCsViewState extends State<ProfileCsView> {
     );
   }
 
-  // UPDATE: Tombol Log Out sekarang memanggil _showLogoutDialog
   Widget _buildLogoutButton(BuildContext context) {
     return Align(
       alignment: Alignment.centerRight,
       child: ElevatedButton(
         onPressed: () {
-          // MEMANGGIL POP-UP KONFIRMASI
           _showLogoutDialog(context);
         },
         style: ElevatedButton.styleFrom(

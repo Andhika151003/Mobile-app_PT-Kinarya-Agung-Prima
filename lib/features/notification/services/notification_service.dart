@@ -1,8 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import '../../../core/repositories/notification_repository.dart';
 
 class NotificationService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final NotificationRepository _notificationRepository;
+
+  NotificationService({NotificationRepository? notificationRepository})
+      : _notificationRepository = notificationRepository ?? NotificationRepository();
 
   // Add Notification for a Specific User
   Future<void> addUserNotification({
@@ -13,11 +17,7 @@ class NotificationService {
     String? relatedId,
   }) async {
     try {
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('notifications')
-          .add({
+      await _notificationRepository.addUserNotification(userId, {
         'title': title,
         'message': message,
         'timestamp': FieldValue.serverTimestamp(),
@@ -38,7 +38,7 @@ class NotificationService {
     String? relatedId,
   }) async {
     try {
-      await _firestore.collection('admin_notifications').add({
+      await _notificationRepository.addAdminNotification({
         'title': title,
         'message': message,
         'timestamp': FieldValue.serverTimestamp(),

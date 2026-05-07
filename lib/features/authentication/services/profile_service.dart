@@ -39,7 +39,7 @@ class ProfileService {
     required String phoneNumber,
     String? businessType,
     File? profileImage,
-    required String role, // 'retail', 'admin', 'cs'
+    required String role, 
   }) async {
     try {
       final user = _auth.currentUser;

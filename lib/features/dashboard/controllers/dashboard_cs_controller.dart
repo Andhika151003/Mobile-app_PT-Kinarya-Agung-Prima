@@ -10,7 +10,7 @@ class DashboardCsController {
   final ProfileService _profileService;
   final ComplaintRepository _complaintRepository;
   final FirebaseAuth _auth;
-  final FirebaseFirestore? _firestore; // Kept for some direct calls if needed, but primarily for repo initialization
+  final FirebaseFirestore? _firestore;
 
   DashboardCsController({
     ProfileService? profileService,

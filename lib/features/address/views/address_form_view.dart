@@ -158,7 +158,7 @@ class _AddressFormViewState extends State<AddressFormView> {
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            counterText: "", // Hide the counter for cleaner look
+            counterText: "",
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
             focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: AppColors.primary)),

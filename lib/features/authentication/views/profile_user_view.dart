@@ -57,7 +57,6 @@ class _ProfileUserViewState extends State<ProfileUserView>
           isEmailVerified =
               FirebaseAuth.instance.currentUser?.emailVerified ?? false;
 
-          // Stats dari controller
           totalOrders = stats['totalOrders'] ?? 0;
           totalSpent = stats['totalSpent'] ?? 0.0;
 

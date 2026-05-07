@@ -5,13 +5,16 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/repositories/notification_repository.dart';
 
 class PushNotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+  final AuthRepository _authRepository = AuthRepository();
+  final NotificationRepository _notificationRepository = NotificationRepository();
 
   static final PushNotificationService _instance =
       PushNotificationService._internal();
@@ -66,7 +69,7 @@ class PushNotificationService {
 
     listenToUserNotifications();
 
-    _auth.authStateChanges().listen((user) {
+    FirebaseAuth.instance.authStateChanges().listen((user) {
       if (user != null) {
         listenToUserNotifications();
         saveTokenToFirestore();
@@ -75,16 +78,13 @@ class PushNotificationService {
   }
 
   Future<void> saveTokenToFirestore() async {
-    final user = _auth.currentUser;
+    final user = _authRepository.currentUser;
     if (user == null) return;
 
     try {
       String? token = await _fcm.getToken();
       if (token != null) {
-        await _firestore.collection('users').doc(user.uid).set({
-          'fcmToken': token,
-          'lastTokenUpdate': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        await _authRepository.saveFCMToken(user.uid, token);
         debugPrint('FCM Token saved to Firestore');
       }
     } catch (e) {
@@ -93,14 +93,11 @@ class PushNotificationService {
   }
 
   Future<void> clearToken() async {
-    final user = _auth.currentUser;
+    final user = _authRepository.currentUser;
     if (user == null) return;
 
     try {
-      _firestore.collection('users').doc(user.uid).update({
-        'fcmToken': FieldValue.delete(),
-      }).catchError((e) => debugPrint('Background clear token failed: $e'));
-      
+      _authRepository.clearFCMToken(user.uid).catchError((e) => debugPrint('Background clear token failed: $e'));
       debugPrint('FCM Token clearing initiated in background');
     } catch (e) {
       debugPrint('Error starting background clear token: $e');
@@ -114,7 +111,7 @@ class PushNotificationService {
     String? relatedId,
   }) async {
     try {
-      await _firestore.collection('admin_notifications').add({
+      await _notificationRepository.addAdminNotification({
         'title': title,
         'message': message,
         'timestamp': FieldValue.serverTimestamp(),
@@ -136,11 +133,7 @@ class PushNotificationService {
     String? relatedId,
   }) async {
     try {
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('notifications')
-          .add({
+      await _notificationRepository.addUserNotification(userId, {
         'title': title,
         'message': message,
         'timestamp': FieldValue.serverTimestamp(),
@@ -161,22 +154,15 @@ class PushNotificationService {
     String? relatedId,
   }) async {
     try {
-      final usersSnapshot = await _firestore.collection('users').get();
-      
-      final batch = _firestore.batch();
-      for (var userDoc in usersSnapshot.docs) {
-        final notifRef = userDoc.reference.collection('notifications').doc();
-        batch.set(notifRef, {
-          'title': title,
-          'message': message,
-          'timestamp': FieldValue.serverTimestamp(),
-          'isRead': false,
-          'type': type,
-          'relatedId': relatedId,
-        });
-      }
-      await batch.commit();
-      debugPrint('Broadcast notification sent to ${usersSnapshot.docs.length} users');
+      await _notificationRepository.broadcastNotificationToAllUsers({
+        'title': title,
+        'message': message,
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+        'type': type,
+        'relatedId': relatedId,
+      });
+      debugPrint('Broadcast notification sent to users');
     } catch (e) {
       debugPrint('Error broadcasting notification: $e');
     }
@@ -205,19 +191,13 @@ class PushNotificationService {
   }
 
   void listenToUserNotifications() async {
-    final user = _auth.currentUser;
+    final user = _authRepository.currentUser;
     if (user == null) return;
 
-    final userDoc = await _firestore.collection('users').doc(user.uid).get();
+    final userDoc = await _authRepository.getUserDoc(user.uid);
     final role = (userDoc.data()?['role'] ?? 'retailer').toString().toLowerCase();
 
-    _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('notifications')
-        .where('timestamp', isGreaterThan: Timestamp.now())
-        .snapshots()
-        .listen((snapshot) {
+    _notificationRepository.getUserNotificationsSnapshotStream(user.uid).listen((snapshot) {
       for (var change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.added) {
           final data = change.doc.data() as Map<String, dynamic>;
@@ -228,11 +208,7 @@ class PushNotificationService {
     });
 
     if (role == 'admin' || role == 'cs' || role == 'customer_support') {
-      _firestore
-          .collection('admin_notifications')
-          .where('timestamp', isGreaterThan: Timestamp.now())
-          .snapshots()
-          .listen((snapshot) {
+      _notificationRepository.getAdminNotificationsSnapshotStream().listen((snapshot) {
         for (var change in snapshot.docChanges) {
           if (change.type == DocumentChangeType.added) {
             final data = change.doc.data() as Map<String, dynamic>;

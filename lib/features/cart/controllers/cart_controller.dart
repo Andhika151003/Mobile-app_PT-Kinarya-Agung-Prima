@@ -3,19 +3,33 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/cart.dart';
 import '../../../core/repositories/product_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CartController extends ChangeNotifier {
   static final CartController _instance = CartController._internal();
   factory CartController() => _instance;
   
   final ProductRepository _productRepository = ProductRepository();
+  final List<CartItem> _items = [];
+  
+  // Cache UID saat ini untuk memastikan kita menyimpan ke kunci yang benar
+  String? _currentUid;
   
   CartController._internal() {
-    _loadFromPrefs();
+    _listenToAuthChanges();
   }
 
-  final List<CartItem> _items = [];
-  static const _prefKey = 'cart_items';
+  void _listenToAuthChanges() {
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      _currentUid = user?.uid;
+      debugPrint('CartController: Auth change detected. Current UID: ${_currentUid ?? "Guest"}');
+      _loadFromPrefs();
+    });
+  }
+
+  String get _prefKey {
+    return _currentUid != null ? 'cart_items_$_currentUid' : 'cart_items_guest';
+  }
 
   List<CartItem> get items => _items;
 
@@ -30,15 +44,23 @@ class CartController extends ChangeNotifier {
   Future<void> _loadFromPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_prefKey);
+      final key = _prefKey;
+      final raw = prefs.getString(key);
+      
+      debugPrint('CartController: Loading from key: $key');
+      
+      _items.clear(); 
+      
       if (raw != null) {
         final List<dynamic> decoded = jsonDecode(raw);
-        _items.clear();
         _items.addAll(decoded
             .map((e) => CartItem.fromMap(Map<String, dynamic>.from(e)))
             .toList());
-        notifyListeners();
+        debugPrint('CartController: Loaded ${_items.length} items for $key');
+      } else {
+        debugPrint('CartController: No items found for $key');
       }
+      notifyListeners();
     } catch (e) {
       debugPrint('CartController: gagal load cart dari prefs: $e');
     }
@@ -47,8 +69,11 @@ class CartController extends ChangeNotifier {
   Future<void> _saveToPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final key = _prefKey;
       final encoded = jsonEncode(_items.map((e) => e.toMap()).toList());
-      await prefs.setString(_prefKey, encoded);
+      
+      await prefs.setString(key, encoded);
+      debugPrint('CartController: Saved ${_items.length} items to key: $key');
     } catch (e) {
       debugPrint('CartController: gagal save cart ke prefs: $e');
     }

@@ -243,7 +243,6 @@ class _AllProductAdminViewState extends State<AllProductAdminView> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // Navigasi ke detail produk admin
           Navigator.push(
             context,
             MaterialPageRoute(

@@ -60,6 +60,19 @@ class AuthRepository {
     await _firestore.collection('users').doc(uid).set(data);
   }
 
+  Future<void> saveFCMToken(String uid, String token) async {
+    await _firestore.collection('users').doc(uid).set({
+      'fcmToken': token,
+      'lastTokenUpdate': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> clearFCMToken(String uid) async {
+    await _firestore.collection('users').doc(uid).update({
+      'fcmToken': FieldValue.delete(),
+    });
+  }
+
   Future<int> getTotalCustomersCount() async {
     final snapshot = await _firestore
         .collection('users')
@@ -82,6 +95,10 @@ class AuthRepository {
         .where('role', isEqualTo: 'admin')
         .limit(1)
         .get();
+  }
+
+  Future<QuerySnapshot<Map<String, dynamic>>> getAllUsers() async {
+    return await _firestore.collection('users').get();
   }
 
   User? get currentUser => _auth.currentUser;

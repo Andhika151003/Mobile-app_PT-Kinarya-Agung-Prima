@@ -52,7 +52,6 @@ class _LoginViewState extends State<LoginView> {
         );
 
       } else if (mounted && controller.errorMessage != null) {
-        // Jika Login Gagal
         if (controller.errorMessage!.contains('Account Deactivated')) {
           _showDeactivatedDialog(context, controller.deactivatedAdminPhone);
         } else {
@@ -118,7 +117,6 @@ class _LoginViewState extends State<LoginView> {
           ),
           ElevatedButton(
             onPressed: () {
-              // Jika ingin integrasi WhatsApp/Telepon bisa ditambahkan di sini
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(

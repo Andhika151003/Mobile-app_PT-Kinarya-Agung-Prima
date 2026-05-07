@@ -18,11 +18,9 @@ class AuthService {
     required String password,
   }) async {
     try {
-      // 1. Sign in with Firebase
       final userCredential = await _authRepository.signIn(email.trim(), password);
       final uid = userCredential.user!.uid;
 
-      // 2. Fetch user profile from Firestore
       final docSnapshot = await _authRepository.getUserDoc(uid);
 
       if (!docSnapshot.exists) {
@@ -33,7 +31,6 @@ class AuthService {
       final bool isActive = data['isActive'] ?? true;
       final String role = data['role']?.toString().toLowerCase() ?? 'retailer';
 
-      // 3. Check if account is active
       if (!isActive) {
         await _authRepository.signOut();
         
@@ -54,7 +51,6 @@ class AuthService {
         return Result.failure(AuthFailure(message));
       }
 
-      // 4. Map to model
       dynamic user;
       if (role == 'admin') {
         user = AdminUser.fromMap(uid, data);
@@ -93,7 +89,7 @@ class AuthService {
         'businessType': businessType,
         'role': 'retailer',
         'isActive': true,
-        'createdAt': DateTime.now(), // Repository will handle FieldValue if needed, but for now passing DateTime
+        'createdAt': DateTime.now(),
       });
 
       return Result.success(true);

@@ -248,11 +248,10 @@ class PromotionAdminController extends ChangeNotifier {
         imageUrl: imageUrl,
         sku: sku,
         maxDiscount: maxDiscount,
-        createdAt: DateTime.now(), // Ignored in update
-        createdBy: '', // Ignored
+        createdAt: DateTime.now(),
+        createdBy: '',
       ).toMap();
 
-      // Remove createdAt/createdBy to avoid overwriting them
       promoUpdateMap.remove('createdAt');
       promoUpdateMap.remove('createdBy');
 

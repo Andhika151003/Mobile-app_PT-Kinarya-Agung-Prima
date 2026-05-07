@@ -1,14 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import '../../product/models/product.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/repositories/order_repository.dart';
+import '../../../core/repositories/product_repository.dart';
+import '../../../core/repositories/complaint_repository.dart';
 
 enum StatFilter { today, week, month }
 
 class AdminStatisticController extends ChangeNotifier {
-  final FirebaseFirestore _firestore;
+  final OrderRepository _orderRepository;
+  final AuthRepository _authRepository;
+  final ProductRepository _productRepository;
+  final ComplaintRepository _complaintRepository;
 
-  AdminStatisticController({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  AdminStatisticController({
+    OrderRepository? orderRepository,
+    AuthRepository? authRepository,
+    ProductRepository? productRepository,
+    ComplaintRepository? complaintRepository,
+  })  : _orderRepository = orderRepository ?? OrderRepository(),
+        _authRepository = authRepository ?? AuthRepository(),
+        _productRepository = productRepository ?? ProductRepository(),
+        _complaintRepository = complaintRepository ?? ComplaintRepository();
   
   bool _isDisposed = false;
 
@@ -87,8 +102,6 @@ class AdminStatisticController extends ChangeNotifier {
   }
 
   Future<void> _fetchOrderStats() async {
-    Query query = _firestore.collection('orders');
-    
     DateTime now = DateTime.now();
     DateTime? startDate;
 
@@ -100,11 +113,7 @@ class AdminStatisticController extends ChangeNotifier {
       startDate = DateTime(now.year, now.month - 1, now.day);
     }
 
-    if (startDate != null) {
-      query = query.where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
-    }
-
-    final snapshot = await query.get();
+    final snapshot = await _orderRepository.getOrdersSince(startDate);
     
     double revenue = 0;
     int ordersCount = snapshot.docs.length;
@@ -116,7 +125,7 @@ class AdminStatisticController extends ChangeNotifier {
     Map<String, double> trendData = {};
 
     for (var doc in snapshot.docs) {
-      final data = doc.data() as Map<String, dynamic>;
+      final data = doc.data();
       final status = data['status'] ?? 'Unknown';
       final total = (data['total'] as num?)?.toDouble() ?? 0.0;
       final createdAt = (data['createdAt'] as Timestamp?)?.toDate() ?? now;
@@ -214,7 +223,7 @@ class AdminStatisticController extends ChangeNotifier {
   }
 
   Future<void> _fetchUserStats() async {
-    final snapshot = await _firestore.collection('users').get();
+    final snapshot = await _authRepository.getAllUsers();
     
     int retailers = 0;
     int activeRet = 0;
@@ -242,7 +251,7 @@ class AdminStatisticController extends ChangeNotifier {
   }
 
   Future<void> _fetchProductStats() async {
-    final snapshot = await _firestore.collection('products').get();
+    final snapshot = await _productRepository.getAllProducts();
     
     int products = snapshot.docs.length;
     int lowStock = 0;
@@ -262,8 +271,6 @@ class AdminStatisticController extends ChangeNotifier {
   }
 
   Future<void> _fetchComplaintStats() async {
-    Query query = _firestore.collection('complaints');
-
     DateTime now = DateTime.now();
     DateTime? startDate;
 
@@ -275,12 +282,11 @@ class AdminStatisticController extends ChangeNotifier {
       startDate = DateTime(now.year, now.month - 1, now.day);
     }
 
-    if (startDate != null) {
-      query = query.where('createdAt',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
-    }
-
-    final snapshot = await query.get();
+    final snapshot = await _complaintRepository.getComplaintsSince(startDate);
     _totalComplaints = snapshot.docs.length;
+  }
+
+  Future<ProductModel?> getProduct(String productId) async {
+    return await _productRepository.getProductById(productId);
   }
 }

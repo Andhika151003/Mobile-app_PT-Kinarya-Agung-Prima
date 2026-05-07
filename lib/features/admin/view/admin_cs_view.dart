@@ -48,8 +48,6 @@ class _AdminCsViewState extends State<AdminCsView> {
                   MaterialPageRoute(builder: (context) => const FormAddCsView()),
                 );
                 if (result == true && context.mounted) {
-                  // AdminCsController will refresh the list inside addCS if called from there,
-                  // or we can refresh here if needed.
                 }
               },
             ),
@@ -73,7 +71,6 @@ class _AdminCsViewState extends State<AdminCsView> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Stats Row ──────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Row(

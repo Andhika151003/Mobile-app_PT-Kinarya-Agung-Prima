@@ -382,14 +382,11 @@ class _StatusDropdownButtonState extends State<_StatusDropdownButton>
   }
 
   Future<void> _selectStatus(bool newStatus) async {
-    // Tutup dropdown
     setState(() => _isOpen = false);
     _animController.reverse();
 
-    // Jika status sama, tidak perlu konfirmasi
     if (newStatus == widget.isActive) return;
 
-    // Tampilkan dialog konfirmasi
     final confirmed = await _showConfirmDialog(context);
     if (confirmed == true) {
       await widget.onStatusChange(newStatus);
@@ -478,7 +475,6 @@ class _StatusDropdownButtonState extends State<_StatusDropdownButton>
               ),
             ),
 
-            // ── Divider ──────────────────────────────────────
             Container(height: 1, color: const Color(0xFFF3F4F6)),
 
             // ── Tombol Yes & Cancel ───────────────────────────
@@ -662,7 +658,6 @@ class _StatusDropdownButtonState extends State<_StatusDropdownButton>
                     ),
                   ),
                 ),
-                // Divider
                 Container(height: 1, color: const Color(0xFFF3F4F6)),
                 // Pilihan Inactive
                 GestureDetector(

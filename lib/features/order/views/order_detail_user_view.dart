@@ -97,11 +97,9 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Header Card
             _buildHeaderCard(order.orderId, order.createdAt, order.total, order.status, currency),
             const SizedBox(height: 20),
 
-            // 2. Order Status Stepper
             const Text('Order Status', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 12),
             _buildStatusStepper(order.status, order),
@@ -110,7 +108,6 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
 
             const SizedBox(height: 24),
 
-            // 3. Shipping Information
             const Text('Shipping Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 8),
             Container(
@@ -150,7 +147,6 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             ),
             const SizedBox(height: 24),
 
-            // 4. Order Items & Summary
             const Text('Order Items', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 8),
             Container(
@@ -191,7 +187,6 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             ),
             const SizedBox(height: 24),
 
-            // 5. Payment Information
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

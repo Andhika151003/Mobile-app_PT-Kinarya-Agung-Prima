@@ -244,12 +244,10 @@ class _OrderList extends StatelessWidget {
 
         List<OrderModel> allOrders = docs.map((doc) => OrderModel.fromMap(doc.data())).toList();
 
-        // 1. Filter by Status
         if (tab.statusFilter != null) {
           allOrders = allOrders.where((order) => tab.statusFilter!.contains(order.status)).toList();
         }
 
-        // 2. Filter by Search Query (Order ID or Product Names)
         if (searchQuery.isNotEmpty) {
           allOrders = allOrders.where((order) {
             final matchesId = order.orderId.toLowerCase().contains(searchQuery);
@@ -261,7 +259,6 @@ class _OrderList extends StatelessWidget {
 
         if (allOrders.isEmpty) return _EmptyState(hasSearch: searchQuery.isNotEmpty);
 
-        // Urutkan
         if (selectedSort == 'Newest') {
           allOrders.sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
         } else if (selectedSort == 'Oldest') {

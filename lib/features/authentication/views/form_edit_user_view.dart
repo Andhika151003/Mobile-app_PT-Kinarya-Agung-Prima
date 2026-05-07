@@ -76,7 +76,6 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
             _currentEmail = data['email'] ?? '';
             _selectedBusinessType = data['businessType'];
             _isEmailVerified = user.emailVerified; 
-            // Fallback jika tidak ada di list
             if (_selectedBusinessType != null && !_businessTypes.contains(_selectedBusinessType)) {
                _selectedBusinessType = 'Lainnya';
             }
@@ -182,7 +181,6 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                     const SizedBox(height: 16),
                     _buildTextField('Business Name', 'Enter Your Name', _nameController, semanticLabel: 'input_edit_profile_name'),
                     
-                    // Business Type Dropdown
                     const Padding(
                       padding: EdgeInsets.only(bottom: 8.0),
                       child: Text(

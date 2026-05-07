@@ -44,7 +44,6 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
           distributorId = '#DS${data['uid'].substring(0, 6).toUpperCase()}';
           photoUrl = data['photoUrl'];
 
-          // Stats dari controller (Data tidak lagi ditampilkan di profile)
           isLoading = false;
         });
       } else {

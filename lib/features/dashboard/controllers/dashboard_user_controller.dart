@@ -57,7 +57,22 @@ class DashboardUserController {
   Stream<List<OrderModel>> getRecentOrders() {
     final user = _auth.currentUser;
     if (user == null) return Stream.value([]);
-    return _orderRepository.getRecentOrdersStream(user.uid);
+    
+    // Fetch orders and sort in memory to avoid "Missing Index" errors
+    // which occur when combining where('userId') and orderBy('createdAt').
+    return _orderRepository.getOrdersStreamByUserId(user.uid).map((snapshot) {
+      final orders = snapshot.docs.map((doc) {
+        var data = doc.data();
+        data['orderId'] = doc.id;
+        return OrderModel.fromMap(data);
+      }).toList();
+
+      // Sort by createdAt descending
+      orders.sort((a, b) =>
+          (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+
+      return orders;
+    });
   }
 
   Stream<List<ProductModel>> getRecommendedProducts() {

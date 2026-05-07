@@ -89,4 +89,8 @@ class ProductRepository {
       return Result.failure(ServerFailure("Gagal menghapus produk: $e"));
     }
   }
+
+  Future<QuerySnapshot<Map<String, dynamic>>> getAllProducts() async {
+    return await _firestore.collection('products').get();
+  }
 }

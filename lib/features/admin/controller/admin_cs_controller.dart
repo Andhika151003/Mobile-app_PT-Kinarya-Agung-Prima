@@ -93,14 +93,9 @@ class AdminCsController extends ChangeNotifier {
     _setLoading(true);
     _errorMessage = null;
     try {
-      // 1. Validasi Keamanan (Otorisasi Admin)
       if (!await _isAdmin()) {
         throw Exception("Unauthorized: Only Admin can add Customer Support");
       }
-
-      // 2. Memastikan Akun Terbuat di Firebase Auth
-      // Menggunakan secondary app (jika mungkin) atau createUser standard.
-      // Note: Di unit test kita menggunakan MockFirebaseAuth yang mensimulasikan Auth.
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: cs.email,
         password: cs.password,
@@ -109,7 +104,6 @@ class AdminCsController extends ChangeNotifier {
       final uid = userCredential.user?.uid;
       if (uid == null) throw Exception("Failed to obtain UID from Firebase Auth");
 
-      // 3. Firestore Entry
       final csData = cs.toMap();
       csData['id'] = uid; 
       await _firestore.collection('users').doc(uid).set(csData);

@@ -6,8 +6,8 @@ class NotificationModel {
   final String message;
   final DateTime timestamp;
   final bool isRead;
-  final String type; // e.g., 'order', 'promo', 'complaint', 'system'
-  final String? relatedId; // e.g., orderId or promoId
+  final String type; 
+  final String? relatedId; 
 
   NotificationModel({
     required this.id,

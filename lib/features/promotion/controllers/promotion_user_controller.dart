@@ -27,11 +27,9 @@ class PromotionUserController {
       }).toList();
 
       promos.sort((a, b) {
-        // Prioritaskan yang sedang aktif
         if (a.isActive && !b.isActive) return -1;
         if (!a.isActive && b.isActive) return 1;
         
-        // Lalu yang segera berakhir (jika aktif)
         if (a.isActive && b.isActive) {
           if (a.isEndingSoon && !b.isEndingSoon) return -1;
           if (!a.isEndingSoon && b.isEndingSoon) return 1;

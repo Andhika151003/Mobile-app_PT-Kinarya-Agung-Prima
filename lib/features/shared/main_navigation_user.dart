@@ -3,6 +3,7 @@ import '../../features/dashboard/views/dashboard_user_view.dart';
 import '../../features/authentication/views/profile_user_view.dart';
 import '../product/views/product_user_view.dart';
 import '../order/views/order_user_view.dart';
+import '../../../core/notifications/navigation_notifications.dart';
 
 class MainNavigationUser extends StatefulWidget {
   const MainNavigationUser({super.key});
@@ -24,9 +25,17 @@ class _MainNavigationUserState extends State<MainNavigationUser> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
+      body: NotificationListener<ChangeTabNotification>(
+        onNotification: (notification) {
+          setState(() {
+            _selectedIndex = notification.index;
+          });
+          return true;
+        },
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: _pages,
+        ),
       ),
       
       bottomNavigationBar: Semantics(

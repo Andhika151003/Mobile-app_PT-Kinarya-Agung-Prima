@@ -72,7 +72,6 @@ class AddressService {
         ));
       }
       
-      // If no default, try getting the first one
       final all = await _addressRepository.getFirstAddress();
       if (all.docs.isNotEmpty) {
         return Result.success(AddressModel.fromMap(

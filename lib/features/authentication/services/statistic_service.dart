@@ -37,10 +37,6 @@ class StatisticService {
     try {
       final now = DateTime.now();
       final firstDayOfMonth = DateTime(now.year, now.month, 1);
-
-      // We might need a method in OrderRepository to get all orders or filter by status
-      // For now, let's assume we can get them.
-      // Optimization: This should probably be a Cloud Function or more specific query.
       
       final snapshot = await FirebaseFirestore.instance
           .collection('orders')

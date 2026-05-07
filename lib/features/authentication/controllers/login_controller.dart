@@ -43,7 +43,6 @@ class LoginController extends ChangeNotifier {
       final failure = result.failure;
       _setError(failure?.message ?? 'Login gagal');
       
-      // Handle deactivated account specific message (if phone is in message)
       if (failure?.message.contains('hubungi admin di') ?? false) {
         final parts = failure!.message.split(' di ');
         if (parts.length > 1) {

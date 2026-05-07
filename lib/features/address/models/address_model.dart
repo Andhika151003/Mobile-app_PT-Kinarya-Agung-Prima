@@ -1,6 +1,6 @@
 class AddressModel {
   final String? id;
-  final String label; // Home, Office, etc.
+  final String label;
   final String recipientName;
   final String phoneNumber;
   final String fullAddress;

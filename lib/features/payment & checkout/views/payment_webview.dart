@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../order/controllers/order_stats_helper.dart';
+import '../../order/controllers/order_user_controller.dart';
 
 class PaymentWebView extends StatefulWidget {
   final String paymentUrl;
@@ -27,7 +27,7 @@ class _PaymentWebViewState extends State<PaymentWebView> {
   bool _hasError = false; 
   String _errorMsg = '';
   int _errorCode = 0;
-  StreamSubscription<DocumentSnapshot>? _statusSubscription;
+  StreamSubscription<Map<String, dynamic>?>? _statusSubscription;
 
   final String _merchantReturnUrl = dotenv.get('BACKEND_URL');
 
@@ -48,12 +48,6 @@ class _PaymentWebViewState extends State<PaymentWebView> {
           onWebResourceError: (error) {
             debugPrint('❌ WebView Error: [${error.errorCode}] ${error.description}');
             
-            // Filter non-fatal errors
-            // -10: ERR_UNKNOWN_URL_SCHEME (Handled in onNavigationRequest or sub-resource)
-            // -1: Generic error / Connection closed
-            // -6: Connection refused (often transient during gateway handshake)
-            // -8: Connection timed out (transient)
-            // -3: ERR_ABORTED (often happens when navigation is cancelled or interrupted)
             final nonFatalCodes = [-10, -1, -6, -8, -3, 102];
             if (nonFatalCodes.contains(error.errorCode)) {
               debugPrint('ℹ️ Ignoring non-fatal error: ${error.errorCode}');
@@ -109,13 +103,11 @@ class _PaymentWebViewState extends State<PaymentWebView> {
       )
       ..loadRequest(Uri.parse(widget.paymentUrl));
 
-    _statusSubscription = FirebaseFirestore.instance
-        .collection('orders')
-        .doc(widget.orderId)
-        .snapshots()
-        .listen((snapshot) {
-      if (snapshot.exists) {
-        final data = snapshot.data() as Map<String, dynamic>;
+    final orderUserController = OrderUserController();
+    _statusSubscription = orderUserController
+        .streamOrderById(widget.orderId)
+        .listen((data) {
+      if (data != null) {
         final status = data['status'];
         
         if (status == 'Paid' && !_isUpdating) {

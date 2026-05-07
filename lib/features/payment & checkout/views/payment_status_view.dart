@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../../order/controllers/order_stats_helper.dart';
+import '../../order/controllers/order_user_controller.dart';
 
 class PaymentStatusView extends StatefulWidget {
   final String orderId;
@@ -23,6 +20,8 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
   bool _isChecking = false;
   String? _syncMessage;
 
+  final _orderUserController = OrderUserController();
+
   @override
   void initState() {
     super.initState();
@@ -35,18 +34,14 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
       _syncMessage = null;
     });
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('orders')
-          .doc(widget.orderId)
-          .get();
-      if (doc.exists && mounted) {
-        final data = doc.data()!;
+      final orderData = await _orderUserController.getOrderById(widget.orderId);
+      if (orderData != null && mounted) {
         setState(() {
-          _order = data;
+          _order = orderData;
           _isLoading = false;
         });
 
-        final status = data['status'] as String? ?? 'Ordered';
+        final status = orderData['status'] as String? ?? 'Ordered';
         if (status == 'Ordered' || status == 'Pending Payment') {
           await _syncFromDuitku();
         } else {
@@ -65,43 +60,21 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
 
   Future<void> _syncFromDuitku() async {
     try {
-      final baseUrl = dotenv.get('BACKEND_URL');
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/check-status'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'orderId': widget.orderId}),
-          )
-          .timeout(const Duration(seconds: 10));
+      final syncStatus = await _orderUserController.syncDuitkuPayment(widget.orderId);
+      
+      if (syncStatus == 'Paid') {
+        _syncMessage = 'Status diperbarui: Pembayaran Berhasil';
+      } else if (syncStatus == 'Expired') {
+        _syncMessage = 'Status diperbarui: Pembayaran Kedaluwarsa';
+      } else if (syncStatus != null) {
+        _syncMessage = 'Status saat ini: $syncStatus';
+      }
 
-      if (response.statusCode == 200) {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final duitkuStatus = body['statusCode'] as String?;
-
-        if (duitkuStatus == '00') {
-          // Status Berhasil
-          await OrderStatsHelper.markOrderAsPaid(widget.orderId);
-          _syncMessage = 'Status diperbarui: Pembayaran Berhasil';
-        } else if (duitkuStatus == '02') {
-          // Status Expired atau Cancelled
-          await FirebaseFirestore.instance
-              .collection('orders')
-              .doc(widget.orderId)
-              .update({'status': 'Expired'});
-          _syncMessage = 'Status diperbarui: Pembayaran Kedaluwarsa';
-        } else {
-          _syncMessage = 'Status saat ini: $duitkuStatus';
-        }
-
-        final doc = await FirebaseFirestore.instance
-            .collection('orders')
-            .doc(widget.orderId)
-            .get();
-        if (mounted && doc.exists) {
-          setState(() {
-            _order = doc.data();
-          });
-        }
+      final updatedOrderData = await _orderUserController.getOrderById(widget.orderId);
+      if (mounted && updatedOrderData != null) {
+        setState(() {
+          _order = updatedOrderData;
+        });
       }
     } catch (e) {
       debugPrint('Sync Duitku Error: $e');

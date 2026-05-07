@@ -93,7 +93,6 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   Future<void> _fetchProducts() async {
     setState(() => _loadingProducts = true);
     try {
-      // Fetch promotions to check for busy products
       await _controller.fetchAllPromotions();
 
       final snapshot = await FirebaseFirestore.instance
@@ -157,11 +156,9 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     DateTime firstDate;
 
     if (isStart) {
-      // Start Date: tidak boleh pilih masa lalu
       initialDate = _startDate.isBefore(today) ? today : _startDate;
       firstDate = today;
     } else {
-      // End Date: tidak boleh pilih sebelum Start Date
       final minEndDate = _startDate.isBefore(today) ? today : _startDate;
       initialDate = _endDate.isBefore(minEndDate) ? minEndDate : _endDate;
       firstDate = minEndDate;
@@ -183,7 +180,6 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
       setState(() {
         if (isStart) {
           _startDate = picked;
-          // Jika start date lebih akhir dari end date, geser end date otomatis
           if (_endDate.isBefore(_startDate)) {
             _endDate = _startDate;
           }
@@ -236,7 +232,6 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     final titleEmpty = _titleController.text.trim().isEmpty;
     final discountTypeEmpty = _discountType.isEmpty;
 
-    // BOGO tidak butuh amount, tapi BUNDLE BUTUH amount
     final needsAmount = _discountType != 'bogo';
 
     final discountAmtEmpty =
@@ -249,7 +244,6 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         (_startTime.hour == _endTime.hour &&
             _startTime.minute >= _endTime.minute);
 
-    // Produk wajib diisi HANYA jika scope == 'products'
     final productEmpty =
         _applicableTo == 'products' && _selectedProductIds.isEmpty;
 
@@ -594,7 +588,6 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
       final matchCat =
           _selectedCategory == 'All' || p['category'] == _selectedCategory;
 
-      // Check if product is already in another promo during these dates
       final isBusy = _isProductBusy(p['id']);
 
       return matchSearch && matchCat && !isBusy;
@@ -616,7 +609,6 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     );
 
     for (var promo in _controller.promotions) {
-      // Skip current promotion being edited
       if (promo.id == widget.promotion?.id) continue;
       if (promo.status != 'active') continue;
 
@@ -634,11 +626,9 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         59,
       );
 
-      // Check date overlap
       bool overlaps = start.isBefore(pEnd) && end.isAfter(pStart);
       if (!overlaps) continue;
 
-      // Check product overlap
       if (promo.applicableTo == 'all' || promo.productIds.contains(productId)) {
         return true;
       }

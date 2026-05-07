@@ -67,9 +67,6 @@ class OrderService {
     required String userId,
   }) async {
     try {
-      // For now, keep it simple by updating status to Cancelled
-      // In a real app, this might involve stock return logic (already in OrderStatsHelper? No, it was in the controller)
-      // I'll re-add the stock return logic here or in repository
       await _orderRepository.updateOrderStatus(orderId, {
         'status': 'Cancelled',
         'cancelledAt': FieldValue.serverTimestamp(),

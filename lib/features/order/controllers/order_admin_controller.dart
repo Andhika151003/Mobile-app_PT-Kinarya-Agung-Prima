@@ -85,8 +85,6 @@ class OrderAdminController extends ChangeNotifier {
     if (d1 == null) return false;
     return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
   }
-
-  // --- Backward Compatibility for Views ---
   
   Future<List<OrderModel>> getAllOrdersAdmin() async {
     final result = await getAllOrders();

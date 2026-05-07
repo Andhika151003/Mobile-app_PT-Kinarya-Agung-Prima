@@ -76,7 +76,6 @@ class _CheckoutViewState extends State<CheckoutView> {
       final String fallbackName =
           user?.displayName ?? user?.email?.split('@').first ?? 'Customer Baru';
 
-      // 1. Get user profile for fullname
       final profile = await RetailProfileController().getRetailProfile();
       if (profile != null && mounted) {
         setState(() {
@@ -86,7 +85,6 @@ class _CheckoutViewState extends State<CheckoutView> {
         });
       }
 
-      // 2. Get default address from new system
       final result = await _addressController.getDefaultAddress();
 
       if (mounted) {
