@@ -12,7 +12,6 @@ class CartController extends ChangeNotifier {
   final ProductRepository _productRepository = ProductRepository();
   final List<CartItem> _items = [];
   
-  // Cache UID saat ini untuk memastikan kita menyimpan ke kunci yang benar
   String? _currentUid;
   
   CartController._internal() {

@@ -5,7 +5,6 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'order_stats_helper.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import '../../notification/services/push_notification_service.dart';
 import '../../../core/repositories/order_repository.dart';
@@ -77,7 +76,6 @@ class OrderUserController {
             relatedId: orderId,
           );
           
-          // Track Event: Purchase Success
           await _analytics.logPurchase(
             transactionId: orderId,
             currency: 'IDR',
@@ -88,7 +86,6 @@ class OrderUserController {
         } else if (duitkuStatus == '02' || statusDesc == 'Expired') {
            await _orderRepository.updateOrderStatus(orderId, {'status': 'Expired'});
            
-           // Track Event: Payment Expired
            await _analytics.logEvent(name: 'payment_expired', parameters: {'order_id': orderId});
            
            return 'Expired';
