@@ -129,6 +129,14 @@ class CartController extends ChangeNotifier {
   }) {
     final existingIndex = _items.indexWhere((item) => item.id == id);
 
+    int finalQuantity = quantity;
+    if (finalQuantity > stockLimit) {
+      finalQuantity = stockLimit;
+    }
+    if (finalQuantity < minOrder) {
+      finalQuantity = minOrder > stockLimit ? stockLimit : minOrder;
+    }
+
     if (existingIndex >= 0) {
       final existingItem = _items[existingIndex];
       if (existingItem.quantity + quantity <= stockLimit) {
@@ -147,7 +155,7 @@ class CartController extends ChangeNotifier {
           price: price,
           imageUrl: imageUrl,
           category: category,
-          quantity: quantity,
+          quantity: finalQuantity,
           minOrder: minOrder,
           stockLimit: stockLimit,
         ),
