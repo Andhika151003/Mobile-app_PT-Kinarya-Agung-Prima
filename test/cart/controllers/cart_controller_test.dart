@@ -1,12 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ecommerce/features/cart/controllers/cart_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 
 void main() {
   late CartController cartController;
+  late MockFirebaseAuth mockAuth;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    mockAuth = MockFirebaseAuth();
+    CartController.setAuthInstance(mockAuth);
     cartController = CartController();
     cartController.clearCart();
   });

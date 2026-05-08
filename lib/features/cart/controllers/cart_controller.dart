@@ -4,10 +4,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/cart.dart';
+import 'dart:async';
 
 class CartController extends ChangeNotifier {
   static final CartController _instance = CartController._internal();
   factory CartController() => _instance;
+
+  static FirebaseAuth? _mockAuth;
+  static FirebaseAuth get _auth => _mockAuth ?? FirebaseAuth.instance;
+  StreamSubscription<User?>? _authSubscription;
+
+  @visibleForTesting
+  static void setAuthInstance(FirebaseAuth auth) {
+    _mockAuth = auth;
+    _instance._listenToAuthChanges();
+  }
 
   String? _currentUid;
   final List<CartItem> _items = [];
@@ -17,7 +28,8 @@ class CartController extends ChangeNotifier {
   }
 
   void _listenToAuthChanges() {
-    FirebaseAuth.instance.authStateChanges().listen((user) {
+    _authSubscription?.cancel();
+    _authSubscription = _auth.authStateChanges().listen((user) {
       if (_currentUid != user?.uid) {
         _currentUid = user?.uid;
         _loadFromPrefs();
@@ -25,7 +37,8 @@ class CartController extends ChangeNotifier {
     });
   }
 
-  String get _prefKey => _currentUid != null ? 'cart_items_$_currentUid' : 'cart_items_guest';
+  String get _prefKey =>
+      _currentUid != null ? 'cart_items_$_currentUid' : 'cart_items_guest';
 
   List<CartItem> get items => _items;
 
@@ -42,14 +55,16 @@ class CartController extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final key = _prefKey;
       final raw = prefs.getString(key);
-      
-      _items.clear(); 
-      
+
+      _items.clear();
+
       if (raw != null) {
         final List<dynamic> decoded = jsonDecode(raw);
-        _items.addAll(decoded
-            .map((e) => CartItem.fromMap(Map<String, dynamic>.from(e)))
-            .toList());
+        _items.addAll(
+          decoded
+              .map((e) => CartItem.fromMap(Map<String, dynamic>.from(e)))
+              .toList(),
+        );
       }
       notifyListeners();
     } catch (e) {
