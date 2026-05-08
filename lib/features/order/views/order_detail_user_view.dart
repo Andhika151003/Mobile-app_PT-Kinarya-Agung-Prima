@@ -280,7 +280,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Bayar sebelum ${DateFormat('hh:mm a').format(date.add(const Duration(minutes: 30)))} (Masa berlaku 30 menit)',
+                      'Bayar sebelum ${DateFormat('hh:mm a').format(date.add(const Duration(minutes: 1)))} (Masa berlaku 1 menit)',
                       style: TextStyle(fontSize: 11, color: Colors.red.shade700, fontWeight: FontWeight.bold),
                     ),
                   ),

@@ -116,7 +116,7 @@ class CheckoutController {
           'customerEmail': email,
           'customerName': customerName,
           'paymentMethod': paymentMethodCode,
-          'expiryPeriod': 30,
+          'expiryPeriod': 1,
         }),
       );
 
