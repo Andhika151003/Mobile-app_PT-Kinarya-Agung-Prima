@@ -6,7 +6,13 @@ import '../../shared/services/pdf_service.dart';
 
 class OrderDetailAdminView extends StatefulWidget {
   final String orderId;
-  const OrderDetailAdminView({super.key, required this.orderId});
+  final OrderAdminController? adminController;
+  
+  const OrderDetailAdminView({
+    super.key, 
+    required this.orderId, 
+    this.adminController,
+  });
 
   @override
   State<OrderDetailAdminView> createState() => _OrderDetailAdminViewState();
@@ -16,7 +22,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   static const _primaryColor = Color(0xFF4A7D3C); 
   static const _bgColor = Color(0xFFF7F8FA);
 
-  final OrderAdminController _adminController = OrderAdminController();
+  late final OrderAdminController _adminController;
   
   OrderModel? _order; 
   bool _isLoading = true;
@@ -25,6 +31,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   @override
   void initState() {
     super.initState();
+    _adminController = widget.adminController ?? OrderAdminController();
     _fetchOrder();
   }
 
@@ -66,11 +73,17 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         title: const Text('Update Status Pesanan?'),
         content: Text('Melanjutkan pesanan ke tahap: $actionLabel?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, elevation: 0),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Konfirmasi', style: TextStyle(color: Colors.white)),
+          Semantics(
+            label: 'btn_confirm_cancel',
+            child: TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
+          ),
+          Semantics(
+            label: 'btn_confirm_ok',
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, elevation: 0),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Konfirmasi', style: TextStyle(color: Colors.white)),
+            ),
           ),
         ],
       ),
@@ -99,11 +112,17 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         title: const Text('Batalkan Pesanan?'),
         content: const Text('Tindakan ini akan mengembalikan stok produk dan membatalkan pesanan secara permanen.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tutup', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, elevation: 0),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Ya, Batalkan', style: TextStyle(color: Colors.white)),
+          Semantics(
+            label: 'btn_cancel_dialog_close',
+            child: TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tutup', style: TextStyle(color: Colors.grey))),
+          ),
+          Semantics(
+            label: 'btn_cancel_dialog_confirm',
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, elevation: 0),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Ya, Batalkan', style: TextStyle(color: Colors.white)),
+            ),
           ),
         ],
       ),
@@ -144,20 +163,26 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
-            child: const Icon(Icons.arrow_back_ios_new, size: 14, color: Colors.black87),
+          icon: Semantics(
+            label: 'btn_back',
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
+              child: const Icon(Icons.arrow_back_ios_new, size: 14, color: Colors.black87),
+            ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Order Details', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
-              child: const Icon(Icons.print_outlined, size: 16, color: Colors.black87),
+            icon: Semantics(
+              label: 'btn_print_invoice_header',
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
+                child: const Icon(Icons.print_outlined, size: 16, color: Colors.black87),
+              ),
             ),
             onPressed: () {
               if (_order != null) {
@@ -189,23 +214,29 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                   children: [
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _updateStatus,
-                        style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
-                        child: const Text('Update Status', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                      child: Semantics(
+                        label: 'btn_update_status',
+                        child: ElevatedButton(
+                          onPressed: _updateStatus,
+                          style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
+                          child: const Text('Update Status', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: _cancelOrder,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.red),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      child: Semantics(
+                        label: 'btn_cancel_order',
+                        child: OutlinedButton(
+                          onPressed: _cancelOrder,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.red),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('Batalkan Pesanan', style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.bold)),
                         ),
-                        child: const Text('Batalkan Pesanan', style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -232,6 +263,19 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                     order.shippingAddress, 
                     style: TextStyle(fontSize: 13, height: 1.4, color: order.shippingAddress.contains('tidak tersedia') ? Colors.red : Colors.black87)
                   ),
+                  if (order.phoneNumber != null && order.phoneNumber!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.phone_outlined, size: 14, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Text(
+                          order.phoneNumber!,
+                          style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -250,6 +294,14 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                     child: Column(
                       children: [
                         _buildSummaryRow('Subtotal', currency.format(order.subtotal)),
+                        if (order.discountAmount > 0) ...[
+                          const SizedBox(height: 8),
+                          _buildSummaryRow(
+                            'Discount', 
+                            '-${currency.format(order.discountAmount)}',
+                            valueColor: Colors.red.shade600,
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         _buildSummaryRow('Tax (11%)', currency.format(order.tax)),
                         const SizedBox(height: 8),
@@ -321,7 +373,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                       children: [
                         Container(width: 8, height: 8, decoration: BoxDecoration(color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : (status == 'Ordered' ? Colors.orange : _primaryColor), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Flexible(child: Text((status == 'Cancelled' || status == 'Expired') ? 'Expired / Canceled' : (status == 'Ordered' ? 'Unpaid' : 'Paid'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
+                        Flexible(child: Text(status == 'Cancelled' ? 'Canceled' : (status == 'Expired' ? 'Expired' : (status == 'Ordered' ? 'Unpaid' : 'Paid')), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                   ],
@@ -337,7 +389,18 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   Widget _buildStatusStepper(String currentStatus, OrderModel order) {
     final steps = ['Ordered', 'Paid', 'Shipped', 'Delivered'];
     int currentIndex = steps.indexOf(currentStatus);
-    if (currentIndex == -1) currentIndex = 0;
+    bool isCancelledOrExpired = currentStatus == 'Cancelled' || currentStatus == 'Expired';
+    if (currentIndex == -1) {
+      if (order.deliveredAt != null) {
+        currentIndex = 3;
+      } else if (order.shippedAt != null) {
+        currentIndex = 2;
+      } else if (order.paidAt != null) {
+        currentIndex = 1;
+      } else {
+        currentIndex = 0;
+      }
+    }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,12 +427,12 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                   Container(
                     width: 24, height: 24,
                     decoration: BoxDecoration(
-                      color: isCompleted ? (currentStatus == 'Cancelled' ? Colors.red : _primaryColor) : Colors.white, 
+                      color: isCompleted ? (isCancelledOrExpired && index == currentIndex ? Colors.red : _primaryColor) : Colors.white, 
                       shape: BoxShape.circle, 
-                      border: Border.all(color: isCompleted ? (currentStatus == 'Cancelled' ? Colors.red : _primaryColor) : Colors.grey.shade300)
+                      border: Border.all(color: isCompleted ? (isCancelledOrExpired && index == currentIndex ? Colors.red : _primaryColor) : Colors.grey.shade300)
                     ),
                     child: Icon(
-                      currentStatus == 'Cancelled' && index == currentIndex ? Icons.close : Icons.check, 
+                      isCancelledOrExpired && index == currentIndex ? Icons.close : Icons.check, 
                       size: 14, 
                       color: isCompleted ? Colors.white : Colors.grey.shade300
                     ),
@@ -428,12 +491,12 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value) {
+  Widget _buildSummaryRow(String label, String value, {Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-        Text(value, style: const TextStyle(fontSize: 13, color: Colors.black87)),
+        Text(value, style: TextStyle(fontSize: 13, color: valueColor ?? Colors.black87)),
       ],
     );
   }
@@ -504,20 +567,23 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () {
-              if (_order != null) {
-                PdfService.generateAndOpenInvoice(_order!);
-              }
-            },
-            icon: const Icon(Icons.download_outlined, size: 18),
-            label: const Text('Download Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey.shade100,
-              foregroundColor: Colors.black87,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: Semantics(
+            label: 'btn_download_invoice',
+            child: ElevatedButton.icon(
+              onPressed: () {
+                if (_order != null) {
+                  PdfService.generateAndOpenInvoice(_order!);
+                }
+              },
+              icon: const Icon(Icons.download_outlined, size: 18),
+              label: const Text('Download Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey.shade100,
+                foregroundColor: Colors.black87,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
           ),
         ),
@@ -530,8 +596,10 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
 
     if (status == 'Delivered') {
       bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
-    } else if (status == 'Expired' || status == 'Cancelled') {
+    } else if (status == 'Cancelled') {
       bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Expired') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
     } else if (status == 'Ordered') {
       bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
     } else if (status == 'Shipped') {

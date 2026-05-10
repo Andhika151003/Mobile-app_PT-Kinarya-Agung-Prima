@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,8 +11,7 @@ class FormPromotionAdminView extends StatefulWidget {
   const FormPromotionAdminView({super.key, this.promotion});
 
   @override
-  State<FormPromotionAdminView> createState() =>
-      _FormPromotionAdminViewState();
+  State<FormPromotionAdminView> createState() => _FormPromotionAdminViewState();
 }
 
 class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
@@ -20,6 +20,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _discountValueController;
+  late TextEditingController _maxDiscountController;
   late TextEditingController _skuController;
   late String _discountType;
   late DateTime _startDate;
@@ -27,6 +28,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
   late String _status;
+  late String _applicableTo;
   File? _imageFile;
   bool _isLoading = false;
 
@@ -52,35 +54,48 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   @override
   void initState() {
     super.initState();
-    _titleController =
-        TextEditingController(text: widget.promotion?.title ?? '');
-    _descriptionController =
-        TextEditingController(text: widget.promotion?.description ?? '');
+    _titleController = TextEditingController(
+      text: widget.promotion?.title ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.promotion?.description ?? '',
+    );
     _discountValueController = TextEditingController(
-      text: widget.promotion?.discountValue != null &&
+      text:
+          widget.promotion?.discountValue != null &&
               widget.promotion!.discountValue > 0
           ? widget.promotion!.discountValue.toString()
           : '',
     );
+    _maxDiscountController = TextEditingController(
+      text: widget.promotion?.maxDiscount != null
+          ? widget.promotion!.maxDiscount!.toString()
+          : '',
+    );
     _skuController = TextEditingController(
-      text: widget.promotion?.sku ??
+      text:
+          widget.promotion?.sku ??
           '#PRM-${DateTime.now().millisecondsSinceEpoch % 9000 + 1000}',
     );
     _discountType = widget.promotion?.discountType ?? '';
     _startDate = widget.promotion?.startDate ?? DateTime.now();
-    _endDate = widget.promotion?.endDate ??
+    _endDate =
+        widget.promotion?.endDate ??
         DateTime.now().add(const Duration(days: 7));
     _startTime = _parseTime(widget.promotion?.startTime ?? '00:00');
     _endTime = _parseTime(widget.promotion?.endTime ?? '23:59');
     _status = widget.promotion?.status ?? 'active';
-    _selectedProductIds =
-        List<String>.from(widget.promotion?.productIds ?? []);
+    _applicableTo = widget.promotion?.applicableTo ?? 'products';
+    _selectedProductIds = List<String>.from(widget.promotion?.productIds ?? []);
     _fetchProducts();
   }
 
   Future<void> _fetchProducts() async {
     setState(() => _loadingProducts = true);
     try {
+      // Fetch promotions to check for busy products
+      await _controller.fetchAllPromotions();
+
       final snapshot = await FirebaseFirestore.instance
           .collection('products')
           .where('isAvailable', isEqualTo: true)
@@ -120,8 +135,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
 
   TimeOfDay _parseTime(String time) {
     final parts = time.split(':');
-    return TimeOfDay(
-        hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 
   @override
@@ -129,6 +143,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     _titleController.dispose();
     _descriptionController.dispose();
     _discountValueController.dispose();
+    _maxDiscountController.dispose();
     _skuController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -137,8 +152,20 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
   Future<void> _selectDate(bool isStart) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final initialDate = isStart ? _startDate : _endDate;
-    final firstDate = initialDate.isBefore(today) ? initialDate : today;
+
+    DateTime initialDate;
+    DateTime firstDate;
+
+    if (isStart) {
+      // Start Date: tidak boleh pilih masa lalu
+      initialDate = _startDate.isBefore(today) ? today : _startDate;
+      firstDate = today;
+    } else {
+      // End Date: tidak boleh pilih sebelum Start Date
+      final minEndDate = _startDate.isBefore(today) ? today : _startDate;
+      initialDate = _endDate.isBefore(minEndDate) ? minEndDate : _endDate;
+      firstDate = minEndDate;
+    }
 
     final picked = await showDatePicker(
       context: context,
@@ -147,8 +174,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
       lastDate: DateTime(2030),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme:
-              const ColorScheme.light(primary: Color(0xFF2E7D32)),
+          colorScheme: const ColorScheme.light(primary: Color(0xFF2E7D32)),
         ),
         child: child!,
       ),
@@ -157,6 +183,10 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
       setState(() {
         if (isStart) {
           _startDate = picked;
+          // Jika start date lebih akhir dari end date, geser end date otomatis
+          if (_endDate.isBefore(_startDate)) {
+            _endDate = _startDate;
+          }
         } else {
           _endDate = picked;
         }
@@ -171,8 +201,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
       initialTime: isStart ? _startTime : _endTime,
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme:
-              const ColorScheme.light(primary: Color(0xFF2E7D32)),
+          colorScheme: const ColorScheme.light(primary: Color(0xFF2E7D32)),
         ),
         child: child!,
       ),
@@ -206,19 +235,23 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
 
     final titleEmpty = _titleController.text.trim().isEmpty;
     final discountTypeEmpty = _discountType.isEmpty;
-    
+
     // BOGO tidak butuh amount, tapi BUNDLE BUTUH amount
-    final needsAmount = _discountType != 'bogo'; 
-    
-    final discountAmtEmpty = needsAmount &&
+    final needsAmount = _discountType != 'bogo';
+
+    final discountAmtEmpty =
+        needsAmount &&
         (_discountValueController.text.trim().isEmpty ||
-            double.tryParse(_discountValueController.text.trim()) ==
-                null);
+            double.tryParse(_discountValueController.text.trim()) == null);
     final dateInvalid = _startDate.isAfter(_endDate);
-    final timeInvalid = (_startTime.hour > _endTime.hour) ||
+    final timeInvalid =
+        (_startTime.hour > _endTime.hour) ||
         (_startTime.hour == _endTime.hour &&
             _startTime.minute >= _endTime.minute);
-    final productEmpty = _selectedProductIds.isEmpty;
+
+    // Produk wajib diisi HANYA jika scope == 'products'
+    final productEmpty =
+        _applicableTo == 'products' && _selectedProductIds.isEmpty;
 
     setState(() {
       _titleError = titleEmpty;
@@ -227,7 +260,8 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
       _dateError = dateInvalid;
       _timeError = timeInvalid;
       _productError = productEmpty;
-      _showTopWarning = titleEmpty ||
+      _showTopWarning =
+          titleEmpty ||
           discountTypeEmpty ||
           discountAmtEmpty ||
           dateInvalid ||
@@ -253,8 +287,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
           child: Column(
@@ -265,11 +298,13 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                 height: 72,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                      color: const Color(0xFF2E7D32), width: 4),
+                  border: Border.all(color: const Color(0xFF2E7D32), width: 4),
                 ),
-                child: const Icon(Icons.check_rounded,
-                    color: Color(0xFF2E7D32), size: 40),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Color(0xFF2E7D32),
+                  size: 40,
+                ),
               ),
               const SizedBox(height: 20),
               Text(
@@ -290,14 +325,18 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                     backgroundColor: const Color(0xFF2E7D32),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     elevation: 0,
                   ),
-                  child: const Text('OK',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white)),
+                  child: const Text(
+                    'OK',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -313,8 +352,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
           child: Column(
@@ -323,9 +361,10 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Confirm',
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w700)),
+                  const Text(
+                    'Confirm',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
                   GestureDetector(
                     onTap: () => Navigator.pop(ctx, false),
                     child: Container(
@@ -335,8 +374,11 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                         color: const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.close,
-                          size: 16, color: Color(0xFF6B7280)),
+                      child: const Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Color(0xFF6B7280),
+                      ),
                     ),
                   ),
                 ],
@@ -350,20 +392,23 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFEBEB),
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                          color: Colors.red.shade300, width: 2),
+                      border: Border.all(color: Colors.red.shade300, width: 2),
                     ),
-                    child: const Icon(Icons.close_rounded,
-                        color: Colors.red, size: 30),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.red,
+                      size: 30,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   const Expanded(
                     child: Text(
                       'Are you sure you want to delete this promotion?',
                       style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF374151),
-                          height: 1.4),
+                        fontSize: 14,
+                        color: Color(0xFF374151),
+                        height: 1.4,
+                      ),
                     ),
                   ),
                 ],
@@ -375,18 +420,23 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(ctx, true),
                       style: OutlinedButton.styleFrom(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         side: const BorderSide(
-                            color: Color(0xFF2E7D32), width: 1.5),
+                          color: Color(0xFF2E7D32),
+                          width: 1.5,
+                        ),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                      child: const Text('Yes',
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1F2937))),
+                      child: const Text(
+                        'Yes',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1F2937),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -394,18 +444,23 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(ctx, false),
                       style: OutlinedButton.styleFrom(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         side: const BorderSide(
-                            color: Color(0xFF2E7D32), width: 1.5),
+                          color: Color(0xFF2E7D32),
+                          width: 1.5,
+                        ),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                      child: const Text('No',
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1F2937))),
+                      child: const Text(
+                        'No',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1F2937),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -422,10 +477,20 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
 
     setState(() => _isLoading = true);
 
-    final startDateTime = DateTime(_startDate.year, _startDate.month,
-        _startDate.day, _startTime.hour, _startTime.minute);
-    final endDateTime = DateTime(_endDate.year, _endDate.month,
-        _endDate.day, _endTime.hour, _endTime.minute);
+    final startDateTime = DateTime(
+      _startDate.year,
+      _startDate.month,
+      _startDate.day,
+      _startTime.hour,
+      _startTime.minute,
+    );
+    final endDateTime = DateTime(
+      _endDate.year,
+      _endDate.month,
+      _endDate.day,
+      _endTime.hour,
+      _endTime.minute,
+    );
 
     bool success;
     if (widget.promotion == null) {
@@ -433,16 +498,16 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         discountType: _discountType,
-        discountValue:
-            double.tryParse(_discountValueController.text) ?? 0,
-        productIds: _selectedProductIds,
-        applicableTo: 'all',
+        discountValue: double.tryParse(_discountValueController.text) ?? 0,
+        productIds: _applicableTo == 'all' ? [] : _selectedProductIds,
+        applicableTo: _applicableTo,
         startDate: startDateTime,
         endDate: endDateTime,
         startTime: _formatTime(_startTime),
         endTime: _formatTime(_endTime),
         sku: _skuController.text,
         imageFile: _imageFile,
+        maxDiscount: double.tryParse(_maxDiscountController.text),
       );
     } else {
       success = await _controller.updatePromotion(
@@ -450,10 +515,9 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         discountType: _discountType,
-        discountValue:
-            double.tryParse(_discountValueController.text) ?? 0,
-        productIds: _selectedProductIds,
-        applicableTo: 'all',
+        discountValue: double.tryParse(_discountValueController.text) ?? 0,
+        productIds: _applicableTo == 'all' ? [] : _selectedProductIds,
+        applicableTo: _applicableTo,
         startDate: startDateTime,
         endDate: endDateTime,
         startTime: _formatTime(_startTime),
@@ -462,6 +526,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         sku: _skuController.text,
         imageFile: _imageFile,
         currentImageUrl: widget.promotion!.imageUrl,
+        maxDiscount: double.tryParse(_maxDiscountController.text),
       );
     }
 
@@ -469,16 +534,20 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     if (!mounted) return;
 
     if (success) {
-      await _showSuccessDialog(widget.promotion == null
-          ? 'Successfully Created'
-          : 'Successfully Saved');
+      await _showSuccessDialog(
+        widget.promotion == null
+            ? 'Successfully Created'
+            : 'Successfully Saved',
+      );
       if (!mounted) return;
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Failed to save promotion'),
-        backgroundColor: Colors.red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_controller.errorMessage ?? 'Gagal menyimpan promo'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -492,15 +561,19 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     if (ok) {
       Navigator.pop(context);
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Promotion deleted'),
-        backgroundColor: Colors.red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Promotion deleted'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Failed to delete promotion'),
-        backgroundColor: Colors.red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to delete promotion'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -515,21 +588,71 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
 
   List<Map<String, dynamic>> get _filteredProducts {
     return _allProducts.where((p) {
-      final matchSearch = (p['name'] as String)
-          .toLowerCase()
-          .contains(_productSearchQuery.toLowerCase());
-      final matchCat = _selectedCategory == 'All' ||
-          p['category'] == _selectedCategory;
-      return matchSearch && matchCat;
+      final matchSearch = (p['name'] as String).toLowerCase().contains(
+        _productSearchQuery.toLowerCase(),
+      );
+      final matchCat =
+          _selectedCategory == 'All' || p['category'] == _selectedCategory;
+
+      // Check if product is already in another promo during these dates
+      final isBusy = _isProductBusy(p['id']);
+
+      return matchSearch && matchCat && !isBusy;
     }).toList();
   }
 
-  String _formatPrice(dynamic price) {
-    final val = (price is num) ? price.toInt() : 0;
-    if (val >= 1000) {
-      return 'Rp ${val.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+  bool _isProductBusy(String productId) {
+    if (_controller.promotions.isEmpty) return false;
+
+    // Normalize dates for current form
+    final start = DateTime(_startDate.year, _startDate.month, _startDate.day);
+    final end = DateTime(
+      _endDate.year,
+      _endDate.month,
+      _endDate.day,
+      23,
+      59,
+      59,
+    );
+
+    for (var promo in _controller.promotions) {
+      // Skip current promotion being edited
+      if (promo.id == widget.promotion?.id) continue;
+      if (promo.status != 'active') continue;
+
+      final pStart = DateTime(
+        promo.startDate.year,
+        promo.startDate.month,
+        promo.startDate.day,
+      );
+      final pEnd = DateTime(
+        promo.endDate.year,
+        promo.endDate.month,
+        promo.endDate.day,
+        23,
+        59,
+        59,
+      );
+
+      // Check date overlap
+      bool overlaps = start.isBefore(pEnd) && end.isAfter(pStart);
+      if (!overlaps) continue;
+
+      // Check product overlap
+      if (promo.applicableTo == 'all' || promo.productIds.contains(productId)) {
+        return true;
+      }
     }
-    return 'Rp $val';
+    return false;
+  }
+
+  String _formatPrice(dynamic price) {
+    final num val = (price is num) ? price : 0;
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(val);
   }
 
   @override
@@ -543,8 +666,11 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              color: Color(0xFF1F2937), size: 18),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Color(0xFF1F2937),
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -555,6 +681,46 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             color: Color(0xFF1F2937),
           ),
         ),
+        actions: [
+          if (isEditing && !_isLoading)
+            IconButton(
+              icon: const Icon(
+                Icons.delete_outline,
+                color: Colors.red,
+                size: 22,
+              ),
+              onPressed: _deletePromotion,
+            ),
+          if (_isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.only(right: 20),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF2E7D32),
+                  ),
+                ),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton(
+                onPressed: _savePromotion,
+                child: Text(
+                  isEditing ? 'Update' : 'Save',
+                  style: const TextStyle(
+                    color: Color(0xFF2E7D32),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         controller: _scrollController,
@@ -562,23 +728,26 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // ── Banner Warning (muncul saat ada error) ────────
             if (_showTopWarning) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFFBEB),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                      color: const Color(0xFFFCD34D), width: 1),
+                  border: Border.all(color: const Color(0xFFFCD34D), width: 1),
                 ),
                 child: Row(
                   children: const [
-                    Icon(Icons.warning_amber_rounded,
-                        color: Color(0xFFF59E0B), size: 18),
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: Color(0xFFF59E0B),
+                      size: 18,
+                    ),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -614,13 +783,16 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                           fit: BoxFit.cover,
                         )
                       : (widget.promotion?.imageUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(widget.promotion!.imageUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : null),
+                            ? DecorationImage(
+                                image: NetworkImage(
+                                  widget.promotion!.imageUrl!,
+                                ),
+                                fit: BoxFit.cover,
+                              )
+                            : null),
                 ),
-                child: (_imageFile == null && widget.promotion?.imageUrl == null)
+                child:
+                    (_imageFile == null && widget.promotion?.imageUrl == null)
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -631,8 +803,11 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                               color: const Color(0xFFE8F5E9),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.camera_alt_outlined,
-                                color: Color(0xFF2E7D32), size: 22),
+                            child: const Icon(
+                              Icons.camera_alt_outlined,
+                              color: Color(0xFF2E7D32),
+                              size: 22,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -640,7 +815,9 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                                 ? 'Replace Promotion Banner'
                                 : 'Upload Promotion Banner',
                             style: const TextStyle(
-                                fontSize: 12, color: Color(0xFF9CA3AF)),
+                              fontSize: 12,
+                              color: Color(0xFF9CA3AF),
+                            ),
                           ),
                         ],
                       )
@@ -653,8 +830,11 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                             color: Colors.black54,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.edit,
-                              color: Colors.white, size: 16),
+                          child: const Icon(
+                            Icons.edit,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         ),
                       ),
               ),
@@ -676,14 +856,11 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                 }
               },
               decoration: _inputDeco(
-                isEditing
-                    ? 'Change Promotion Title'
-                    : 'Enter Promotion Title',
+                isEditing ? 'Change Promotion Title' : 'Enter Promotion Title',
                 hasError: _titleError,
               ),
             ),
-            if (_titleError)
-              _errorText('Nama promo wajib diisi'),
+            if (_titleError) _errorText('Nama promo wajib diisi'),
 
             const SizedBox(height: 20),
 
@@ -722,16 +899,20 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                   value: _discountType.isEmpty ? null : _discountType,
                   hint: const Text(''),
                   isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                      color: Color(0xFF6B7280)),
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Color(0xFF6B7280),
+                  ),
                   items: const [
                     DropdownMenuItem(
-                        value: 'percentage',
-                        child: Text('Percentage')),
+                      value: 'percentage',
+                      child: Text('Percentage'),
+                    ),
+                    DropdownMenuItem(value: 'bogo', child: Text('BOGO')),
                     DropdownMenuItem(
-                        value: 'bogo', child: Text('BOGO')),
-                    DropdownMenuItem(
-                        value: 'bundle', child: Text('Bundle Deal')),
+                      value: 'bundle',
+                      child: Text('Bundle Deal'),
+                    ),
                   ],
                   onChanged: (v) => setState(() {
                     _discountType = v!;
@@ -760,32 +941,60 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                     });
                   }
                 },
-                decoration: _inputDeco(
-                  isEditing
-                      ? 'Change Discount Value'
-                      : (_discountType == 'percentage'
-                          ? 'Enter Discount Percentage'
-                          : 'Enter Discount per Set (Rp)'),
-                  hasError: _discountAmountError,
-                ).copyWith(
-                  suffixIcon: _discountType == 'percentage'
-                      ? const Padding(
-                          padding:
-                              EdgeInsets.only(right: 14, top: 14),
-                          child: Text('%',
-                              style: TextStyle(
+                decoration:
+                    _inputDeco(
+                      isEditing
+                          ? 'Change Discount Value'
+                          : (_discountType == 'percentage'
+                                ? 'Enter Discount Percentage'
+                                : 'Enter Discount per Set (Rp)'),
+                      hasError: _discountAmountError,
+                    ).copyWith(
+                      suffixIcon: _discountType == 'percentage'
+                          ? const Padding(
+                              padding: EdgeInsets.only(right: 14, top: 14),
+                              child: Text(
+                                '%',
+                                style: TextStyle(
                                   fontSize: 16,
-                                  color: Color(0xFF9CA3AF))),
-                        )
-                      : null,
-                  suffixIconConstraints: const BoxConstraints(
-                      minHeight: 0, minWidth: 0),
-                ),
+                                  color: Color(0xFF9CA3AF),
+                                ),
+                              ),
+                            )
+                          : null,
+                      suffixIconConstraints: const BoxConstraints(
+                        minHeight: 0,
+                        minWidth: 0,
+                      ),
+                    ),
               ),
               if (_discountAmountError)
                 _errorText(
-                    'Jumlah diskon harus diisi dengan angka yang valid.'),
+                  'Jumlah diskon harus diisi dengan angka yang valid.',
+                ),
             ],
+
+            const SizedBox(height: 20),
+
+            // ── Maximum Discount (Optional) ──────────────────
+            _label('Maximum Discount Amount (Optional)'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _maxDiscountController,
+              keyboardType: TextInputType.number,
+              decoration: _inputDeco('Enter Maximum Discount (Rp)').copyWith(
+                prefixText: 'Rp ',
+                prefixStyle: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Limit total diskon yang bisa didapatkan user (berguna untuk BOGO atau diskon % besar).',
+              style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+            ),
 
             const SizedBox(height: 20),
 
@@ -815,7 +1024,8 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             ),
             if (_dateError)
               _errorText(
-                  'Tanggal mulai dan tanggal berakhir promo wajib diisi.'),
+                'Tanggal mulai dan tanggal berakhir promo wajib diisi.',
+              ),
 
             const SizedBox(height: 20),
 
@@ -844,13 +1054,24 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
               ],
             ),
             if (_timeError)
-              _errorText(
-                  'Waktu mulai dan waktu berakhir promo wajib diisi.'),
+              _errorText('Waktu mulai dan waktu berakhir promo wajib diisi.'),
 
             const SizedBox(height: 24),
 
+            // ── Target Scope ──────────────────────────────────
+            _label('Promotion Scope'),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _buildScopeChip('Specific Products', 'products'),
+                const SizedBox(width: 12),
+                _buildScopeChip('All Products', 'all'),
+              ],
+            ),
+            const SizedBox(height: 24),
+
             // ── Product Selection ─────────────────────────────
-            if (true) ...[
+            if (_applicableTo == 'products') ...[
               _label('Product Selection'),
               const SizedBox(height: 6),
               if (_selectedProductIds.isNotEmpty)
@@ -871,37 +1092,40 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
               TextField(
                 decoration: InputDecoration(
                   hintText: 'Search Product',
-                  hintStyle: TextStyle(
-                      fontSize: 14, color: Colors.grey[400]),
+                  hintStyle: TextStyle(fontSize: 14, color: Colors.grey[400]),
                   suffixIcon: Container(
                     margin: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1F2937),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.search,
-                        color: Colors.white, size: 18),
+                    child: const Icon(
+                      Icons.search,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: Color(0xFFE5E7EB)),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: Color(0xFFE5E7EB)),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(
-                        color: Color(0xFF2E7D32), width: 1.5),
+                      color: Color(0xFF2E7D32),
+                      width: 1.5,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                 ),
-                onChanged: (v) =>
-                    setState(() => _productSearchQuery = v),
+                onChanged: (v) => setState(() => _productSearchQuery = v),
               ),
 
               const SizedBox(height: 12),
@@ -913,12 +1137,13 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                   children: _categories.map((cat) {
                     final isSel = _selectedCategory == cat;
                     return GestureDetector(
-                      onTap: () =>
-                          setState(() => _selectedCategory = cat),
+                      onTap: () => setState(() => _selectedCategory = cat),
                       child: Container(
                         margin: const EdgeInsets.only(right: 8),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 6),
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: isSel
                               ? const Color(0xFF2E7D32)
@@ -963,287 +1188,187 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                       child: Padding(
                         padding: EdgeInsets.all(24),
                         child: CircularProgressIndicator(
-                            color: Color(0xFF2E7D32)),
+                          color: Color(0xFF2E7D32),
+                        ),
                       ),
                     )
                   : _filteredProducts.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text('No products found',
-                                style: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontSize: 13)),
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          'No products found',
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 13,
                           ),
-                        )
-                      : GridView.builder(
-                          shrinkWrap: true,
-                          physics:
-                              const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
+                        ),
+                      ),
+                    )
+                  : GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             childAspectRatio: 0.82,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
                           ),
-                          itemCount: _filteredProducts.length,
-                          itemBuilder: (ctx, i) {
-                            final p = _filteredProducts[i];
-                            final isSel = _selectedProductIds
-                                .contains(p['id']);
-                            final imageUrl =
-                                (p['imageUrl'] as String?) ?? '';
-                            final imageUrls =
-                                (p['imageUrls'] as List?) ?? [];
-                            final displayImage = imageUrl.isNotEmpty
-                                ? imageUrl
-                                : (imageUrls.isNotEmpty
-                                    ? imageUrls[0].toString()
-                                    : '');
+                      itemCount: _filteredProducts.length,
+                      itemBuilder: (ctx, i) {
+                        final p = _filteredProducts[i];
+                        final isSel = _selectedProductIds.contains(p['id']);
+                        final imageUrl = (p['imageUrl'] as String?) ?? '';
+                        final imageUrls = (p['imageUrls'] as List?) ?? [];
+                        final displayImage = imageUrl.isNotEmpty
+                            ? imageUrl
+                            : (imageUrls.isNotEmpty
+                                  ? imageUrls[0].toString()
+                                  : '');
 
-                            return GestureDetector(
-                              onTap: () => setState(() {
-                                if (isSel) {
-                                  _selectedProductIds
-                                      .remove(p['id']);
-                                } else {
-                                  _selectedProductIds.add(p['id']);
-                                }
-                                if (_productError &&
-                                    _selectedProductIds.isNotEmpty) {
-                                  _productError = false;
-                                  _showTopWarning = false;
-                                }
-                              }),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius:
-                                      BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: _productError
-                                        ? Colors.red.shade300
-                                        : (isSel
-                                            ? const Color(0xFF2E7D32)
-                                            : const Color(
-                                                0xFFE5E7EB)),
-                                    width:
-                                        (_productError || isSel)
-                                            ? 1.5
-                                            : 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Stack(
-                                        children: [
-                                          Container(
-                                            width: double.infinity,
-                                            decoration:
-                                                const BoxDecoration(
-                                              color: Color(0xFFF3F4F6),
-                                              borderRadius:
-                                                  BorderRadius.vertical(
-                                                      top: Radius
-                                                          .circular(
-                                                              12)),
-                                            ),
-                                            child: displayImage
-                                                    .isNotEmpty
-                                                ? ClipRRect(
-                                                    borderRadius:
-                                                        const BorderRadius
-                                                            .vertical(
-                                                            top: Radius
-                                                                .circular(
-                                                                    12)),
-                                                    child:
-                                                        Image.network(
-                                                      displayImage,
-                                                      fit: BoxFit.cover,
-                                                      errorBuilder: (_,
-                                                              __,
-                                                              ___) =>
-                                                          const Center(
-                                                        child: Icon(
-                                                            Icons
-                                                                .image_outlined,
-                                                            color: Color(
-                                                                0xFF9CA3AF),
-                                                            size: 36),
-                                                      ),
-                                                    ),
-                                                  )
-                                                : const Center(
-                                                    child: Icon(
-                                                        Icons
-                                                            .image_outlined,
-                                                        color: Color(
-                                                            0xFF9CA3AF),
-                                                        size: 36),
-                                                  ),
+                        return GestureDetector(
+                          onTap: () => setState(() {
+                            if (isSel) {
+                              _selectedProductIds.remove(p['id']);
+                            } else {
+                              _selectedProductIds.add(p['id']);
+                            }
+                            if (_productError &&
+                                _selectedProductIds.isNotEmpty) {
+                              _productError = false;
+                              _showTopWarning = false;
+                            }
+                          }),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _productError
+                                    ? Colors.red.shade300
+                                    : (isSel
+                                          ? const Color(0xFF2E7D32)
+                                          : const Color(0xFFE5E7EB)),
+                                width: (_productError || isSel) ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        width: double.infinity,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFF3F4F6),
+                                          borderRadius: BorderRadius.vertical(
+                                            top: Radius.circular(12),
                                           ),
-                                          Positioned(
-                                            top: 8,
-                                            left: 8,
-                                            child: Container(
-                                              width: 20,
-                                              height: 20,
-                                              decoration: BoxDecoration(
-                                                color: isSel
-                                                    ? const Color(
-                                                        0xFF2E7D32)
-                                                    : Colors.white,
+                                        ),
+                                        child: displayImage.isNotEmpty
+                                            ? ClipRRect(
                                                 borderRadius:
-                                                    BorderRadius
-                                                        .circular(4),
-                                                border: Border.all(
-                                                  color: _productError
-                                                      ? Colors.red
-                                                      : (isSel
-                                                          ? const Color(
-                                                              0xFF2E7D32)
-                                                          : const Color(
-                                                              0xFFD1D5DB)),
+                                                    const BorderRadius.vertical(
+                                                      top: Radius.circular(12),
+                                                    ),
+                                                child: Image.network(
+                                                  displayImage,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (_, __, ___) =>
+                                                      const Center(
+                                                        child: Icon(
+                                                          Icons.image_outlined,
+                                                          color: Color(
+                                                            0xFF9CA3AF,
+                                                          ),
+                                                          size: 36,
+                                                        ),
+                                                      ),
+                                                ),
+                                              )
+                                            : const Center(
+                                                child: Icon(
+                                                  Icons.image_outlined,
+                                                  color: Color(0xFF9CA3AF),
+                                                  size: 36,
                                                 ),
                                               ),
-                                              child: isSel
-                                                  ? const Icon(
-                                                      Icons.check,
-                                                      size: 14,
-                                                      color:
-                                                          Colors.white)
-                                                  : null,
-                                            ),
-                                          ),
-                                        ],
                                       ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            p['name'] ?? '',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight:
-                                                  FontWeight.w600,
-                                              color: Color(0xFF1F2937),
+                                      Positioned(
+                                        top: 8,
+                                        left: 8,
+                                        child: Container(
+                                          width: 20,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            color: isSel
+                                                ? const Color(0xFF2E7D32)
+                                                : Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              4,
                                             ),
-                                            maxLines: 1,
-                                            overflow:
-                                                TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            _formatPrice(p['price']),
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: Color(0xFF6B7280),
+                                            border: Border.all(
+                                              color: _productError
+                                                  ? Colors.red
+                                                  : (isSel
+                                                        ? const Color(
+                                                            0xFF2E7D32,
+                                                          )
+                                                        : const Color(
+                                                            0xFFD1D5DB,
+                                                          )),
                                             ),
                                           ),
-                                        ],
+                                          child: isSel
+                                              ? const Icon(
+                                                  Icons.check,
+                                                  size: 14,
+                                                  color: Colors.white,
+                                                )
+                                              : null,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
+                                Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        p['name'] ?? '',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF1F2937),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _formatPrice(p['price']),
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
             ],
 
-            const SizedBox(height: 28),
-
-            // ── Tombol Aksi ───────────────────────────────────
-            if (!isEditing)
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _savePromotion,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2))
-                      : const Text('Create Promotion',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white)),
-                ),
-              )
-            else
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed:
-                            _isLoading ? null : _savePromotion,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2E7D32),
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2))
-                            : const Text('Update Promotion',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed:
-                            _isLoading ? null : _deletePromotion,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color(0xFFF3F4F6),
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        child: const Text('Delete Promotion',
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF374151))),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -1252,25 +1377,25 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
 
   // ── Helper Widgets ────────────────────────────────────────
   Widget _label(String text) => Text(
-        text,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF1F2937),
-        ),
-      );
+    text,
+    style: const TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+      color: Color(0xFF1F2937),
+    ),
+  );
 
   Widget _errorText(String msg) => Padding(
-        padding: const EdgeInsets.only(top: 6),
-        child: Text(
-          msg,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.red,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(top: 6),
+    child: Text(
+      msg,
+      style: const TextStyle(
+        fontSize: 12,
+        color: Colors.red,
+        fontWeight: FontWeight.w400,
+      ),
+    ),
+  );
 
   Widget _datePicker(
     String label,
@@ -1281,15 +1406,15 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 12, color: Color(0xFF6B7280))),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+        ),
         const SizedBox(height: 6),
         GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 12, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(10),
@@ -1301,13 +1426,16 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             child: Row(
               children: [
                 Expanded(
-                    child: Text(_formatDate(date),
-                        style: const TextStyle(fontSize: 14))),
-                Icon(Icons.calendar_today_outlined,
-                    size: 16,
-                    color: hasError
-                        ? Colors.red
-                        : const Color(0xFF9CA3AF)),
+                  child: Text(
+                    _formatDate(date),
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 16,
+                  color: hasError ? Colors.red : const Color(0xFF9CA3AF),
+                ),
               ],
             ),
           ),
@@ -1325,15 +1453,15 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 12, color: Color(0xFF6B7280))),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+        ),
         const SizedBox(height: 6),
         GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 12, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(10),
@@ -1345,13 +1473,16 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             child: Row(
               children: [
                 Expanded(
-                    child: Text(_formatTimeDisplay(time),
-                        style: const TextStyle(fontSize: 14))),
-                Icon(Icons.access_time_rounded,
-                    size: 16,
-                    color: hasError
-                        ? Colors.red
-                        : const Color(0xFF9CA3AF)),
+                  child: Text(
+                    _formatTimeDisplay(time),
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+                Icon(
+                  Icons.access_time_rounded,
+                  size: 16,
+                  color: hasError ? Colors.red : const Color(0xFF9CA3AF),
+                ),
               ],
             ),
           ),
@@ -1360,33 +1491,86 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     );
   }
 
-  InputDecoration _inputDeco(String hint,
-          {bool hasError = false}) =>
+  InputDecoration _inputDeco(String hint, {bool hasError = false}) =>
       InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(
-            fontSize: 14, color: Color(0xFFD1D5DB)),
+        hintStyle: const TextStyle(fontSize: 14, color: Color(0xFFD1D5DB)),
         filled: true,
         fillColor: const Color(0xFFF9FAFB),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-              color: hasError ? Colors.red : const Color(0xFFE5E7EB),
-              width: hasError ? 1.5 : 1),
+            color: hasError ? Colors.red : const Color(0xFFE5E7EB),
+            width: hasError ? 1.5 : 1,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-              color: hasError ? Colors.red : const Color(0xFFE5E7EB),
-              width: hasError ? 1.5 : 1),
+            color: hasError ? Colors.red : const Color(0xFFE5E7EB),
+            width: hasError ? 1.5 : 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-              color: hasError ? Colors.red : const Color(0xFF2E7D32),
-              width: 1.5),
+            color: hasError ? Colors.red : const Color(0xFF2E7D32),
+            width: 1.5,
+          ),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
       );
+
+  Widget _buildScopeChip(String label, String value) {
+    bool isSelected = _applicableTo == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() {
+          _applicableTo = value;
+          if (_applicableTo == 'all') {
+            _productError = false;
+          }
+        }),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFE8F5E9) : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFF2E7D32)
+                  : const Color(0xFFE5E7EB),
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                value == 'all' ? Icons.public : Icons.inventory_2_outlined,
+                size: 16,
+                color: isSelected
+                    ? const Color(0xFF2E7D32)
+                    : const Color(0xFF6B7280),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? const Color(0xFF2E7D32)
+                      : const Color(0xFF6B7280),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

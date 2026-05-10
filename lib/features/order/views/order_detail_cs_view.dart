@@ -18,7 +18,6 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
   final currencyFormatter =
       NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
-  // Status step index
   static const _statusSteps = ['Ordered', 'Paid', 'Shipped', 'Delivered'];
 
   bool _isUpdating = false;
@@ -31,7 +30,12 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
   }
 
   int get _currentStep {
-    if (_order.status == 'Cancelled') return -1;
+    if (_order.status == 'Cancelled' || _order.status == 'Expired') {
+      if (_order.deliveredAt != null) return 3;
+      if (_order.shippedAt != null) return 2;
+      if (_order.paidAt != null) return 1;
+      return 0;
+    }
     return _statusSteps.indexOf(_order.status);
   }
 
@@ -63,8 +67,6 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
     ];
     return months[m];
   }
-
-  // Status colors removed in favor of _buildStatusBadge
 
   Future<void> _fetchOrder() async {
     final updated = await _controller.getOrderById(_order.orderId);
@@ -368,6 +370,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
             children: List.generate(_statusSteps.length, (i) {
               final isDone = _currentStep >= i;
               final isLast = i == _statusSteps.length - 1;
+              final isCancelledOrExpired = _order.status == 'Cancelled' || _order.status == 'Expired';
               return Expanded(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,12 +384,12 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                             height: 28,
                             decoration: BoxDecoration(
                               color: isDone
-                                  ? const Color(0xFF2E7D32)
+                                  ? (isCancelledOrExpired && i == _currentStep ? Colors.red : const Color(0xFF2E7D32))
                                   : const Color(0xFFE5E7EB),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              isDone ? Icons.check : (i == _currentStep + 1 && _order.status != 'Cancelled' ? Icons.access_time : Icons.circle),
+                              isDone ? (isCancelledOrExpired && i == _currentStep ? Icons.close : Icons.check) : (i == _currentStep + 1 && !isCancelledOrExpired ? Icons.access_time : Icons.circle),
                               color: isDone
                                   ? Colors.white
                                   : const Color(0xFFD1D5DB),
@@ -485,6 +488,19 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
             style: const TextStyle(
                 fontSize: 13, fontFamily: 'Inter', color: Color(0xFF374151)),
           ),
+          if (_order.phoneNumber != null && _order.phoneNumber!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.phone_outlined, size: 14, color: Color(0xFF6B7280)),
+                const SizedBox(width: 6),
+                Text(
+                  _order.phoneNumber!,
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563), fontFamily: 'Inter'),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -584,6 +600,14 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
           const Divider(color: Color(0xFFF3F4F6)),
           const SizedBox(height: 8),
           _summaryRow('Subtotal', currencyFormatter.format(_order.subtotal)),
+          if (_order.discountAmount > 0) ...[
+            const SizedBox(height: 4),
+            _summaryRow(
+              'Discount', 
+              '-${currencyFormatter.format(_order.discountAmount)}',
+              valueColor: Colors.red.shade600,
+            ),
+          ],
           const SizedBox(height: 4),
           _summaryRow(
               'Pajak (11%)', currencyFormatter.format(_order.tax)),
@@ -615,7 +639,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
     );
   }
 
-  Widget _summaryRow(String label, String value) {
+  Widget _summaryRow(String label, String value, {Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -624,7 +648,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                 fontSize: 13, color: Color(0xFF6B7280), fontFamily: 'Inter')),
         Text(value,
             style:
-                const TextStyle(fontSize: 13, fontFamily: 'Inter')),
+                TextStyle(fontSize: 13, fontFamily: 'Inter', color: valueColor ?? Colors.black)),
       ],
     );
   }
@@ -634,8 +658,10 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
 
     if (status == 'Delivered') {
       bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
-    } else if (status == 'Expired' || status == 'Cancelled') {
+    } else if (status == 'Cancelled') {
       bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Expired') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
     } else if (status == 'Ordered') {
       bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
     } else if (status == 'Shipped') {

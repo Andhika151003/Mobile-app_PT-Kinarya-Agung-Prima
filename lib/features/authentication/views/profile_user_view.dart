@@ -1,9 +1,12 @@
+import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
+import '../../../core/utils/format_util.dart';
 import 'login_view.dart';
 import 'form_edit_user_view.dart';
 import '../controllers/profile_user_controller.dart';
+import '../../shared/widgets/shimmer_loading.dart';
+import '../../notification/services/push_notification_service.dart';
 
 class ProfileUserView extends StatefulWidget {
   const ProfileUserView({super.key});
@@ -12,16 +15,21 @@ class ProfileUserView extends StatefulWidget {
   State<ProfileUserView> createState() => _ProfileUserViewState();
 }
 
-class _ProfileUserViewState extends State<ProfileUserView> {
+class _ProfileUserViewState extends State<ProfileUserView>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final RetailProfileController _retailController = RetailProfileController();
 
   String storeName = 'Loading...';
-  String location = 'Loading...';
   String contact = 'Loading...';
   String businessType = 'Loading...';
+  String email = 'Loading...';
   String storeId = '-';
-  int totalOrders = 0; 
+  int totalOrders = 0;
   double totalSpent = 0;
+  bool isEmailVerified = false;
   bool isActive = true;
   String? photoUrl;
   bool isLoading = true;
@@ -36,21 +44,23 @@ class _ProfileUserViewState extends State<ProfileUserView> {
     try {
       final data = await _retailController.getRetailProfile();
       final stats = await _retailController.getRetailStats();
-      
+
       if (data != null && mounted) {
         setState(() {
           storeName = data['fullName'] ?? 'No Name';
-          location = data['address'] ?? 'No Location';
           contact = data['phoneNumber'] ?? 'No Contact';
           businessType = data['businessType'] ?? 'No Business Type';
+          email = data['email'] ?? 'No Email';
           storeId = '#KNY${data['uid'].substring(0, 6).toUpperCase()}';
-          isActive = data['isActive'] ?? true; 
+          isActive = data['isActive'] ?? true;
           photoUrl = data['photoUrl'];
-          
+          isEmailVerified =
+              FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+
           // Stats dari controller
           totalOrders = stats['totalOrders'] ?? 0;
           totalSpent = stats['totalSpent'] ?? 0.0;
-          
+
           isLoading = false;
         });
       } else {
@@ -64,46 +74,60 @@ class _ProfileUserViewState extends State<ProfileUserView> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        color: Colors.white,
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFF458833)))
-            : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 10),
-                    _buildProfileHeader(),
-                    const SizedBox(height: 40),
-                    _buildBusinessDetails(),
-                    const SizedBox(height: 20),
-                    _buildStoreStatusCard(),
-                    const SizedBox(height: 32),
-                    _buildStatsCard(
-                      icon: Icons.inventory_2_outlined,
-                      title: 'Total Orders',
-                      value: totalOrders.toString(), 
-                    ),
-                    const SizedBox(height: 16),
-                    _buildStatsCard(
-                      icon: Icons.account_balance_wallet_outlined, 
-                      title: 'Total Spent',
-                      value: NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0).format(totalSpent),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildLogoutButton(context),
-                  ],
-                ),
-              ),
+    super.build(context);
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        centerTitle: true,
+        title: const Text(
+          'My Profile',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
+      body: isLoading
+          ? const ProfileShimmer()
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 20.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  _buildProfileHeader(),
+                  const SizedBox(height: 40),
+                  _buildBusinessDetails(),
+                  const SizedBox(height: 32),
+                  _buildStatsCard(
+                    icon: Icons.inventory_2_outlined,
+                    title: 'Total Orders',
+                    value: FormatUtil.formatCompact(totalOrders),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStatsCard(
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: 'Total Spent',
+                    value: FormatUtil.formatCompact(totalSpent, isCurrency: true),
+                  ),
+                  _buildLogoutButton(context),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
     );
   }
 
   // --- FUNGSI POP-UP LOGOUT ---
   void _showLogoutDialog(BuildContext context) {
-    const primaryGreen = Color(0xFF458833);
+    const primaryGreen = AppColors.primary;
 
     showDialog(
       context: context,
@@ -167,11 +191,14 @@ class _ProfileUserViewState extends State<ProfileUserView> {
                             context: context,
                             barrierDismissible: false,
                             builder: (context) => const Center(
-                              child: CircularProgressIndicator(color: primaryGreen),
+                              child: CircularProgressIndicator(
+                                color: primaryGreen,
+                              ),
                             ),
                           );
 
                           try {
+                            await PushNotificationService().clearToken();
                             await FirebaseAuth.instance.signOut();
 
                             if (context.mounted) {
@@ -203,9 +230,7 @@ class _ProfileUserViewState extends State<ProfileUserView> {
                         ),
                         child: const Text(
                           'Log Out',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -221,74 +246,76 @@ class _ProfileUserViewState extends State<ProfileUserView> {
 
   // ---  WIDGET SECTIONS ---
   Widget _buildProfileHeader() {
-    return Center(
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF458833), width: 2),
-            ),
-            child: CircleAvatar(
-              radius: 44,
-              backgroundColor: const Color(0xFFE8F5E9),
-              backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
-                  ? NetworkImage(photoUrl!)
-                  : null,
-              child: photoUrl == null || photoUrl!.isEmpty
-                  ? const Icon(Icons.storefront_outlined, size: 40, color: Color(0xFF458833))
-                  : null,
-            ),
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.primary, width: 1.5),
           ),
-          const SizedBox(height: 16),
-          Text(
-            storeName,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+          child: CircleAvatar(
+            radius: 35,
+            backgroundColor: const Color(0xFFE8F5E9),
+            backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
+                ? NetworkImage(photoUrl!)
+                : null,
+            child: photoUrl == null || photoUrl!.isEmpty
+                ? const Icon(
+                    Icons.storefront_outlined,
+                    size: 30,
+                    color: Color(0xFF458833),
+                  )
+                : null,
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Retail Store',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.blueGrey.shade600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const FormProfileUserView()),
-                  ).then((_) {
-                    _fetchUserData();
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF458833),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  minimumSize: const Size(70, 30),
-                  padding: EdgeInsets.zero,
+              Text(
+                storeName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
-                child: const Text(
-                  'Edit',
-                  style: TextStyle(color: Colors.white, fontSize: 13),
-                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                businessType,
+                style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade600),
               ),
             ],
           ),
-        ],
-      ),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const FormProfileUserView(),
+              ),
+            ).then((_) {
+              _fetchUserData();
+            });
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+            minimumSize: const Size(60, 30),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+          ),
+          child: const Text(
+            'Edit',
+            style: TextStyle(color: Colors.white, fontSize: 13),
+          ),
+        ),
+      ],
     );
   }
 
@@ -307,9 +334,9 @@ class _ProfileUserViewState extends State<ProfileUserView> {
         const SizedBox(height: 16),
         _buildDetailRow('Store ID', storeId),
         const SizedBox(height: 16),
-        _buildDetailRow('Business Type', businessType),
+        _buildDetailRow('Email', email),
         const SizedBox(height: 16),
-        _buildDetailRow('Location', location),
+        _buildDetailRow('Business Type', businessType),
         const SizedBox(height: 16),
         _buildDetailRow('Contact', contact),
       ],
@@ -318,21 +345,33 @@ class _ProfileUserViewState extends State<ProfileUserView> {
 
   Widget _buildDetailRow(String label, String value) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
         ),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildStatsCard({required IconData icon, required String title, required String value}) {
+  Widget _buildStatsCard({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -354,18 +393,26 @@ class _ProfileUserViewState extends State<ProfileUserView> {
         children: [
           Row(
             children: [
-              Icon(icon, color: const Color(0xFF458833), size: 18),
+              Icon(icon, color: AppColors.primary, size: 18),
               const SizedBox(width: 8),
               Text(
                 title,
-                style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade600, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.blueGrey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
         ],
       ),
@@ -380,11 +427,9 @@ class _ProfileUserViewState extends State<ProfileUserView> {
           _showLogoutDialog(context);
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF458833),
+          backgroundColor: AppColors.primary,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
         child: const Text(
@@ -395,88 +440,4 @@ class _ProfileUserViewState extends State<ProfileUserView> {
     );
   }
 
-  Widget _buildStoreStatusCard() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        // Warna berubah sedikit jika inaktif
-        color: isActive ? Colors.green.shade50 : Colors.red.shade50, 
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isActive ? Colors.green.shade200 : Colors.red.shade200,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(
-                isActive ? Icons.store_mall_directory : Icons.store_mall_directory_outlined,
-                color: isActive ? const Color(0xFF458833) : Colors.red,
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Store Status',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                  Text(
-                    isActive ? 'Active (Accepting Orders)' : 'Inactive (Closed)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isActive ? const Color(0xFF458833) : Colors.red,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          
-          // TOMBOL SAKLAR ON/OFF
-          Switch(
-            value: isActive,
-            activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF458833),
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: Colors.red.shade300,
-            onChanged: (bool newValue) async {
-              setState(() {
-                isActive = newValue;
-              });
-
-              try {
-                await _retailController.updateStoreStatus(newValue);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(newValue ? 'Store is now Active!' : 'Store is now Inactive!'),
-                      backgroundColor: newValue ? const Color(0xFF458833) : Colors.red,
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                }
-              } catch (e) {
-                setState(() {
-                  isActive = !newValue;
-                });
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Failed to update status.')),
-                  );
-                }
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
 }

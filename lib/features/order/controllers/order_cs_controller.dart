@@ -4,7 +4,10 @@ import '../models/order.dart';
 import 'order_stats_helper.dart';
 
 class OrderCsController extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+
+  OrderCsController({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -20,6 +23,8 @@ class OrderCsController extends ChangeNotifier {
 
   String _searchQuery = '';
   String _statusFilter = 'all';
+  String _selectedSort = 'Newest';
+  String get selectedSort => _selectedSort;
 
   Future<void> fetchAllOrders() async {
     _setLoading(true);
@@ -46,7 +51,6 @@ class OrderCsController extends ChangeNotifier {
           return OrderModel.fromMap(doc.data());
         }).toList();
 
-        // Sort by createdAt descending
         _orders.sort((a, b) {
           final aTs = a.createdAt;
           final bTs = b.createdAt;
@@ -78,6 +82,11 @@ class OrderCsController extends ChangeNotifier {
     _applyFilters();
   }
 
+  void setSort(String sort) {
+    _selectedSort = sort;
+    _applyFilters();
+  }
+
   void _applyFilters() {
     var filtered = List<OrderModel>.from(_orders);
 
@@ -91,7 +100,21 @@ class OrderCsController extends ChangeNotifier {
     }
 
     if (_statusFilter != 'all') {
-      filtered = filtered.where((order) => order.status == _statusFilter).toList();
+      filtered =
+          filtered.where((order) => order.status == _statusFilter).toList();
+    }
+
+    // Sort
+    if (_selectedSort == 'Newest') {
+      filtered.sort((a, b) =>
+          (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Oldest') {
+      filtered.sort((a, b) =>
+          (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Price (High-Low)') {
+      filtered.sort((a, b) => b.total.compareTo(a.total));
+    } else if (_selectedSort == 'Price (Low-High)') {
+      filtered.sort((a, b) => a.total.compareTo(b.total));
     }
 
     _filteredOrders = filtered;
@@ -104,7 +127,7 @@ class OrderCsController extends ChangeNotifier {
 
     try {
       if (newStatus == 'Paid' || newStatus == 'Shipped' || newStatus == 'Delivered') {
-        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus);
+        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus, firestore: _firestore);
       } else {
         final updateData = {
           'status': newStatus,
@@ -113,10 +136,8 @@ class OrderCsController extends ChangeNotifier {
         await _firestore.collection('orders').doc(orderId).update(updateData);
       }
 
-      // Update local state
       final index = _orders.indexWhere((o) => o.orderId == orderId);
       if (index != -1) {
-        // Fetch the updated doc to get fresh data (including paidAt etc)
         final updatedDoc = await _firestore.collection('orders').doc(orderId).get();
         if (updatedDoc.exists) {
           _orders[index] = OrderModel.fromMap(updatedDoc.data()!);
@@ -152,29 +173,24 @@ class OrderCsController extends ChangeNotifier {
 
         if (currentStatus == 'Cancelled') throw Exception('Pesanan sudah dibatalkan sebelumnya');
 
-        // 1. Update status pesanan
         transaction.update(orderRef, {
           'status': 'Cancelled',
           'cancelledAt': FieldValue.serverTimestamp(),
         });
 
-        // 2. Kembalikan Stok (Restock)
         for (var itemMap in itemsData) {
           final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
           final int quantity = (itemMap['quantity'] as num?)?.toInt() ?? 0;
 
           if (productId != null && productId.isNotEmpty && quantity > 0) {
             final productRef = _firestore.collection('products').doc(productId);
-            transaction.update(productRef, {
-              'stock': FieldValue.increment(quantity),
-            });
-
-            // 3. Batalkan Statistik (jika sudah tercatat)
+            
             if (statsRecorded) {
               final int price = (itemMap['price'] as num?)?.toInt() ?? 0;
               final int revenue = price * quantity;
               
               transaction.update(productRef, {
+                'stock': FieldValue.increment(quantity),
                 'monthlySales': FieldValue.increment(-quantity),
                 'revenue': FieldValue.increment(-revenue),
               });
@@ -183,7 +199,6 @@ class OrderCsController extends ChangeNotifier {
         }
       });
 
-      // Update local state
       final index = _orders.indexWhere((o) => o.orderId == orderId);
       if (index != -1) {
         final updatedDoc = await _firestore.collection('orders').doc(orderId).get();

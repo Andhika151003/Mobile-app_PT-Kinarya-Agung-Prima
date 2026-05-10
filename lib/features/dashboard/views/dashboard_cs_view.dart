@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/format_util.dart';
 import '../controllers/dashboard_cs_controller.dart';
 import '../../complaint/views/complaint_detail_cs_view.dart';
-import '../../complaint/models/complaint.dart';
 
 class DashboardCsView extends StatefulWidget {
   const DashboardCsView({super.key});
@@ -76,19 +76,19 @@ class _DashboardCsViewState extends State<DashboardCsView> {
                         final stats = snapshot.data ?? {'openComplaints': 0, 'resolvedToday': 0};
                         return Row(
                           children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                'Open Complaints',
-                                stats['openComplaints'].toString(),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildStatCard(
-                                'Resolved Today',
-                                stats['resolvedToday'].toString(),
-                              ),
-                            ),
+                             Expanded(
+                               child: _buildStatCard(
+                                 'Open Complaints',
+                                 FormatUtil.formatCompact(stats['openComplaints'] ?? 0),
+                               ),
+                             ),
+                             const SizedBox(width: 16),
+                             Expanded(
+                               child: _buildStatCard(
+                                 'Resolved Today',
+                                 FormatUtil.formatCompact(stats['resolvedToday'] ?? 0),
+                               ),
+                             ),
                           ],
                         );
                       }

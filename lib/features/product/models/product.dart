@@ -16,16 +16,16 @@ class ProductModel {
   
   // --- INVENTORY ---
   int stock;
-  int? lowStockAlert; // Baru
+  int? lowStockAlert;
   
   // --- SPECIFICATIONS ---
   String description;
   
   // --- SHIPPING ---
-  double? weight; // Baru (kg)
-  double? length; // Baru (cm)
-  double? width; // Baru (cm)
-  double? height; // Baru (cm)
+  double? weight; // (kg)
+  double? length; // (cm)
+  double? width; // (cm)
+  double? height; // (cm)
   
   // --- MEDIA & STATUS ---
   String imageUrl; // Foto utama (Cover)

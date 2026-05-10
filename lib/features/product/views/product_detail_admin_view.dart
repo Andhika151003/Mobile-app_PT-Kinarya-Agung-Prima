@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/product.dart';
 import '../controllers/product_admin_controller.dart';
 import '../views/form_edit_product_admin_view.dart';
+import '../../../core/utils/format_util.dart';
 
 class ProductDetailAdminView extends StatefulWidget {
   final ProductModel product;
@@ -25,6 +27,11 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -50,11 +57,17 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                   const SizedBox(height: 24),
                   
 
-                  _buildInfoRow('Regular Price', 'Rp ${_currentProduct.price}'),
+                  _buildInfoRow('Regular Price', currencyFormatter.format(_currentProduct.price)),
                   const SizedBox(height: 16),
                   _buildInfoRow('MOQ (Min. Order)', '${_currentProduct.moq ?? 1} units'),
                   const SizedBox(height: 16),
-                  _buildInfoRow('Stock Available', '${_currentProduct.stock} units'),
+                  _buildInfoRow(
+                    'Stock Available', 
+                    '${_currentProduct.stock} units',
+                    valueColor: _currentProduct.stock <= 0 
+                        ? Colors.red 
+                        : (_currentProduct.stock <= (_currentProduct.lowStockAlert ?? 0) ? Colors.orange.shade800 : Colors.black),
+                  ),
                 ],
               ),
             ),
@@ -126,8 +139,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                       Expanded(
                         child: _buildStatCard(
                           title: 'Monthly Sales',
-                          value: '${_currentProduct.monthlySales ?? 0}',
-                          // Mengambil nilai tren dari model, default 0.0 jika null
+                          value: FormatUtil.formatCompact(_currentProduct.monthlySales ?? 0),
                           percentage: _currentProduct.monthlySalesTrend ?? 0.0, 
                           titleColor: Colors.blue.shade600,
                           bgColor: const Color(0xFFF0F6FF),
@@ -137,8 +149,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                       Expanded(
                         child: _buildStatCard(
                           title: 'Revenue',
-                          value: _productController.formatRevenue(_currentProduct.revenue ?? 0),
-                          // Mengambil nilai tren dari model, default 0.0 jika null
+                          value: FormatUtil.formatCompact(_currentProduct.revenue ?? 0, isCurrency: true),
                           percentage: _currentProduct.revenueTrend ?? 0.0, 
                           titleColor: Colors.purple.shade400,
                           bgColor: const Color(0xFFF7F0FF),
@@ -265,7 +276,26 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
   }
 
   Widget _buildTitleAndBadge() {
-    bool isInStock = _currentProduct.stock > 0;
+    String badgeText;
+    Color badgeColor;
+    Color textColor;
+
+    final int threshold = _currentProduct.lowStockAlert ?? 0;
+
+    if (_currentProduct.stock <= 0) {
+      badgeText = 'Out of Stock';
+      badgeColor = Colors.red.shade50;
+      textColor = Colors.red;
+    } else if (_currentProduct.stock <= threshold) {
+      badgeText = 'Low Stock';
+      badgeColor = Colors.orange.shade50;
+      textColor = Colors.orange.shade800;
+    } else {
+      badgeText = 'In Stock';
+      badgeColor = Colors.green.shade50;
+      textColor = const Color(0xFF458833);
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -276,24 +306,24 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: isInStock ? Colors.green.shade100 : Colors.red.shade100,
+            color: badgeColor,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            isInStock ? 'In Stock' : 'Out of Stock',
-            style: TextStyle(color: isInStock ? const Color(0xFF458833) : Colors.red, fontSize: 11, fontWeight: FontWeight.bold),
+            badgeText,
+            style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.bold),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, {Color valueColor = Colors.black}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: valueColor)),
       ],
     );
   }

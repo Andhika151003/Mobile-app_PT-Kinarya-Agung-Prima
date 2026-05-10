@@ -42,10 +42,18 @@ class AuthGate extends StatelessWidget {
 
             if (userSnapshot.hasData && userSnapshot.data!.exists) {
               final userData = userSnapshot.data!.data() as Map<String, dynamic>;
-              final String role = userData['role'] ?? 'user';
+              final String role = (userData['role'] ?? 'user').toString().toLowerCase();
+              final bool isActive = userData['isActive'] ?? true;
+
+              if (!isActive) {
+                // Jika tidak aktif, sign out dan biarkan StreamBuilder mengarahkan ke LoginView
+                FirebaseAuth.instance.signOut();
+                return const LoginView();
+              }
+
               if (role == 'admin') {
                 return const MainNavigationAdmin();
-              } else if (role == 'cs') {
+              } else if (role == 'cs' || role == 'customer_support') {
                 return const MainNavigationCs();
               } else {
                 return const MainNavigationUser();

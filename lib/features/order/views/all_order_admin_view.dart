@@ -22,9 +22,20 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
   bool _isLoading = true;
 
   String _selectedFilter = 'All Transactions';
-  final List<String> _filters = ['All Transactions', 'Today', 'This Week'];
+  final List<String> _filters = [
+    'All Transactions', 
+    'Today', 
+    'This Week',
+    'Ordered',
+    'Paid',
+    'Shipped',
+    'Delivered',
+    'Cancelled',
+    'Expired'
+  ];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _selectedSort = 'Newest';
 
   @override
   void initState() {
@@ -67,16 +78,31 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
   }
 
   void _filterItems() {
-    final MapList = _allOrders.map((e) => e.toMap()).toList();
+    final mapList = _allOrders.map((e) => e.toMap()).toList();
     final filteredMaps = _adminController.filterAndSearchOrders(
-      MapList, 
+      mapList, 
       _selectedFilter == 'All Transactions' ? 'All' : _selectedFilter, 
       _searchQuery
     );
     
     setState(() {
       _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
+      _applySortInternal();
     });
+  }
+
+  void _applySortInternal() {
+    if (_selectedSort == 'Newest') {
+      _filteredOrders.sort((a, b) =>
+          (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Oldest') {
+      _filteredOrders.sort((a, b) =>
+          (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Price (High-Low)') {
+      _filteredOrders.sort((a, b) => b.total.compareTo(a.total));
+    } else if (_selectedSort == 'Price (Low-High)') {
+      _filteredOrders.sort((a, b) => a.total.compareTo(b.total));
+    }
   }
 
   @override
@@ -107,44 +133,77 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Search Bar ──────────────────────────────────────────────
-          Padding(
+           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Container(
-              height: 46,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: TextField(
-                controller: _searchController,
-                style: const TextStyle(fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'Search ID, Name, or Product...',
-                  hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade400),
-                  prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  suffixIcon: _searchQuery.isNotEmpty 
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                            _filterItems();
-                          });
-                        },
-                      )
-                    : null,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Search ID, Name, or Product...',
+                        hintStyle:
+                            TextStyle(fontSize: 14, color: Colors.grey.shade400),
+                        prefixIcon:
+                            const Icon(Icons.search, size: 20, color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _searchQuery = '';
+                                    _filterItems();
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                          _filterItems();
+                        });
+                      },
+                    ),
+                  ),
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                    _filterItems();
-                  });
-                },
-              ),
+                const SizedBox(width: 8),
+                Container(
+                  height: 46,
+                  width: 46,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(Icons.sort, color: Colors.black87),
+                    onSelected: (String value) {
+                      setState(() {
+                        _selectedSort = value;
+                        _applySortInternal();
+                      });
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      const PopupMenuItem(value: 'Newest', child: Text('Newest')),
+                      const PopupMenuItem(value: 'Oldest', child: Text('Oldest')),
+                      const PopupMenuItem(value: 'Price (High-Low)', child: Text('Price: High to Low')),
+                      const PopupMenuItem(value: 'Price (Low-High)', child: Text('Price: Low to High')),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -268,10 +327,18 @@ class _TransactionCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  order.orderId,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
+                Expanded(
+                  child: Text(
+                    order.orderId,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
+                const SizedBox(width: 8),
                 _buildStatusBadge(order.status),
               ],
             ),
@@ -328,8 +395,10 @@ class _TransactionCard extends StatelessWidget {
 
     if (status == 'Delivered') {
       bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
-    } else if (status == 'Expired' || status == 'Cancelled') {
+    } else if (status == 'Cancelled') {
       bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Expired') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
     } else if (status == 'Ordered') {
       bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
     } else if (status == 'Shipped') {

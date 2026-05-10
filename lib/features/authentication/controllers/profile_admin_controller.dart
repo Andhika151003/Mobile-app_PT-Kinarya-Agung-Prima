@@ -31,11 +31,8 @@ class AdminProfileController {
 
   Future<void> updateAdminProfile({
     required String fullName,
-    required String address,
     required String phoneNumber,
     required String businessType,
-    required String bankAccount,
-    required String bankName,
     File? profileImage,
   }) async {
     try {
@@ -45,17 +42,14 @@ class AdminProfileController {
 
         if (profileImage != null) {
           final storageService = SupabaseStorageService();
-          final fileName = 'admin_profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          uploadedImageUrl = await storageService.uploadProductImage(profileImage, fileName);
+          final fileName = 'admin_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          uploadedImageUrl = await storageService.uploadAdminProfileImage(profileImage, fileName);
         }
 
         final updateData = {
           'fullName': fullName,
-          'address': address,
           'phoneNumber': phoneNumber,
           'businessType': businessType,
-          'bankAccount': bankAccount,
-          'bankName': bankName,
         };
 
         if (uploadedImageUrl != null) {

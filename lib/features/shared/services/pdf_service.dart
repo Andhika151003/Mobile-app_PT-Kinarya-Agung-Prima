@@ -61,6 +61,10 @@ class PdfService {
                         pw.SizedBox(height: 4),
                         pw.Text('Alamat Pengiriman:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
                         pw.Text(order.shippingAddress, style: const pw.TextStyle(fontSize: 10), maxLines: 3),
+                        if (order.phoneNumber != null && order.phoneNumber!.isNotEmpty) ...[
+                          pw.SizedBox(height: 2),
+                          pw.Text('Telp: ${order.phoneNumber!}', style: const pw.TextStyle(fontSize: 10)),
+                        ],
                       ],
                     ),
                   ),
@@ -196,6 +200,160 @@ class PdfService {
         children: [
           pw.Text(label, style: pw.TextStyle(fontSize: 10, fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal)),
           pw.Text(value, style: pw.TextStyle(fontSize: 10, fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal)),
+        ],
+      ),
+    );
+  }
+
+  static Future<void> generateAnalyticsReport({
+    required String filterName,
+    required double totalRevenue,
+    required int totalOrders,
+    required int completedOrders,
+    required int cancelledOrders,
+    required int totalComplaints,
+    required List<Map<String, dynamic>> topProducts,
+    required List<Map<String, dynamic>> topRetailers,
+  }) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            // Header
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text('LAPORAN ANALITIK PENJUALAN', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold, color: PdfColors.green800)),
+                    pw.Text('PT Kinarya Agung Prima', style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700)),
+                  ],
+                ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text('Periode: $filterName', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                    pw.Text('Dicetak: ${dateFormat.format(DateTime.now())}', style: const pw.TextStyle(fontSize: 8)),
+                  ],
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 20),
+            pw.Divider(color: PdfColors.grey300),
+            pw.SizedBox(height: 20),
+
+            // Summary Section
+            pw.Text('Ringkasan Performa', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 10),
+            pw.GridView(
+              crossAxisCount: 2,
+              childAspectRatio: 0.3,
+              children: [
+                _buildStatBox('Total Pendapatan', currencyFormat.format(totalRevenue)),
+                _buildStatBox('Total Pesanan', '$totalOrders'),
+                _buildStatBox('Pesanan Selesai', '$completedOrders'),
+                _buildStatBox('Pesanan Dibatalkan', '$cancelledOrders'),
+                _buildStatBox('Total Komplain', '$totalComplaints'),
+                _buildStatBox('Tingkat Keberhasilan', '${totalOrders > 0 ? ((completedOrders / totalOrders) * 100).toStringAsFixed(1) : 0}%'),
+              ],
+            ),
+            pw.SizedBox(height: 30),
+
+            // Top Products Table
+            pw.Text('Top 5 Produk Terlaris', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 10),
+            pw.Table(
+              border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+              children: [
+                pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: PdfColors.grey100),
+                  children: [
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Peringkat', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Nama Produk', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Terjual', textAlign: pw.TextAlign.center, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Revenue', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                  ],
+                ),
+                ...topProducts.asMap().entries.map((entry) {
+                  final i = entry.key;
+                  final item = entry.value;
+                  return pw.TableRow(
+                    children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${i + 1}', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 9))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(item['name'], style: const pw.TextStyle(fontSize: 9))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${item['sales']}', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 9))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(currencyFormat.format(item['revenue']), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 9))),
+                    ],
+                  );
+                }),
+              ],
+            ),
+            pw.SizedBox(height: 30),
+
+            // Top Retailers Table
+            pw.Text('Top Retailer Performance', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 10),
+            pw.Table(
+              border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+              children: [
+                pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: PdfColors.grey100),
+                  children: [
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Peringkat', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Nama Retailer', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Total Belanja', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                  ],
+                ),
+                ...topRetailers.asMap().entries.map((entry) {
+                  final i = entry.key;
+                  final item = entry.value;
+                  return pw.TableRow(
+                    children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${i + 1}', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 9))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(item['name'], style: const pw.TextStyle(fontSize: 9))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(currencyFormat.format(item['spent']), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 9))),
+                    ],
+                  );
+                }),
+              ],
+            ),
+
+            pw.Spacer(),
+            pw.Divider(color: PdfColors.grey300),
+            pw.SizedBox(height: 10),
+            pw.Center(child: pw.Text('Laporan ini dibuat secara otomatis oleh Sistem Manajemen PT Kinarya Agung Prima.', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600))),
+          ];
+        },
+      ),
+    );
+
+    final output = await getTemporaryDirectory();
+    final fileName = "report_${filterName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf";
+    final file = File("${output.path}/$fileName");
+    await file.writeAsBytes(await pdf.save());
+
+    await OpenFilex.open(file.path);
+  }
+
+  static pw.Widget _buildStatBox(String label, String value) {
+    return pw.Container(
+      margin: const pw.EdgeInsets.all(5),
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey200),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(label, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+          pw.SizedBox(height: 5),
+          pw.Text(value, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
         ],
       ),
     );
