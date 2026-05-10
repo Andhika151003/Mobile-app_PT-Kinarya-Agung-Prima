@@ -197,17 +197,11 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
 
+    Navigator.pop(context, 'deleted');
     final controller = PromotionAdminController();
-    final ok = await controller.deletePromotion(_promotion.id!);
-    if (ok && mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Promotion deleted'),
-        backgroundColor: Colors.red,
-      ));
-    }
+    await controller.deletePromotion(_promotion.id!);
   }
 
   @override

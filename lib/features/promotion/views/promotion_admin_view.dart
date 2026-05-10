@@ -274,13 +274,19 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
 
     return GestureDetector(
       onTap: () async {
-        await Navigator.push(
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => PromotionDetailAdminView(promotion: promo),
           ),
         );
         controller.fetchAllPromotions();
+        if (result == 'deleted' && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Promotion deleted successfully'),
+            backgroundColor: Colors.red,
+          ));
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
