@@ -274,7 +274,66 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildInfoCard('Stock', '$currentStock pcs')),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey.shade200),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Stock',
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Text(
+                              '$currentStock pcs',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            if (currentStock <= 0)
+                              const Text(
+                                '(Out of Stock)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            else if (currentStock <= (widget.product.lowStockAlert ?? 0))
+                              Text(
+                                '(Low Stock)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.orange.shade800,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            else
+                              const Text(
+                                '(In Stock)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF458833),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildInfoCard(
