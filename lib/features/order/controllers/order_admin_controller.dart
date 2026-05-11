@@ -1,16 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import '../../notification/services/push_notification_service.dart';
 import 'order_stats_helper.dart';
+import 'order_user_controller.dart';
 
 class OrderAdminController {
   final FirebaseFirestore _firestore;
   final PushNotificationService _pushNotificationService;
+  final OrderUserController _userController;
 
   OrderAdminController({
     FirebaseFirestore? firestore,
     PushNotificationService? pushNotificationService,
+    http.Client? client,
+    String? backendUrl,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _pushNotificationService = pushNotificationService ?? PushNotificationService();
+       _pushNotificationService = pushNotificationService ?? PushNotificationService(),
+       _userController = OrderUserController(
+         firestore: firestore,
+         pushNotificationService: pushNotificationService,
+         client: client,
+         backendUrl: backendUrl,
+       );
 
   Future<List<Map<String, dynamic>>> getAllOrdersAdmin() async {
     try {
@@ -194,5 +206,39 @@ class OrderAdminController {
     }
 
     return results;
+  }
+
+  /// Sinkronisasi semua pesanan yang masih 'Ordered' atau 'Pending Payment'
+  /// untuk seluruh sistem (Admin side).
+  Future<void> syncAllPendingOrders() async {
+    try {
+      final snapshot = await _firestore
+          .collection('orders')
+          .where('status', whereIn: ['Ordered', 'Pending Payment'])
+          .get();
+
+      if (snapshot.docs.isEmpty) return;
+
+      debugPrint("Admin: Checking ${snapshot.docs.length} pending orders for sync...");
+
+      for (var doc in snapshot.docs) {
+        final orderId = doc.id;
+        final data = doc.data();
+
+        // Cek expiry lokal
+        final expiredAt = data['paymentExpiredAt'] as Timestamp?;
+        if (expiredAt != null && DateTime.now().isAfter(expiredAt.toDate())) {
+          await _firestore.collection('orders').doc(orderId).update({
+            'status': 'Expired',
+          });
+          debugPrint("Admin: Order $orderId marked as Expired locally.");
+          continue;
+        }
+
+        await _userController.syncDuitkuPayment(orderId);
+      }
+    } catch (e) {
+      debugPrint("Admin Error syncAllPendingOrders: $e");
+    }
   }
 }

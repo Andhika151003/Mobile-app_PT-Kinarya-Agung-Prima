@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/utils/format_util.dart';
 import '../controllers/dashboard_admin_controller.dart';
@@ -9,6 +10,7 @@ import '../../shared/main_navigation_admin.dart';
 import '../../shared/widgets/shimmer_loading.dart';
 import '../../notification/views/notif_admin_view.dart';
 import '../../notification/controllers/notif_admin_controller.dart';
+import 'package:ecommerce/features/order/controllers/order_admin_controller.dart';
 
 
 class DashboardAdminView extends StatefulWidget {
@@ -26,6 +28,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
   List<Map<String, dynamic>> promotions = [];
   List<Map<String, dynamic>> retailers = [];
   bool isLoading = true;
+  Timer? _syncTimer;
 
   @override
   bool get wantKeepAlive => true;
@@ -34,10 +37,19 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
   void initState() {
     super.initState();
     _loadDashboardData();
+    
+    // Sinkronisasi berkala setiap 5 menit agar status Expired/Paid terupdate otomatis
+    _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      _loadDashboardData();
+    });
   }
 
   Future<void> _loadDashboardData() async {
     try {
+      // Sinkronisasi pesanan yang tertunda agar data overview akurat
+      final OrderAdminController adminOrderCtrl = OrderAdminController();
+      await adminOrderCtrl.syncAllPendingOrders();
+
       final stats = await _controller.getOverviewStats();
       final proms = await _controller.getPromotions();
       final retails = await _controller.getRetailers();
@@ -54,6 +66,12 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
       debugPrint('Error loading admin dashboard data: $e');
       if (mounted) setState(() => isLoading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _syncTimer?.cancel();
+    super.dispose();
   }
 
   @override

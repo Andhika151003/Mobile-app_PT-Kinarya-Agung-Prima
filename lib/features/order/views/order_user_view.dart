@@ -40,6 +40,14 @@ class _OrderUserViewState extends State<OrderUserView>
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    
+    // Sinkronisasi status pesanan yang tertunda secara otomatis
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        OrderUserController().syncAllPendingOrders(uid);
+      }
+    });
   }
 
   @override
@@ -240,7 +248,19 @@ class _OrderList extends StatelessWidget {
         }
 
         final docs = snapshot.data?.docs ?? [];
-        if (docs.isEmpty) return _EmptyState(hasSearch: searchQuery.isNotEmpty);
+        if (docs.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: () async => await userController.syncAllPendingOrders(uid),
+            color: Colors.black,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.7,
+                child: _EmptyState(hasSearch: searchQuery.isNotEmpty),
+              ),
+            ),
+          );
+        }
 
         List<OrderModel> allOrders = docs.map((doc) => OrderModel.fromMap(doc.data())).toList();
 
@@ -259,7 +279,19 @@ class _OrderList extends StatelessWidget {
           }).toList();
         }
 
-        if (allOrders.isEmpty) return _EmptyState(hasSearch: searchQuery.isNotEmpty);
+        if (allOrders.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: () async => await userController.syncAllPendingOrders(uid),
+            color: Colors.black,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.7,
+                child: _EmptyState(hasSearch: searchQuery.isNotEmpty),
+              ),
+            ),
+          );
+        }
 
         // Urutkan
         if (selectedSort == 'Newest') {
@@ -272,11 +304,18 @@ class _OrderList extends StatelessWidget {
           allOrders.sort((a, b) => a.total.compareTo(b.total));
         }
 
-        return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-          itemCount: allOrders.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 16),
-          itemBuilder: (context, i) => _OrderCard(order: allOrders[i]),
+        return RefreshIndicator(
+          onRefresh: () async {
+            await userController.syncAllPendingOrders(uid);
+          },
+          color: Colors.black,
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+            physics: const AlwaysScrollableScrollPhysics(), // Memastikan refresh bisa dipicu meski list pendek
+            itemCount: allOrders.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            itemBuilder: (context, i) => _OrderCard(order: allOrders[i]),
+          ),
         );
       },
     );

@@ -33,8 +33,24 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
     try {
       final data = await _userController.getOrderById(widget.orderId);
       if (data != null && mounted) {
+        final order = OrderModel.fromMap(data);
+        
+        // Auto-refresh jika status masih Ordered
+        if (order.status == 'Ordered') {
+          await _userController.syncDuitkuPayment(widget.orderId);
+          // Ambil data terbaru setelah sinkronisasi
+          final updatedData = await _userController.getOrderById(widget.orderId);
+          if (updatedData != null && mounted) {
+            setState(() {
+              _order = OrderModel.fromMap(updatedData);
+              _isLoading = false;
+            });
+            return;
+          }
+        }
+
         setState(() {
-          _order = OrderModel.fromMap(data);
+          _order = order;
           _isLoading = false;
         });
       }

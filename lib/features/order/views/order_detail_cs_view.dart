@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../controllers/order_cs_controller.dart';
+import '../controllers/order_user_controller.dart';
 import '../models/order.dart';
 import '../../shared/services/pdf_service.dart';
 
@@ -27,6 +28,8 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
   void initState() {
     super.initState();
     _order = widget.order;
+    // Auto refresh saat pertama kali buka detail
+    _fetchOrder();
   }
 
   int get _currentStep {
@@ -69,11 +72,32 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
   }
 
   Future<void> _fetchOrder() async {
-    final updated = await _controller.getOrderById(_order.orderId);
-    if (updated != null && mounted) {
-      setState(() {
-        _order = updated;
-      });
+    try {
+      // Ambil data terbaru dari Firestore
+      final updated = await _controller.getOrderById(_order.orderId);
+      if (updated != null && mounted) {
+        
+        // Auto-refresh jika status masih Ordered
+        if (updated.status == 'Ordered') {
+          final userCtrl = OrderUserController(); // CS side menggunakan UserController untuk sync
+          await userCtrl.syncDuitkuPayment(_order.orderId);
+          
+          // Re-fetch data terbaru setelah sync
+          final finalData = await _controller.getOrderById(_order.orderId);
+          if (finalData != null && mounted) {
+            setState(() {
+              _order = finalData;
+            });
+            return;
+          }
+        }
+
+        setState(() {
+          _order = updated;
+        });
+      }
+    } catch (e) {
+      debugPrint("OrderDetailCsView Error: $e");
     }
   }
 

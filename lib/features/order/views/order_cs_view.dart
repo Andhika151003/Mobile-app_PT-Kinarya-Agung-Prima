@@ -31,6 +31,7 @@ class _OrderCsViewState extends State<OrderCsView> {
     _controller = OrderCsController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.fetchAllOrders();
+      _controller.syncAllPendingOrders(); // Tambahkan sync otomatis
     });
   }
 

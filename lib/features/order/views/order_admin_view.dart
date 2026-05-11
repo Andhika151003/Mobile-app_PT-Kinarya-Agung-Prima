@@ -47,6 +47,13 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
   void initState() {
     super.initState();
     _fetchOrders();
+    
+    // Sinkronisasi status pesanan yang tertunda secara otomatis untuk seluruh sistem
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _adminController.syncAllPendingOrders().then((_) {
+        if (mounted) _fetchOrders(); // Refresh setelah sync
+      });
+    });
   }
 
   @override

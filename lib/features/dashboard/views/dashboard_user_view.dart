@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:ecommerce/core/theme/app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/format_util.dart';
@@ -14,6 +16,7 @@ import '../../complaint/views/complaint_history_view.dart';
 import '../../authentication/controllers/profile_user_controller.dart';
 import '../../notification/views/notif_user_view.dart';
 import '../../notification/controllers/notif_user_controller.dart';
+import 'package:ecommerce/features/order/controllers/order_user_controller.dart';
 
 class DashboardUserView extends StatefulWidget {
   const DashboardUserView({super.key});
@@ -39,6 +42,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
 
   late Stream<List<Map<String, dynamic>>> _recentOrdersStream;
   late Stream<List<ProductModel>> _recommendedProductsStream;
+  Timer? _syncTimer;
 
   @override
   bool get wantKeepAlive => true;
@@ -50,6 +54,23 @@ class _DashboardUserViewState extends State<DashboardUserView>
     _loadPromotions();
     _recentOrdersStream = _controller.getRecentOrders();
     _recommendedProductsStream = _controller.getRecommendedProducts();
+    
+    // Sinkronisasi pesanan yang tertunda secara otomatis (saat buka)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncOrders();
+    });
+
+    // Sinkronisasi berkala setiap 5 menit
+    _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      _syncOrders();
+    });
+  }
+
+  void _syncOrders() {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null && userId.isNotEmpty) {
+      OrderUserController().syncAllPendingOrders(userId);
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -62,6 +83,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
 
   @override
   void dispose() {
+    _syncTimer?.cancel();
     _bannerPageController.dispose();
     super.dispose();
   }
