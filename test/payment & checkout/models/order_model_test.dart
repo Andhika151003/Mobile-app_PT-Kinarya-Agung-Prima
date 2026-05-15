@@ -3,120 +3,165 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce/features/order/models/order.dart';
 
 void main() {
-  group('Unit Test Model OrderItemModel', () {
-    test('fromMap harus mengurai data dengan benar', () {
-      final map = {
-        'productId': 'p1',
-        'title': 'Produk 1',
-        'variant': 'A',
-        'quantity': 2,
-        'price': 50.0,
-        'imageUrl': 'img1'
-      };
+  group('Unit Test Model: OrderItemModel', () {
+    test(
+      'fromMap harus melakukan deserialisasi Map menjadi objek OrderItemModel dengan akurat',
+      () {
+        // Arrange: Menyiapkan simulasi payload data mentah (JSON/Map) dari Firestore
+        final Map<String, dynamic> firestoreMap = {
+          'productId': 'p1',
+          'title': 'Produk 1',
+          'variant': 'A',
+          'quantity': 2,
+          'price': 50.0,
+          'imageUrl': 'img1',
+        };
 
-      final item = OrderItemModel.fromMap(map);
+        // Act: Mengeksekusi fungsi konversi data mentah menjadi entitas Model
+        final resultItem = OrderItemModel.fromMap(firestoreMap);
 
-      expect(item.productId, equals('p1'));
-      expect(item.title, equals('Produk 1'));
-      expect(item.quantity, equals(2));
-      expect(item.price, equals(50.0));
-    });
+        // Assert: Memastikan setiap properti terpetakan dengan sempurna
+        expect(resultItem.productId, equals('p1'));
+        expect(resultItem.title, equals('Produk 1'));
+        expect(resultItem.quantity, equals(2));
+        expect(resultItem.price, equals(50.0));
+      },
+    );
 
-    test('toMap harus mengembalikan map yang benar', () {
-      final item = OrderItemModel(
-        productId: 'p1',
-        title: 'Produk 1',
-        variant: 'A',
-        quantity: 3,
-        price: 60.0,
-      );
+    test(
+      'toMap harus melakukan serialisasi objek OrderItemModel menjadi Map yang sesuai skema database',
+      () {
+        // Arrange: Menyiapkan objek Dart yang valid dan siap dikirim
+        final item = OrderItemModel(
+          productId: 'p1',
+          title: 'Produk 1',
+          variant: 'A',
+          quantity: 3,
+          price: 60.0,
+        );
 
-      final map = item.toMap();
-      expect(map['productId'], equals('p1'));
-      expect(map['quantity'], equals(3));
-    });
+        // Act: Mengeksekusi pembentukan objek menjadi Map
+        final resultMap = item.toMap();
+
+        // Assert: Memastikan struktur Map siap ditulis ke database tanpa ada key yang salah eja
+        expect(resultMap['productId'], equals('p1'));
+        expect(resultMap['quantity'], equals(3));
+        expect(resultMap['price'], equals(60.0));
+      },
+    );
   });
 
-  group('Unit Test Model OrderModel', () {
-    final now = DateTime.now();
-    final timestamp = Timestamp.fromDate(now);
+  group('Unit Test Model: OrderModel', () {
+    final currentDateTime = DateTime.now();
+    final currentTimestamp = Timestamp.fromDate(currentDateTime);
 
-    test('fromMap harus mengurai Firestore Timestamp dengan benar', () {
-      final map = {
-        'orderId': 'KNY-123',
-        'userId': 'u1',
-        'fullName': 'Test User',
-        'shippingAddress': 'Alamat',
-        'paymentMethod': 'Duitku',
-        'promoCode': 'NONE',
-        'subtotal': 100.0,
-        'shippingCost': 10.0,
-        'tax': 0.0,
-        'total': 110.0,
-        'status': 'Ordered',
-        'createdAt': timestamp,
-        'items': [
-          {'productId': 'p1', 'title': 'P1', 'variant': '-', 'quantity': 1, 'price': 100.0}
-        ]
-      };
+    test(
+      'fromMap harus mengurai data kompleks termasuk konversi mutlak Firestore Timestamp ke DateTime',
+      () {
+        // Arrange: Simulasi satu dokumen utuh dari koleksi 'orders' di Firestore
+        final Map<String, dynamic> firestoreDocument = {
+          'orderId': 'KNY-123',
+          'userId': 'u1',
+          'fullName': 'Test User',
+          'shippingAddress': 'Alamat',
+          'paymentMethod': 'Duitku',
+          'promoCode': 'NONE',
+          'subtotal': 100.0,
+          'shippingCost': 10.0,
+          'tax': 0.0,
+          'total': 110.0,
+          'status': 'Ordered',
+          'createdAt': currentTimestamp,
+          'items': [
+            {
+              'productId': 'p1',
+              'title': 'P1',
+              'variant': '-',
+              'quantity': 1,
+              'price': 100.0,
+            },
+          ],
+        };
 
-      final order = OrderModel.fromMap(map);
+        // Act: Mengubah dokumen Firestore menjadi objek Dart
+        final resultOrder = OrderModel.fromMap(firestoreDocument);
 
-      expect(order.orderId, equals('KNY-123'));
-      expect(order.createdAt, isNotNull);
-      // Bandingkan dengan milidetik untuk menghindari perbedaan mikrodetik saat konversi
-      expect(order.createdAt!.millisecondsSinceEpoch, equals(now.toLocal().millisecondsSinceEpoch));
-      expect(order.items.length, equals(1));
-      expect(order.items[0].productId, equals('p1'));
-    });
+        // Assert: Memastikan arsitektur data utuh, presisi waktu terjaga, dan nested list (items) terurai
+        expect(resultOrder.orderId, equals('KNY-123'));
+        expect(resultOrder.createdAt, isNotNull);
+        // Validasi berbasis milidetik untuk mencegah kegagalan minor akibat presisi mikrodetik
+        expect(
+          resultOrder.createdAt!.millisecondsSinceEpoch,
+          equals(currentDateTime.toLocal().millisecondsSinceEpoch),
+        );
+        expect(resultOrder.items.length, equals(1));
+        expect(resultOrder.items.first.productId, equals('p1'));
+      },
+    );
 
-    test('toMap harus menangani tanggal null dengan benar', () {
-      final order = OrderModel(
-        orderId: 'KNY-123',
-        userId: 'u1',
-        fullName: 'User',
-        shippingAddress: 'Alamat',
-        paymentMethod: 'Metode',
-        promoCode: 'NONE',
-        subtotal: 100.0,
-        shippingCost: 10.0,
-        tax: 0.0,
-        discountAmount: 0.0,
-        total: 110.0,
-        items: [],
-        status: 'Ordered',
-        createdAt: now,
-      );
+    test(
+      'toMap harus menangani serialisasi secara aman pada field tanggal operasional yang bernilai null',
+      () {
+        // Arrange: Instansiasi objek order baru yang belum memiliki status pembayaran atau pengiriman
+        final newOrder = OrderModel(
+          orderId: 'KNY-123',
+          userId: 'u1',
+          fullName: 'User',
+          shippingAddress: 'Alamat',
+          paymentMethod: 'Metode',
+          promoCode: 'NONE',
+          subtotal: 100.0,
+          shippingCost: 10.0,
+          tax: 0.0,
+          discountAmount: 0.0,
+          total: 110.0,
+          items: [],
+          status: 'Ordered',
+          createdAt: currentDateTime,
+        );
 
-      final map = order.toMap();
-      expect(map['createdAt'], isA<Timestamp>());
-      expect(map['paidAt'], isNull);
-      expect(map['shippedAt'], isNull);
-    });
+        // Act: Konversi format menuju skema penyimpanan Firestore
+        final resultMap = newOrder.toMap();
 
-    test('copyWith harus memperbarui status dan tanggal', () {
-      final order = OrderModel(
-        orderId: 'KNY-123',
-        userId: 'u1',
-        fullName: 'User',
-        shippingAddress: 'Alamat',
-        paymentMethod: 'Metode',
-        promoCode: 'NONE',
-        subtotal: 100.0,
-        shippingCost: 10.0,
-        tax: 0.0,
-        discountAmount: 0.0,
-        total: 110.0,
-        items: [],
-        status: 'Ordered',
-      );
+        // Assert: Memvalidasi kebersihan data sebelum proses write dilakukan ke backend
+        expect(resultMap['createdAt'], isA<Timestamp>());
+        expect(resultMap['paidAt'], isNull);
+        expect(resultMap['shippedAt'], isNull);
+      },
+    );
 
-      final paidDate = DateTime.now();
-      final updatedOrder = order.copyWith(status: 'Paid', paidAt: paidDate);
+    test(
+      'copyWith harus menghasilkan instance baru dengan pembaruan state tanpa memutasikan data asli (immutable)',
+      () {
+        // Arrange: Menyiapkan objek order dengan status transaksi awal
+        final initialOrder = OrderModel(
+          orderId: 'KNY-123',
+          userId: 'u1',
+          fullName: 'User',
+          shippingAddress: 'Alamat',
+          paymentMethod: 'Metode',
+          promoCode: 'NONE',
+          subtotal: 100.0,
+          shippingCost: 10.0,
+          tax: 0.0,
+          discountAmount: 0.0,
+          total: 110.0,
+          items: [],
+          status: 'Ordered',
+        );
+        final paymentTime = DateTime.now();
 
-      expect(updatedOrder.status, equals('Paid'));
-      expect(updatedOrder.paidAt, equals(paidDate));
-      expect(updatedOrder.orderId, equals(order.orderId)); // Tidak berubah
-    });
+        // Act: Memanipulasi state dengan membuat salinan yang diperbarui
+        final updatedOrder = initialOrder.copyWith(
+          status: 'Paid',
+          paidAt: paymentTime,
+        );
+
+        // Assert: Mengisolasi perubahan state agar data lain tetap identik
+        expect(updatedOrder.status, equals('Paid'));
+        expect(updatedOrder.paidAt, equals(paymentTime));
+        expect(updatedOrder.orderId, equals(initialOrder.orderId));
+      },
+    );
   });
 }
