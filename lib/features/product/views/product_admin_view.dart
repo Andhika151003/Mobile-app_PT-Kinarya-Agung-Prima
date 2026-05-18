@@ -350,11 +350,8 @@ class _ProductAdminViewState extends State<ProductAdminView>
       symbol: 'Rp ',
       decimalDigits: 0,
     );
-    int alertLevel =
-        (product.lowStockAlert != null && product.lowStockAlert! > 0)
-        ? product.lowStockAlert!
-        : 5;
-    bool isInStock = product.stock > alertLevel;
+    bool isLowStock = product.isLowStock;
+    bool isOutOfStock = product.stock <= 0;
 
     String displaySku = (product.sku != null && product.sku!.isNotEmpty)
         ? product.sku!
@@ -440,22 +437,24 @@ class _ProductAdminViewState extends State<ProductAdminView>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: isInStock
-                          ? Colors.green.shade50
-                          : Colors.red.shade50,
+                      color: isOutOfStock
+                          ? Colors.red.shade50
+                          : (isLowStock ? Colors.orange.shade50 : Colors.green.shade50),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isInStock
-                            ? Colors.green.shade200
-                            : Colors.red.shade200,
+                        color: isOutOfStock
+                            ? Colors.red.shade200
+                            : (isLowStock ? Colors.orange.shade200 : Colors.green.shade200),
                       ),
                     ),
                     child: Text(
-                      isInStock ? 'In Stock' : 'Low Stock Alert',
+                      isOutOfStock
+                          ? 'Out of Stock'
+                          : (isLowStock ? 'Low Stock Alert' : 'In Stock'),
                       style: TextStyle(
-                        color: isInStock
-                            ? primaryGreen
-                            : Colors.red.shade700,
+                        color: isOutOfStock
+                            ? Colors.red.shade700
+                            : (isLowStock ? Colors.orange.shade800 : primaryGreen),
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),

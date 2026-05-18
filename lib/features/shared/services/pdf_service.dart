@@ -13,7 +13,7 @@ class PdfService {
   static Future<void> generateAndOpenInvoice(OrderModel order) async {
     if (order.status != 'Delivered' &&
         order.status != 'Cancelled' &&
-        order.status != 'Ordered') {
+        order.status != 'Paid') {
       return;
     }
     final pdf = pw.Document();

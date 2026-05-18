@@ -28,7 +28,6 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
   void initState() {
     super.initState();
     _order = widget.order;
-    // Auto refresh saat pertama kali buka detail
     _fetchOrder();
   }
 
@@ -73,16 +72,13 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
 
   Future<void> _fetchOrder() async {
     try {
-      // Ambil data terbaru dari Firestore
       final updated = await _controller.getOrderById(_order.orderId);
       if (updated != null && mounted) {
         
-        // Auto-refresh jika status masih Ordered
         if (updated.status == 'Ordered') {
-          final userCtrl = OrderUserController(); // CS side menggunakan UserController untuk sync
+          final userCtrl = OrderUserController();
           await userCtrl.syncDuitkuPayment(_order.orderId);
           
-          // Re-fetch data terbaru setelah sync
           final finalData = await _controller.getOrderById(_order.orderId);
           if (finalData != null && mounted) {
             setState(() {

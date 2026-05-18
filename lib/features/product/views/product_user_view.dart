@@ -416,8 +416,16 @@ class _ProductUserViewState extends State<ProductUserView> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Sisa stok: ${product.stock}',
-                          style: TextStyle(color: product.stock < 10 ? Colors.red : Colors.grey.shade600, fontSize: 11),
+                          product.stock <= 0
+                              ? 'Stok Habis'
+                              : (product.isLowStock ? 'Stok Menipis (Sisa: ${product.stock})' : 'Sisa stok: ${product.stock}'),
+                          style: TextStyle(
+                            color: product.stock <= 0
+                                ? Colors.red
+                                : (product.isLowStock ? Colors.orange.shade800 : Colors.grey.shade600),
+                            fontSize: 11,
+                            fontWeight: product.isLowStock ? FontWeight.bold : FontWeight.normal,
+                          ),
                         ),
                       ],
                     ),

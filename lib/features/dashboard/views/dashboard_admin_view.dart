@@ -38,7 +38,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
     super.initState();
     _loadDashboardData();
     
-    // Sinkronisasi berkala setiap 5 menit agar status Expired/Paid terupdate otomatis
     _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       _loadDashboardData();
     });
@@ -46,7 +45,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
 
   Future<void> _loadDashboardData() async {
     try {
-      // Sinkronisasi pesanan yang tertunda agar data overview akurat
       final OrderAdminController adminOrderCtrl = OrderAdminController();
       await adminOrderCtrl.syncAllPendingOrders();
 

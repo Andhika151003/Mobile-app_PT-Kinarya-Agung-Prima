@@ -231,10 +231,7 @@ class _AllProductAdminViewState extends State<AllProductAdminView> {
       symbol: 'Rp ',
       decimalDigits: 0,
     );
-    int alertLevel = (product.lowStockAlert != null && product.lowStockAlert! > 0) 
-        ? product.lowStockAlert! 
-        : 5;
-    bool isLowStock = product.stock <= alertLevel;
+    bool isLowStock = product.isLowStock;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

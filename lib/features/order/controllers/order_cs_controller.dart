@@ -245,8 +245,6 @@ class OrderCsController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sinkronisasi semua pesanan yang masih 'Ordered' atau 'Pending Payment'
-  /// untuk seluruh sistem (CS side).
   Future<void> syncAllPendingOrders() async {
     try {
       final snapshot = await _firestore
@@ -264,7 +262,6 @@ class OrderCsController extends ChangeNotifier {
         await userCtrl.syncDuitkuPayment(orderId);
       }
       
-      // Refresh list setelah sync
       await fetchAllOrders();
     } catch (e) {
       debugPrint("CS Error syncAllPendingOrders: $e");

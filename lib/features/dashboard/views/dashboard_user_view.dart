@@ -55,12 +55,9 @@ class _DashboardUserViewState extends State<DashboardUserView>
     _recentOrdersStream = _controller.getRecentOrders();
     _recommendedProductsStream = _controller.getRecommendedProducts();
     
-    // Sinkronisasi pesanan yang tertunda secara otomatis (saat buka)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncOrders();
     });
-
-    // Sinkronisasi berkala setiap 5 menit
     _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       _syncOrders();
     });
@@ -306,8 +303,6 @@ class _DashboardUserViewState extends State<DashboardUserView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
-    // Removed initial shimmer check to render dashboard structure immediately
 
     return SafeArea(
       child: Container(

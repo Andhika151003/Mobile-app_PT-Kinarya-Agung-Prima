@@ -31,7 +31,7 @@ class _OrderCsViewState extends State<OrderCsView> {
     _controller = OrderCsController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.fetchAllOrders();
-      _controller.syncAllPendingOrders(); // Tambahkan sync otomatis
+      _controller.syncAllPendingOrders();
     });
   }
 
@@ -214,7 +214,9 @@ class _OrderCsViewState extends State<OrderCsView> {
         MaterialPageRoute(
           builder: (_) => OrderDetailCsView(order: order),
         ),
-      ),
+      ).then((_) {
+        controller.fetchAllOrders();
+      }),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),

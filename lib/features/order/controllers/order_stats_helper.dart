@@ -6,14 +6,12 @@ class OrderStatsHelper {
     final orderRef = db.collection('orders').doc(orderId);
     
     await db.runTransaction((transaction) async {
-      // 1. ALL READS FIRST
       final orderDoc = await transaction.get(orderRef);
       if (!orderDoc.exists) return;
 
       final data = orderDoc.data() as Map<String, dynamic>;
       final itemsData = data['items'] as List<dynamic>? ?? [];
       
-      // Get all product references and documents
       Map<String, DocumentSnapshot> productDocs = {};
       for (var itemMap in itemsData) {
         final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
@@ -23,13 +21,11 @@ class OrderStatsHelper {
         }
       }
 
-      // 2. LOGIC & DATA PREPARATION
       final currentStatus = data['status']?.toString() ?? '';
       final bool statsRecorded = data['statsRecorded'] ?? false;
 
       Map<String, dynamic> orderUpdates = {};
       
-      // Determine Status Update
       if (targetStatus != null) {
         orderUpdates['status'] = targetStatus;
         if (targetStatus == 'Paid') orderUpdates['paidAt'] = FieldValue.serverTimestamp();
@@ -40,7 +36,6 @@ class OrderStatsHelper {
         orderUpdates['paidAt'] = FieldValue.serverTimestamp();
       }
 
-      // Record Stats if not already done
       if (!statsRecorded) {
         for (var itemMap in itemsData) {
           final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
@@ -64,7 +59,6 @@ class OrderStatsHelper {
         orderUpdates['statsRecorded'] = true;
       }
 
-      // 3. ALL WRITES LAST
       if (orderUpdates.isNotEmpty) {
         transaction.update(orderRef, orderUpdates);
       }

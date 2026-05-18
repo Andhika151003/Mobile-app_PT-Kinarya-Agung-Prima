@@ -58,7 +58,6 @@ class ComplaintUserController {
 
       await _firestore.collection('complaints').add(complaint.toMap());
 
-      // Trigger Notification for Admin
       await _pushNotificationService.sendNotificationToAdmin(
         title: 'Komplain Baru!',
         message: 'Ada komplain baru untuk pesanan $orderId: $issueType.',

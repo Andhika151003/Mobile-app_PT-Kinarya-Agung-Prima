@@ -62,7 +62,6 @@ class OrderUserController {
           
           return true;
         } else if (duitkuStatus == '02') {
-          // Status Expired atau Cancelled dari Duitku
           await _firestore.collection('orders').doc(orderId).update({
             'status': 'Expired',
           });
@@ -98,8 +97,6 @@ class OrderUserController {
     }
   }
 
-  /// Sinkronisasi semua pesanan yang masih 'Ordered' atau 'Pending Payment'
-  /// untuk memperbarui statusnya secara otomatis (Paid/Expired).
   Future<void> syncAllPendingOrders(String userId) async {
     try {
       final snapshot = await _firestore
@@ -116,7 +113,6 @@ class OrderUserController {
         final orderId = doc.id;
         final data = doc.data();
         
-        // Cek apakah sudah expired berdasarkan waktu lokal dulu (lebih cepat & hemat API)
         final expiredAt = data['paymentExpiredAt'] as Timestamp?;
         if (expiredAt != null && DateTime.now().isAfter(expiredAt.toDate())) {
           await _firestore.collection('orders').doc(orderId).update({
@@ -126,7 +122,6 @@ class OrderUserController {
           continue;
         }
 
-        // Jika belum expired di waktu lokal, baru cek ke Duitku (siapa tahu sudah dibayar)
         await syncDuitkuPayment(orderId);
       }
     } catch (e) {

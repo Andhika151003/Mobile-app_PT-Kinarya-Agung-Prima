@@ -41,7 +41,6 @@ class _OrderUserViewState extends State<OrderUserView>
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
     
-    // Sinkronisasi status pesanan yang tertunda secara otomatis
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
@@ -311,7 +310,7 @@ class _OrderList extends StatelessWidget {
           color: Colors.black,
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-            physics: const AlwaysScrollableScrollPhysics(), // Memastikan refresh bisa dipicu meski list pendek
+            physics: const AlwaysScrollableScrollPhysics(),
             itemCount: allOrders.length,
             separatorBuilder: (_, __) => const SizedBox(height: 16),
             itemBuilder: (context, i) => _OrderCard(order: allOrders[i]),

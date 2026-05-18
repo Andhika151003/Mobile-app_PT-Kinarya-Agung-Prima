@@ -1,10 +1,7 @@
 import 'package:ecommerce/core/theme/app_colors.dart';
-import 'package:ecommerce/features/shared/main_navigation_admin.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/login_controller.dart';
-import '../../shared/main_navigation_user.dart';
-import '../../shared/main_navigation_cs.dart';
 import 'register_view.dart';
 import 'forgot_password_view.dart';
 
@@ -30,28 +27,7 @@ class _LoginViewState extends State<LoginView> {
         password: _passwordController.text,
       );
 
-      if (user != null && mounted) {
-        
-        Widget mainView;
-
-        switch (user.role) {
-          case 'admin':
-            mainView = const MainNavigationAdmin();
-            break;
-          case 'cs':
-          case 'customer_support':
-            mainView = const MainNavigationCs();
-            break;
-          default:
-            mainView = const MainNavigationUser();
-        }
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => mainView),
-        );
-
-      } else if (mounted && controller.errorMessage != null) {
+      if (user == null && mounted && controller.errorMessage != null) {
         // Jika Login Gagal
         if (controller.errorMessage!.contains('Account Deactivated')) {
           _showDeactivatedDialog(context, controller.deactivatedAdminPhone);
@@ -118,7 +94,6 @@ class _LoginViewState extends State<LoginView> {
           ),
           ElevatedButton(
             onPressed: () {
-              // Jika ingin integrasi WhatsApp/Telepon bisa ditambahkan di sini
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(

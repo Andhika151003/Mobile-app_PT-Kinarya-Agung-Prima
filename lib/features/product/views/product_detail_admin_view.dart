@@ -61,7 +61,13 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                   const SizedBox(height: 16),
                   _buildInfoRow('MOQ (Min. Order)', '${_currentProduct.moq ?? 1} units'),
                   const SizedBox(height: 16),
-                  _buildInfoRow('Stock Available', '${_currentProduct.stock} units'),
+                  _buildInfoRow(
+                    'Stock Available', 
+                    '${_currentProduct.stock} units',
+                    valueColor: _currentProduct.stock <= 0
+                        ? Colors.red
+                        : (_currentProduct.isLowStock ? Colors.orange.shade800 : Colors.black),
+                  ),
                 ],
               ),
             ),
@@ -270,7 +276,25 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
   }
 
   Widget _buildTitleAndBadge() {
-    bool isInStock = _currentProduct.stock > 0;
+    final bool isOut = _currentProduct.stock <= 0;
+    final bool isLow = _currentProduct.isLowStock;
+
+    final String statusText = isOut
+        ? 'Out of Stock'
+        : (isLow ? 'Low Stock Alert' : 'In Stock');
+
+    final Color bgColor = isOut
+        ? Colors.red.shade50
+        : (isLow ? Colors.orange.shade50 : Colors.green.shade50);
+
+    final Color borderColor = isOut
+        ? Colors.red.shade200
+        : (isLow ? Colors.orange.shade200 : Colors.green.shade200);
+
+    final Color textColor = isOut
+        ? Colors.red.shade700
+        : (isLow ? Colors.orange.shade800 : const Color(0xFF458833));
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -281,24 +305,32 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: isInStock ? Colors.green.shade100 : Colors.red.shade100,
+            color: bgColor,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
           ),
           child: Text(
-            isInStock ? 'In Stock' : 'Out of Stock',
-            style: TextStyle(color: isInStock ? const Color(0xFF458833) : Colors.red, fontSize: 11, fontWeight: FontWeight.bold),
+            statusText,
+            style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.bold),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, {Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
+        Text(
+          value, 
+          style: TextStyle(
+            fontSize: 14, 
+            fontWeight: FontWeight.bold, 
+            color: valueColor ?? Colors.black,
+          ),
+        ),
       ],
     );
   }

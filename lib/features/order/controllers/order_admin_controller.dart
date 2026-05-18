@@ -67,7 +67,6 @@ class OrderAdminController {
 
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     try {
-      // Get order data to find userId
       final orderDoc = await _firestore.collection('orders').doc(orderId).get();
       if (!orderDoc.exists) return;
       final orderData = orderDoc.data() as Map<String, dynamic>;
@@ -208,8 +207,6 @@ class OrderAdminController {
     return results;
   }
 
-  /// Sinkronisasi semua pesanan yang masih 'Ordered' atau 'Pending Payment'
-  /// untuk seluruh sistem (Admin side).
   Future<void> syncAllPendingOrders() async {
     try {
       final snapshot = await _firestore
@@ -225,7 +222,6 @@ class OrderAdminController {
         final orderId = doc.id;
         final data = doc.data();
 
-        // Cek expiry lokal
         final expiredAt = data['paymentExpiredAt'] as Timestamp?;
         if (expiredAt != null && DateTime.now().isAfter(expiredAt.toDate())) {
           await _firestore.collection('orders').doc(orderId).update({

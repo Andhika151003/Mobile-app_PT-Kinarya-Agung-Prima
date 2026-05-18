@@ -26,11 +26,11 @@ class AuthGate extends StatelessWidget {
           return const LoginView();
         }
 
-        return FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance
+        return StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
               .collection('users')
               .doc(authSnapshot.data!.uid)
-              .get(),
+              .snapshots(),
           builder: (context, userSnapshot) {
 
             if (userSnapshot.connectionState == ConnectionState.waiting) {
@@ -40,14 +40,41 @@ class AuthGate extends StatelessWidget {
               );
             }
 
+            if (userSnapshot.hasError) {
+              return Scaffold(
+                body: Center(child: Text('Error loading user data: ${userSnapshot.error}')),
+              );
+            }
+
             if (userSnapshot.hasData && userSnapshot.data!.exists) {
-              final userData = userSnapshot.data!.data() as Map<String, dynamic>;
-              final String role = (userData['role'] ?? 'user').toString().toLowerCase();
+              final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
+              
+              if (userData == null) {
+                return const Scaffold(
+                  body: Center(child: Text('User data is empty!')),
+                );
+              }
+
+              // Jika data belum tersinkronisasi penuh (hanya pending write token), kita tunggu sebentar
+              if (!userData.containsKey('role') && userSnapshot.data!.metadata.hasPendingWrites) {
+                return const Scaffold(
+                  backgroundColor: Colors.white,
+                  body: Center(child: CircularProgressIndicator(color: Color(0xFF458833))),
+                );
+              }
+
+              debugPrint('AuthGate FULL DATA Fetched: $userData for UID: ${authSnapshot.data!.uid}');
+
+              final String role = (userData['role']?.toString().trim().toLowerCase()) ?? 'user';
+              debugPrint('AuthGate Role Fetched: "$role" for UID: ${authSnapshot.data!.uid}');
+
               final bool isActive = userData['isActive'] ?? true;
 
               if (!isActive) {
-                // Jika tidak aktif, sign out dan biarkan StreamBuilder mengarahkan ke LoginView
-                FirebaseAuth.instance.signOut();
+                // Jangan sign out otomatis di sini untuk menghindari loop Stream
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  FirebaseAuth.instance.signOut();
+                });
                 return const LoginView();
               }
 
@@ -55,10 +82,19 @@ class AuthGate extends StatelessWidget {
                 return const MainNavigationAdmin();
               } else if (role == 'cs' || role == 'customer_support') {
                 return const MainNavigationCs();
-              } else {
+              } else if (role == 'retailer' || role == 'user') {
                 return const MainNavigationUser();
+              } else {
+                return Scaffold(
+                  body: Center(child: Text('Unknown role: "$role"')),
+                );
               }
             }
+            
+            // Jika dokumen benar-benar tidak ada di database
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              FirebaseAuth.instance.signOut();
+            });
             return const LoginView();
           },
         );

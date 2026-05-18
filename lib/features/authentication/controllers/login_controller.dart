@@ -55,11 +55,10 @@ class LoginController extends ChangeNotifier {
         password: password,
       );
 
-      // 2. Ambil data user dari Firestore
       final docSnapshot = await _firestore
           .collection('users')
           .doc(userCredential.user!.uid)
-          .get();
+          .get(const GetOptions(source: Source.server));
 
       if (!docSnapshot.exists) {
         throw Exception('User data not found');
@@ -67,7 +66,7 @@ class LoginController extends ChangeNotifier {
 
       final data = docSnapshot.data()!;
       final bool isActive = data['isActive'] ?? true;
-      final String role = data['role']?.toString().toLowerCase() ?? 'retailer';
+      final String role = (data['role']?.toString().trim().toLowerCase()) ?? 'retailer';
 
       // 3. Cek status aktif (khusus untuk retailer atau semua role jika diperlukan)
       if (!isActive) {

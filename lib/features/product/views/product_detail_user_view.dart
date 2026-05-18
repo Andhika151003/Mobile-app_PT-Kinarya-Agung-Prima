@@ -199,6 +199,42 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
               'SKU: $displaySku',
               style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
             ),
+            if (currentStock <= 0 || widget.product.isLowStock) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: currentStock <= 0 ? Colors.red.shade50 : Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: currentStock <= 0 ? Colors.red.shade200 : Colors.orange.shade200,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      currentStock <= 0 ? Icons.error_outline : Icons.warning_amber_outlined,
+                      color: currentStock <= 0 ? Colors.red.shade700 : Colors.orange.shade800,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        currentStock <= 0
+                            ? 'Produk ini sedang tidak tersedia (Stok Habis).'
+                            : 'Stok Terbatas! Segera lakukan pemesanan sebelum kehabisan.',
+                        style: TextStyle(
+                          color: currentStock <= 0 ? Colors.red.shade700 : Colors.orange.shade800,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
 
             // 3. HARGA & COUNTER
@@ -274,7 +310,17 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildInfoCard('Stock', '$currentStock pcs')),
+                Expanded(
+                  child: _buildInfoCard(
+                    'Stock',
+                    currentStock <= 0
+                        ? 'Stok Habis'
+                        : (widget.product.isLowStock ? '$currentStock pcs (Stok Menipis)' : '$currentStock pcs'),
+                    valueColor: currentStock <= 0
+                        ? Colors.red
+                        : (widget.product.isLowStock ? Colors.orange.shade800 : Colors.black87),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildInfoCard(
@@ -547,7 +593,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
     );
   }
 
-  Widget _buildInfoCard(String label, String value) {
+  Widget _buildInfoCard(String label, String value, {Color? valueColor}) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -565,10 +611,10 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
+              color: valueColor ?? Colors.black87,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],

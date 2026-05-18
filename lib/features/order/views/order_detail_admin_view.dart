@@ -41,15 +41,9 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
       if (data != null && mounted) {
         final order = OrderModel.fromMap(data);
 
-        // Auto-refresh jika status masih Ordered
         if (order.status == 'Ordered') {
-          // Admin controller menggunakan userController di dalamnya untuk sync payment
-          await _adminController.syncAllPendingOrders(); // Atau panggil spesifik order jika ada methodnya
-          // Namun syncAllPendingOrders mengecek semua. 
-          // Mari kita panggil syncDuitkuPayment via _adminController jika tersedia.
-          // Berdasarkan file controller, _adminController punya akses ke _userController.
+          await _adminController.syncAllPendingOrders();
           
-          // Re-fetch data terbaru
           final updatedData = await _adminController.getOrderById(widget.orderId);
           if (updatedData != null && mounted) {
             setState(() {

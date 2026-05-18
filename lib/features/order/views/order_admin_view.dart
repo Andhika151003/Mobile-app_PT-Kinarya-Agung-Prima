@@ -48,10 +48,9 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
     super.initState();
     _fetchOrders();
     
-    // Sinkronisasi status pesanan yang tertunda secara otomatis untuk seluruh sistem
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _adminController.syncAllPendingOrders().then((_) {
-        if (mounted) _fetchOrders(); // Refresh setelah sync
+        if (mounted) _fetchOrders(); 
       });
     });
   }
@@ -69,8 +68,19 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
       if (mounted) {
         setState(() {
           _allOrders = docs.map((e) => OrderModel.fromMap(e)).toList();
-          _filteredOrders = List.from(_allOrders);
+          final mapList = _allOrders.map((e) => e.toMap()).toList();
+          final filteredMaps = _adminController.filterAndSearchOrders(
+            mapList, 
+            _selectedFilter == 'All' ? 'All Transactions' : _selectedFilter, 
+            _searchQuery
+          );
+          _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
           _applySortInternal();
+          
+          final totalP = (_filteredOrders.length / _pageSize).ceil().clamp(1, 999);
+          if (_currentPage > totalP) {
+            _currentPage = totalP;
+          }
           _isLoading = false;
         });
       }
@@ -116,8 +126,9 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
   int get _totalPages => (_filteredOrders.length / _pageSize).ceil().clamp(1, 999);
 
   List<OrderModel> get _currentPageOrders {
-    final start = (_currentPage - 1) * _pageSize;
+    final start = ((_currentPage - 1) * _pageSize).clamp(0, _filteredOrders.isEmpty ? 0 : _filteredOrders.length - 1);
     final end = (start + _pageSize).clamp(0, _filteredOrders.length);
+    if (start > end) return [];
     return _filteredOrders.sublist(start, end);
   }
 
