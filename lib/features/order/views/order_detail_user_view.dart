@@ -94,18 +94,24 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
           style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
         ),
         actions: [
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
-              child: const Icon(Icons.print_outlined, size: 16, color: Colors.black87),
-            ),
-            onPressed: () {
-              if (_order != null) {
+          if (_order != null &&
+              (_order!.status == 'Delivered' ||
+                  _order!.status == 'Cancelled' ||
+                  _order!.status == 'Paid'))
+            IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey.shade300)),
+                child: const Icon(Icons.print_outlined,
+                    size: 16, color: Colors.black87),
+              ),
+              onPressed: () {
                 PdfService.generateAndOpenInvoice(_order!);
-              }
-            },
-          ),
+              },
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -570,26 +576,31 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                if (_order != null) {
+          if (_order != null &&
+              (_order!.status == 'Delivered' ||
+                  _order!.status == 'Cancelled' ||
+                  _order!.status == 'Paid')) ...[
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
                   PdfService.generateAndOpenInvoice(_order!);
-                }
-              },
-              icon: const Icon(Icons.download_outlined, size: 18),
-              label: const Text('Download Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey.shade100,
-                foregroundColor: Colors.black87,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                },
+                icon: const Icon(Icons.download_outlined, size: 18),
+                label: const Text('Download Invoice',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey.shade100,
+                  foregroundColor: Colors.black87,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

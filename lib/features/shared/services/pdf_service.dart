@@ -11,6 +11,11 @@ class PdfService {
   static final dateFormat = DateFormat('dd MMMM yyyy, HH:mm');
 
   static Future<void> generateAndOpenInvoice(OrderModel order) async {
+    if (order.status != 'Delivered' &&
+        order.status != 'Cancelled' &&
+        order.status != 'Ordered') {
+      return;
+    }
     final pdf = pw.Document();
 
     final invoiceId = order.orderId;

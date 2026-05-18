@@ -201,12 +201,15 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.print_outlined, color: Colors.black),
-            onPressed: () {
-              PdfService.generateAndOpenInvoice(_order);
-            },
-          ),
+          if (_order.status == 'Delivered' ||
+              _order.status == 'Cancelled' ||
+              _order.status == 'Paid')
+            IconButton(
+              icon: const Icon(Icons.print_outlined, color: Colors.black),
+              onPressed: () {
+                PdfService.generateAndOpenInvoice(_order);
+              },
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -259,8 +262,12 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
             _buildOrderItems(),
             const SizedBox(height: 16),
             _buildPaymentInfo(),
-            const SizedBox(height: 16),
-            _buildDownloadInvoiceButton(),
+            if (_order.status == 'Delivered' ||
+                _order.status == 'Cancelled' ||
+                _order.status == 'Paid') ...[
+              const SizedBox(height: 16),
+              _buildDownloadInvoiceButton(),
+            ],
             const SizedBox(height: 24),
           ],
         ),
