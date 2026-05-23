@@ -24,22 +24,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
     if (!_formKey.currentState!.validate()) return;
 
     final email = _emailController.text.trim();
-    
-    // Manual Check
-    final isRegistered = await controller.isEmailRegistered(email);
-    
-    if (!isRegistered) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('This email is not registered in our system.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      return;
-    }
-
     try {
       await controller.sendPasswordReset(email);
       

@@ -502,7 +502,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
       );
     }
 
-    if (order.status != 'Delivered' && order.status != 'Expired' && order.status != 'Cancelled') {
+    if (order.status != 'Delivered' && order.status != 'Expired' && order.status != 'Cancelled' && order.cancellationStatus != 'Requested') {
       actions.add(
         Padding(
           padding: const EdgeInsets.only(top: 16),

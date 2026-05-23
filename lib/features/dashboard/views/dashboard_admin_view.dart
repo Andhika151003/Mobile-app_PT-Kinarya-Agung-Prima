@@ -48,11 +48,30 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
       final OrderAdminController adminOrderCtrl = OrderAdminController();
       await adminOrderCtrl.syncAllPendingOrders();
 
-      final stats = await _controller.getOverviewStats();
-      final proms = await _controller.getPromotions();
-      final retails = await _controller.getRetailers();
+      Map<String, dynamic> stats = {};
+      List<Map<String, dynamic>> proms = [];
+      List<Map<String, dynamic>> retails = [];
+
+      try {
+        stats = await _controller.getOverviewStats();
+      } catch (e) {
+        debugPrint('Error loading stats: $e');
+      }
+
+      try {
+        proms = await _controller.getPromotions();
+      } catch (e) {
+        debugPrint('Error loading promotions: $e');
+      }
+
+      try {
+        retails = await _controller.getRetailers();
+      } catch (e) {
+        debugPrint('Error loading retailers: $e');
+      }
 
       if (mounted) {
+        debugPrint('DashboardAdminView: Fetched ${stats.length} stats, ${proms.length} promos, ${retails.length} retailers');
         setState(() {
           overviewStats = stats;
           promotions = proms;
@@ -60,8 +79,8 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
           isLoading = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading admin dashboard data: $e');
+    } catch (e, stackTrace) {
+      debugPrint('Error loading admin dashboard data overall: $e\n$stackTrace');
       if (mounted) setState(() => isLoading = false);
     }
   }
@@ -519,7 +538,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
       );
     }
 
-    final displayRetailers = retailers.take(2).toList();
+    final displayRetailers = retailers.take(5).toList();
 
     return Column(
       children: [

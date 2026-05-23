@@ -8,6 +8,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'features/notification/services/push_notification_service.dart';
 
+final GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
@@ -17,9 +19,14 @@ void main() async {
     await dotenv.load(fileName: ".env");
 
     debugPrint('Inisialisasi Firebase...');
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } on FirebaseException catch (e) {
+      if (e.code != 'duplicate-app') rethrow;
+      debugPrint('Firebase sudah diinisialisasi sebelumnya, melanjutkan...');
+    }
 
     debugPrint('Inisialisasi Supabase...');
     await Supabase.initialize(
@@ -60,6 +67,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: globalNavigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Kinarya E-Commerce',
       localizationsDelegates: const [

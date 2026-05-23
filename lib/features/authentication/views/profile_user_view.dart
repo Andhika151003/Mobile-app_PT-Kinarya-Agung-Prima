@@ -93,33 +93,39 @@ class _ProfileUserViewState extends State<ProfileUserView>
       ),
       body: isLoading
           ? const ProfileShimmer()
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 20.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 10),
-                  _buildProfileHeader(),
-                  const SizedBox(height: 40),
-                  _buildBusinessDetails(),
-                  const SizedBox(height: 32),
-                  _buildStatsCard(
-                    icon: Icons.inventory_2_outlined,
-                    title: 'Total Orders',
-                    value: FormatUtil.formatCompact(totalOrders),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildStatsCard(
-                    icon: Icons.account_balance_wallet_outlined,
-                    title: 'Total Spent',
-                    value: FormatUtil.formatCompact(totalSpent, isCurrency: true),
-                  ),
-                  _buildLogoutButton(context),
-                  const SizedBox(height: 20),
-                ],
+          : RefreshIndicator(
+              onRefresh: _fetchUserData,
+              color: AppColors.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 20.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 10),
+                    _buildProfileHeader(),
+                    const SizedBox(height: 40),
+                    _buildBusinessDetails(),
+                    const SizedBox(height: 32),
+                    _buildStatsCard(
+                      icon: Icons.inventory_2_outlined,
+                      title: 'Total Orders',
+                      value: FormatUtil.formatCompact(totalOrders),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildStatsCard(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: 'Total Spent',
+                      value: FormatUtil.formatCompact(totalSpent, isCurrency: true),
+                    ),
+                    const SizedBox(height: 32),
+                    _buildLogoutButton(context),
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
             ),
     );

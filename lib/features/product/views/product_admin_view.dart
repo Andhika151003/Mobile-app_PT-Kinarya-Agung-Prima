@@ -539,62 +539,70 @@ class _ProductAdminViewState extends State<ProductAdminView>
       {'icon': Icons.fastfood_outlined, 'label': 'Foods'},
     ];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: categories.map((cat) {
-        bool isSelected = _selectedCategory == cat['label'];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: categories.asMap().entries.map((entry) {
+          int index = entry.key;
+          var cat = entry.value;
+          bool isSelected = _selectedCategory == cat['label'];
 
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedCategory = isSelected ? 'All' : cat['label'] as String;
-            });
-          },
-          child: Container(
-            width: 75,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected ? primaryGreen : Colors.grey.shade200,
+          return Padding(
+            padding: EdgeInsets.only(right: index == categories.length - 1 ? 0 : 12.0),
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedCategory = isSelected ? 'All' : cat['label'] as String;
+                });
+              },
+              child: Container(
+                width: 75,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: isSelected ? primaryGreen : Colors.grey.shade200,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  color: isSelected
+                      ? primaryGreen.withValues(alpha: 0.05)
+                      : Colors.white,
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? primaryGreen.withValues(alpha: 0.2)
+                            : Colors.grey.shade200,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        cat['icon'] as IconData,
+                        color: isSelected ? primaryGreen : Colors.grey.shade600,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      cat['label'] as String,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isSelected ? primaryGreen : Colors.grey.shade600,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              borderRadius: BorderRadius.circular(12),
-              color: isSelected
-                  ? primaryGreen.withValues(alpha: 0.05)
-                  : Colors.white,
             ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? primaryGreen.withValues(alpha: 0.2)
-                        : Colors.grey.shade200,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    cat['icon'] as IconData,
-                    color: isSelected ? primaryGreen : Colors.grey.shade600,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  cat['label'] as String,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isSelected ? primaryGreen : Colors.grey.shade600,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }

@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "915430780308",
-    "project_id": "e-commerce-pt-kinarya",
-    "storage_bucket": "e-commerce-pt-kinarya.firebasestorage.app"
+    "project_number": "694496962300",
+    "project_id": "e-commerce-kinarya-mobileapp",
+    "storage_bucket": "e-commerce-kinarya-mobileapp.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:915430780308:android:e32e9a9f15b1831812b381",
+        "mobilesdk_app_id": "1:694496962300:android:2a7c77b7ee15934abd5979",
         "android_client_info": {
           "package_name": "com.kinaryamobile.ecommerce"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "694496962300-d77o0e4ed6hd9g2mk99pu4lqrna4rt7s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kinaryamobile.ecommerce",
+            "certificate_hash": "a6ba1b72e17545c88ee8de65b6f968201e6a7dc7"
+          }
+        },
+        {
+          "client_id": "694496962300-hd3b92j8q8qa3ee0uirrvjq3q23v1hu5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBJJ1ACDiYs8oheSYLjCaknqIytb2jE8gk"
+          "current_key": "AIzaSyAifePYQbB1tT-nj3grYtQbRhMMHPB4osA"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "694496962300-hd3b92j8q8qa3ee0uirrvjq3q23v1hu5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

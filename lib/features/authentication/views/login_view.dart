@@ -27,85 +27,22 @@ class _LoginViewState extends State<LoginView> {
         password: _passwordController.text,
       );
 
-      if (user == null && mounted && controller.errorMessage != null) {
+      if (user != null && mounted) {
+        // Jika Login Berhasil
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } else if (user == null && mounted && controller.errorMessage != null) {
         // Jika Login Gagal
-        if (controller.errorMessage!.contains('Account Deactivated')) {
-          _showDeactivatedDialog(context, controller.deactivatedAdminPhone);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(controller.errorMessage!),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(controller.errorMessage!),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
       }
     }
   }
 
-  void _showDeactivatedDialog(BuildContext context, String? adminPhone) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.error_outline, color: Colors.red),
-            SizedBox(width: 8),
-            Text('Akun Dinonaktifkan', style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Maaf, akun Anda telah dinonaktifkan oleh administrator.',
-              style: TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Silakan hubungi Admin untuk informasi lebih lanjut:',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.phone, size: 18, color: Color(0xFF2E7D32)),
-                const SizedBox(width: 8),
-                Text(
-                  adminPhone ?? 'Hubungi CS', 
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2E7D32),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Hubungi Admin', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -356,7 +293,7 @@ class _LoginViewState extends State<LoginView> {
                           button: true,
                           child: TextButton(
                             onPressed: () {
-                              Navigator.pushReplacement(
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => const RegisterView(),
