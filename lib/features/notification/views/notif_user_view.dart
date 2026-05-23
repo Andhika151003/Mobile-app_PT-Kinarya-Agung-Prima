@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../controllers/notif_user_controller.dart';
 import '../models/notification_model.dart';
+import '../../order/views/order_detail_user_view.dart';
 
 class NotificationUserView extends StatefulWidget {
   const NotificationUserView({super.key});
@@ -146,6 +147,14 @@ class _NotificationUserViewState extends State<NotificationUserView> {
         onTap: () {
           if (!notif.isRead) {
             _controller.markAsRead(notif.id);
+          }
+          if (notif.relatedId != null && notif.type == 'order') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OrderDetailUserView(orderId: notif.relatedId!),
+              ),
+            );
           }
         },
         child: Container(

@@ -97,6 +97,27 @@ class OrderUserController {
     }
   }
 
+  Future<bool> requestCancellation(String orderId, String reason) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'cancellationReason': reason,
+        'cancellationStatus': 'Requested',
+      });
+
+      await _pushNotificationService.sendNotificationToAdmin(
+        title: 'Pengajuan Pembatalan',
+        message: 'Pesanan $orderId diajukan pembatalan oleh retailer.',
+        type: 'order',
+        relatedId: orderId,
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint("Error requesting cancellation: $e");
+      return false;
+    }
+  }
+
   Future<void> syncAllPendingOrders(String userId) async {
     try {
       final snapshot = await _firestore

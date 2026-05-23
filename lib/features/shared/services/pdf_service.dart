@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../order/models/order.dart';
+import '../../../core/utils/status_helper.dart';
 
 class PdfService {
   static final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
@@ -97,7 +98,7 @@ class PdfService {
                           children: [
                             pw.Text('Status:', style: const pw.TextStyle(fontSize: 10)),
                             pw.Spacer(),
-                            pw.Text(order.status, style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: order.status == 'Paid' || order.status == 'Delivered' ? PdfColors.green : PdfColors.orange)),
+                            pw.Text(order.status.displayStatus, style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: order.status == 'Paid' || order.status == 'Delivered' ? PdfColors.green : PdfColors.orange)),
                           ],
                         ),
                         pw.SizedBox(height: 4),

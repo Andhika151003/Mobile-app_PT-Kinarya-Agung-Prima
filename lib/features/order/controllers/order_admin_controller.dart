@@ -107,7 +107,7 @@ class OrderAdminController {
     }
   }
 
-  Future<void> cancelOrder(String orderId) async {
+  Future<void> cancelOrder(String orderId, {String? cancellationStatus}) async {
     final orderRef = _firestore.collection('orders').doc(orderId);
     
     await _firestore.runTransaction((transaction) async {
@@ -124,6 +124,7 @@ class OrderAdminController {
       transaction.update(orderRef, {
         'status': 'Cancelled',
         'cancelledAt': FieldValue.serverTimestamp(),
+        if (cancellationStatus != null) 'cancellationStatus': cancellationStatus,
       });
 
       final userId = data['userId']?.toString() ?? '';
@@ -157,6 +158,32 @@ class OrderAdminController {
         }
       }
     });
+  }
+
+  Future<void> rejectCancellation(String orderId) async {
+    try {
+      final orderDoc = await _firestore.collection('orders').doc(orderId).get();
+      if (!orderDoc.exists) throw Exception('Pesanan tidak ditemukan');
+      
+      await _firestore.collection('orders').doc(orderId).update({
+        'cancellationStatus': 'Rejected',
+      });
+
+      final data = orderDoc.data() as Map<String, dynamic>;
+      final userId = data['userId']?.toString() ?? '';
+      
+      if (userId.isNotEmpty && userId != 'guest_user') {
+        _pushNotificationService.sendNotificationToUser(
+          userId: userId,
+          title: 'Pengajuan Pembatalan Ditolak',
+          message: 'Admin telah menolak pengajuan pembatalan untuk pesanan $orderId.',
+          type: 'order',
+          relatedId: orderId,
+        );
+      }
+    } catch (e) {
+      throw Exception('Gagal menolak pembatalan: $e');
+    }
   }
 
   List<Map<String, dynamic>> filterAndSearchOrders(

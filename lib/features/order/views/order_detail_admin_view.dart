@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/order.dart';
 import '../controllers/order_admin_controller.dart';
 import '../../shared/services/pdf_service.dart';
+import '../../../core/utils/status_helper.dart';
 
 class OrderDetailAdminView extends StatefulWidget {
   final String orderId;
@@ -157,6 +158,72 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
     }
   }
 
+  Future<void> _acceptCancellation() async {
+    if (_order == null) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text('Terima Pembatalan?'),
+        content: const Text('Tindakan ini akan mengembalikan stok produk dan membatalkan pesanan secara permanen.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tutup', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, elevation: 0),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Terima', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isUpdating = true);
+    try {
+      await _adminController.cancelOrder(widget.orderId, cancellationStatus: 'Approved');
+      await _fetchOrder();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembatalan berhasil disetujui'), backgroundColor: Colors.orange));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menyetujui: $e'), backgroundColor: Colors.red));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _rejectCancellation() async {
+    if (_order == null) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text('Tolak Pembatalan?'),
+        content: const Text('Pesanan ini akan tetap dilanjutkan.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, elevation: 0),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Tolak', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isUpdating = true);
+    try {
+      await _adminController.rejectCancellation(widget.orderId);
+      await _fetchOrder();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembatalan berhasil ditolak'), backgroundColor: Colors.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menolak: $e'), backgroundColor: Colors.red));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading || _order == null) {
@@ -235,41 +302,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
             const SizedBox(height: 12),
             _buildStatusStepper(order.status, order),
             
-            if (order.status != 'Delivered' && order.status != 'Expired' && order.status != 'Cancelled')
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: Semantics(
-                        label: 'btn_update_status',
-                        child: ElevatedButton(
-                          onPressed: _updateStatus,
-                          style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
-                          child: const Text('Update Status', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Semantics(
-                        label: 'btn_cancel_order',
-                        child: OutlinedButton(
-                          onPressed: _cancelOrder,
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.red),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          child: const Text('Batalkan Pesanan', style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            _buildAdminActionButtons(order),
             
             const SizedBox(height: 24),
 
@@ -401,7 +434,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                       children: [
                         Container(width: 8, height: 8, decoration: BoxDecoration(color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : (status == 'Ordered' ? Colors.orange : _primaryColor), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Flexible(child: Text(status == 'Cancelled' ? 'Canceled' : (status == 'Expired' ? 'Expired' : (status == 'Ordered' ? 'Unpaid' : 'Paid')), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
+                        Flexible(child: Text(status == 'Cancelled' ? 'Dibatalkan' : (status == 'Expired' ? 'Kedaluwarsa' : (status == 'Ordered' ? 'Belum bayar' : 'Lunas')), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                   ],
@@ -412,6 +445,104 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         ],
       ),
     );
+  }
+
+  Widget _buildAdminActionButtons(OrderModel order) {
+    List<Widget> actions = [];
+
+    if (order.cancellationStatus == 'Requested') {
+      actions.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.orange.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Pengajuan Pembatalan dari Retailer', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text('Alasan: ${order.cancellationReason ?? "-"}', style: const TextStyle(fontSize: 14)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _rejectCancellation,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.red),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text('Tolak', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _acceptCancellation,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          elevation: 0,
+                        ),
+                        child: const Text('Terima', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (order.status != 'Delivered' && order.status != 'Expired' && order.status != 'Cancelled') {
+      actions.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Column(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: Semantics(
+                  label: 'btn_update_status',
+                  child: ElevatedButton(
+                    onPressed: _updateStatus,
+                    style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
+                    child: const Text('Update Status', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: Semantics(
+                  label: 'btn_cancel_order',
+                  child: OutlinedButton(
+                    onPressed: _cancelOrder,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.red),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('Batalkan Pesanan', style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (actions.isEmpty) return const SizedBox.shrink();
+    return Column(children: actions);
   }
 
   Widget _buildStatusStepper(String currentStatus, OrderModel order) {
@@ -469,7 +600,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(steps[index], style: TextStyle(fontSize: 12, fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal, color: isCompleted ? Colors.black : Colors.grey.shade500), textAlign: TextAlign.center),
+              Text(steps[index].displayStatus, style: TextStyle(fontSize: 12, fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal, color: isCompleted ? Colors.black : Colors.grey.shade500), textAlign: TextAlign.center),
               if (stepDate != null) Text(DateFormat('MMM dd, HH:mm').format(stepDate), style: TextStyle(fontSize: 10, color: Colors.grey.shade500), textAlign: TextAlign.center),
             ],
           ),
@@ -625,22 +756,22 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   }
 
   Widget _buildStatusBadge(String status) {
-    Color bg; Color fg; IconData icon; String label;
+    Color bg; Color fg; IconData icon; String label = status.displayStatus;
 
     if (status == 'Delivered') {
-      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline;
     } else if (status == 'Cancelled') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined;
     } else if (status == 'Expired') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined;
     } else if (status == 'Ordered') {
-      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time;
     } else if (status == 'Shipped') {
-      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined;
     } else if (status == 'Paid') {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment;
     } else {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline;
     }
 
     return Container(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../controllers/notif_admin_controller.dart';
 import '../models/notification_model.dart';
+import '../../order/views/order_detail_admin_view.dart';
 
 class NotificationAdminView extends StatefulWidget {
   const NotificationAdminView({super.key});
@@ -138,6 +139,14 @@ class _NotificationAdminViewState extends State<NotificationAdminView> {
         onTap: () {
           if (!notif.isRead) {
             _controller.markAsRead(notif.id);
+          }
+          if (notif.relatedId != null && notif.type == 'order') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OrderDetailAdminView(orderId: notif.relatedId!),
+              ),
+            );
           }
         },
         child: Container(

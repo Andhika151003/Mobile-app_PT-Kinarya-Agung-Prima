@@ -4,6 +4,7 @@ import '../controllers/order_cs_controller.dart';
 import '../controllers/order_user_controller.dart';
 import '../models/order.dart';
 import '../../shared/services/pdf_service.dart';
+import '../../../core/utils/status_helper.dart';
 
 class OrderDetailCsView extends StatefulWidget {
   final OrderModel order;
@@ -21,7 +22,6 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
 
   static const _statusSteps = ['Ordered', 'Paid', 'Shipped', 'Delivered'];
 
-  bool _isUpdating = false;
   final OrderCsController _controller = OrderCsController();
 
   @override
@@ -97,83 +97,6 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
     }
   }
 
-  Future<void> _updateStatus() async {
-    final currentStatus = _order.status;
-    String newStatus = '';
-    String actionLabel = '';
-
-    if (currentStatus == 'Ordered') {
-      newStatus = 'Paid'; actionLabel = 'Tandai sudah dibayar (Paid)';
-    } else if (currentStatus == 'Paid') {
-      newStatus = 'Shipped'; actionLabel = 'Kirim Pesanan (Shipped)';
-    } else if (currentStatus == 'Shipped') {
-      newStatus = 'Delivered'; actionLabel = 'Pesanan Selesai (Delivered)';
-    } else {
-      return; 
-    }
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: const Text('Update Status Pesanan?'),
-        content: Text('Melanjutkan pesanan ke tahap: $actionLabel?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32), elevation: 0),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Konfirmasi', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    setState(() => _isUpdating = true);
-    try {
-      await _controller.updateOrderStatus(_order.orderId, newStatus);
-      await _fetchOrder();
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal update: $e'), backgroundColor: Colors.red));
-    } finally {
-      if (mounted) setState(() => _isUpdating = false);
-    }
-  }
-
-  Future<void> _cancelOrder() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: const Text('Batalkan Pesanan?'),
-        content: const Text('Tindakan ini akan mengembalikan stok produk dan membatalkan pesanan secara permanen.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tutup', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, elevation: 0),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Ya, Batalkan', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    setState(() => _isUpdating = true);
-    try {
-      await _controller.cancelOrder(_order.orderId);
-      await _fetchOrder();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pesanan berhasil dibatalkan dan stok dikembalikan'), backgroundColor: Colors.orange));
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal pembatalan: $e'), backgroundColor: Colors.red));
-    } finally {
-      if (mounted) setState(() => _isUpdating = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
 
@@ -217,42 +140,6 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
             const SizedBox(height: 16),
             _buildOrderStatusTracker(),
             const SizedBox(height: 16),
-            if (_order.status != 'Delivered' && _order.status != 'Cancelled' && _order.status != 'Expired')
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isUpdating ? null : _updateStatus,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2E7D32),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          elevation: 0
-                        ),
-                        child: _isUpdating 
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Text('Update Status', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: _isUpdating ? null : _cancelOrder,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.red),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        child: const Text('Batalkan Pesanan', style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             _buildShippingInfo(),
             const SizedBox(height: 16),
             _buildOrderItems(),
@@ -352,7 +239,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _order.paidAt != null ? 'Paid' : 'Pending',
+                          _order.status == 'Cancelled' ? 'Dibatalkan' : (_order.status == 'Expired' ? 'Kedaluwarsa' : (_order.paidAt != null ? 'Lunas' : 'Belum bayar')),
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -425,7 +312,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            _statusSteps[i],
+                            _statusSteps[i].displayStatus,
                             style: TextStyle(
                               fontSize: 11,
                               fontFamily: 'Inter',
@@ -681,22 +568,22 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
   }
 
   Widget _buildStatusBadge(String status) {
-    Color bg; Color fg; IconData icon; String label;
+    Color bg; Color fg; IconData icon; String label = status.displayStatus;
 
     if (status == 'Delivered') {
-      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline;
     } else if (status == 'Cancelled') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined;
     } else if (status == 'Expired') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined;
     } else if (status == 'Ordered') {
-      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time;
     } else if (status == 'Shipped') {
-      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined;
     } else if (status == 'Paid') {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment;
     } else {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline;
     }
 
     return Container(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/status_helper.dart';
 import 'package:intl/intl.dart';
 import '../models/order.dart';
 import '../controllers/order_admin_controller.dart'; 
@@ -252,10 +253,10 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                         });
                       },
                       itemBuilder: (BuildContext context) => [
-                        const PopupMenuItem(value: 'Newest', child: Text('Newest')),
-                        const PopupMenuItem(value: 'Oldest', child: Text('Oldest')),
-                        const PopupMenuItem(value: 'Price (High-Low)', child: Text('Price: High to Low')),
-                        const PopupMenuItem(value: 'Price (Low-High)', child: Text('Price: Low to High')),
+                        const PopupMenuItem(value: 'Newest', child: Text('Terbaru')),
+                        const PopupMenuItem(value: 'Oldest', child: Text('Terlama')),
+                        const PopupMenuItem(value: 'Price (High-Low)', child: Text('Harga (Tertinggi)')),
+                        const PopupMenuItem(value: 'Price (Low-High)', child: Text('Harga (Terendah)')),
                       ],
                     ),
                   ),
@@ -289,7 +290,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                           ),
                         ),
                         child: Text(
-                          filter,
+                          filter == 'All' ? 'Semua' : filter.displayStatus,
                           style: TextStyle(
                             color: isSelected ? Colors.white : Colors.black87,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -438,22 +439,22 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color bg, fg; IconData icon; String label;
+    Color bg, fg; IconData icon; String label = status.displayStatus;
 
     if (status == 'Delivered') {
-      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline;
     } else if (status == 'Cancelled') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined;
     } else if (status == 'Expired') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined;
     } else if (status == 'Ordered') {
-      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time;
     } else if (status == 'Shipped') {
-      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined;
     } else if (status == 'Paid') {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment;
     } else {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline;
     }
 
     return Container(
