@@ -16,8 +16,8 @@ class _MainNavigationUserState extends State<MainNavigationUser> {
 
   final List<Widget> _pages = [
     const DashboardUserView(),
-    const OrderUserView(),
     const ProductUserView(),
+    const OrderUserView(),
     const ProfileUserView(),
   ];
 
@@ -44,8 +44,8 @@ class _MainNavigationUserState extends State<MainNavigationUser> {
           },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Orders'),
             BottomNavigationBarItem(icon: Icon(Icons.storefront_outlined), label: 'Products'),
+            BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Orders'),
             BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
           ],
         ),

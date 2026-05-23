@@ -48,8 +48,8 @@ class MainNavigationAdminState extends State<MainNavigationAdmin> {
 
   final List<Widget> _pages = [
     const DashboardAdminView(),
-    const OrderAdminView(),
     const ProductAdminView(),
+    const OrderAdminView(),
     const AdminStatisticView(),
     const ProfileAdminView(),
   ];
@@ -88,12 +88,12 @@ class MainNavigationAdminState extends State<MainNavigationAdmin> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: _buildNavIcon(Icons.shopping_basket_outlined, 1),
-              label: 'Orders',
+              icon: _buildNavIcon(Icons.storefront_outlined, 1),
+              label: 'Products',
             ),
             BottomNavigationBarItem(
-              icon: _buildNavIcon(Icons.storefront_outlined, 2),
-              label: 'Products',
+              icon: _buildNavIcon(Icons.shopping_basket_outlined, 2),
+              label: 'Orders',
             ),
             BottomNavigationBarItem(
               icon: _buildNavIcon(Icons.bar_chart_outlined, 3),
