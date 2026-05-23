@@ -3,14 +3,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce/features/promotion/models/promotion.dart';
 
 void main() {
-  group('PromotionModel Tests', () {
+  group('Unit Test PromotionModel', () {
     final now = DateTime.now();
 
-    test('toMap converts to Firestore-compatible Map', () {
+    test('toMap harus mengonversi object PromotionModel menjadi Map Firebase yang valid', () {
+      // Arrange — Membuat instance PromotionModel dengan data lengkap
       final promotion = PromotionModel(
         id: 'promo1',
-        title: 'Big Sale',
-        description: 'Sale in summer',
+        title: 'Diskon Besar',
+        description: 'Diskon besar di musim panas',
         discountType: 'percentage',
         discountValue: 20.0,
         productIds: ['prod1', 'prod2'],
@@ -25,17 +26,20 @@ void main() {
         createdBy: 'admin_123',
       );
 
+      // Act — Memanggil toMap() untuk konversi ke Map
       final map = promotion.toMap();
 
-      expect(map['title'], 'Big Sale');
+      // Assert — Memverifikasi bahwa Map mengandung data yang benar
+      expect(map['title'], 'Diskon Besar');
       expect(map['discountValue'], 20.0);
       expect(map['productIds'], ['prod1', 'prod2']);
       expect(map['startDate'], isA<Timestamp>()); // should convert to timestamp
     });
 
-    test('fromMap parses Firestore Map correctly', () {
+    test('fromMap harus melakukan parsing Map Firestore ke PromotionModel dengan benar', () {
+      // Arrange — Menyiapkan Map seperti data yang datang dari Firestore
       final map = {
-        'title': 'Flash Sale',
+        'title': 'Promo Kilat',
         'description': '',
         'discountType': 'fixed',
         'discountValue': 50000.0,
@@ -51,16 +55,19 @@ void main() {
         'createdBy': 'user_1',
       };
 
+      // Act — Memanggil factory fromMap() untuk parsing Map ke PromotionModel
       final promotion = PromotionModel.fromMap('doc123', map);
 
+      // Assert — Memverifikasi bahwa parsing menghasilkan objek yang benar
       expect(promotion.id, 'doc123');
-      expect(promotion.title, 'Flash Sale');
+      expect(promotion.title, 'Promo Kilat');
       expect(promotion.discountType, 'fixed');
       expect(promotion.discountValue, 50000.0);
       expect(promotion.startDate.day, now.day);
     });
 
-    test('isActive returns true if active and within date range', () {
+    test('isActive harus mengembalikan true jika status aktif dan dalam masa berlaku', () {
+      // Arrange — Membuat 2 promo: satu aktif (dalam rentang tanggal), satu expired
       final activePromo = PromotionModel(
         title: 'A', description: 'A', discountType: 'percentage', discountValue: 10,
         productIds: [], applicableTo: 'all',
@@ -79,11 +86,13 @@ void main() {
         status: 'active', sku: 'S', createdAt: now, createdBy: 'admin',
       );
 
+      // Act & Assert — Mengakses getter isActive dan memverifikasi hasilnya
       expect(activePromo.isActive, isTrue);
       expect(expiredPromo.isActive, isFalse);
     });
 
-    test('discountText formats text correctly', () {
+    test('discountText harus memformat teks diskon dengan benar', () {
+      // Arrange — Membuat 2 promo dengan tipe diskon berbeda (percentage & fixed)
       final percentage = PromotionModel(
         title: '', description: '', discountType: 'percentage', discountValue: 25,
         productIds: [], applicableTo: 'all', startDate: now, endDate: now, startTime: '', endTime: '', status: 'active', sku: '', createdAt: now, createdBy: ''
@@ -93,8 +102,9 @@ void main() {
         productIds: [], applicableTo: 'all', startDate: now, endDate: now, startTime: '', endTime: '', status: 'active', sku: '', createdAt: now, createdBy: ''
       );
 
+      // Act & Assert — Mengakses getter discountText dan memverifikasi format teks
       expect(percentage.discountText, '25% OFF');
-      expect(fixed.discountText, 'Rp 15000 OFF');
+      expect(fixed.discountText, 'Rp 15.000 OFF');
     });
   });
 }
