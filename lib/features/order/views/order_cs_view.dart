@@ -169,7 +169,7 @@ class _OrderCsViewState extends State<OrderCsView> {
       BuildContext context, OrderModel order, OrderCsController controller) {
     Color statusColor;
     Color statusBgColor;
-    IconData? statusIcon;
+    IconData statusIcon;
     String statusLabel;
 
     if (order.status == 'Delivered') {
@@ -237,10 +237,8 @@ class _OrderCsViewState extends State<OrderCsView> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (statusIcon != null) ...[
-                        Icon(statusIcon, size: 12, color: statusColor),
-                        const SizedBox(width: 4),
-                      ],
+                      Icon(statusIcon, size: 12, color: statusColor),
+                      const SizedBox(width: 4),
                       Text(
                         statusLabel,
                         style: TextStyle(

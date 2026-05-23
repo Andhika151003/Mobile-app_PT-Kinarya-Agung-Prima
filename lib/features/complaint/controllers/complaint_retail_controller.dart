@@ -21,9 +21,6 @@ class ComplaintUserController {
       final user = _auth.currentUser;
       if (user == null) throw Exception('User belum login');
 
-      final userDoc = await _firestore.collection('users').doc(user.uid).get();
-      final customerName = userDoc.data()?['fullName'] ?? user.displayName ?? 'Retailer';
-
       List<String> uploadedImageUrls = [];
 
       if (images.isNotEmpty) {

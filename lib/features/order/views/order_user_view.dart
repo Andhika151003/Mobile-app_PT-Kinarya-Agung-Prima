@@ -214,8 +214,9 @@ class _OrderList extends StatelessWidget {
           }).toList();
         }
 
-        if (allOrders.isEmpty)
+        if (allOrders.isEmpty) {
           return _EmptyState(hasSearch: searchQuery.isNotEmpty);
+        }
 
         // Urutkan dari yang terbaru
         allOrders.sort((a, b) {

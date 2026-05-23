@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../controllers/dashboard_cs_controller.dart';
 import '../../complaint/views/complaint_detail_cs_view.dart';
-import '../../complaint/models/complaint.dart';
 
 class DashboardCsView extends StatefulWidget {
   const DashboardCsView({super.key});

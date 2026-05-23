@@ -866,7 +866,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                         discountAmount: discountAmount,
                       );
 
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       setState(() => _isProcessing = false);
 
                       final navigator = Navigator.of(context);
