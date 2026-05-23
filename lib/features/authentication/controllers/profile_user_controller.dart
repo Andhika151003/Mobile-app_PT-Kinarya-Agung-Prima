@@ -28,10 +28,24 @@ class RetailProfileController {
     }
   }
 
+  /// Stream for real-time profile updates
+  Stream<Map<String, dynamic>?> getRetailProfileStream() {
+    final user = _auth.currentUser;
+    if (user == null) return Stream.value(null);
+
+    return _firestore.collection('users').doc(user.uid).snapshots().map((doc) {
+      if (doc.exists) {
+        var data = doc.data() as Map<String, dynamic>;
+        data['uid'] = user.uid;
+        return data;
+      }
+      return null;
+    });
+  }
+
   // Menyimpan pembaruan khusus Retail
   Future<void> updateRetailProfile({
     required String storeName,
-    required String location,
     required String contact,
     required String businessType,
     File? profileImage,
@@ -43,13 +57,12 @@ class RetailProfileController {
 
         if (profileImage != null) {
           final storageService = SupabaseStorageService();
-          final fileName = 'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          uploadedImageUrl = await storageService.uploadProductImage(profileImage, fileName);
+          final fileName = 'retail_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          uploadedImageUrl = await storageService.uploadRetailProfileImage(profileImage, fileName);
         }
 
         final updateData = {
           'fullName': storeName,
-          'address': location,
           'phoneNumber': contact,
           'businessType': businessType,
         };

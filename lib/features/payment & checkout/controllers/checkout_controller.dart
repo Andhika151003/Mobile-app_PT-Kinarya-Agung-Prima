@@ -4,28 +4,34 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../notification/services/push_notification_service.dart';
 
 class CheckoutController {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
   final http.Client _client;
   final String _backendUrl;
+  final PushNotificationService _pushNotificationService;
 
   CheckoutController({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
     http.Client? client,
     String? backendUrl,
+    PushNotificationService? pushNotificationService,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
        _auth = auth ?? FirebaseAuth.instance,
        _client = client ?? http.Client(),
-       _backendUrl = backendUrl ?? dotenv.get('BACKEND_URL');
+       _backendUrl = backendUrl ?? dotenv.get('BACKEND_URL'),
+       _pushNotificationService = pushNotificationService ?? PushNotificationService();
 
   Future<Map<String, String>> processCheckout({
     required String fullName,
     required String shippingAddress,
+    required String? phoneNumber,
     required String paymentMethod,
     required String paymentMethodCode,
+    String? promoId,
     required String promoCode,
     required double subtotal,
     required double shippingCost,
@@ -78,7 +84,9 @@ class CheckoutController {
         'userId': uid,
         'fullName': fullName,
         'shippingAddress': shippingAddress,
+        'phoneNumber': phoneNumber,
         'paymentMethod': paymentMethod,
+        'promoId': promoId,
         'promoCode': promoCode,
         'subtotal': subtotal,
         'discountAmount': discountAmount,
@@ -88,27 +96,18 @@ class CheckoutController {
         'items': items,
         'status': 'Ordered',
         'createdAt': FieldValue.serverTimestamp(),
+        // Default Duitku expiry (24 jam)
+        'paymentExpiredAt': Timestamp.fromDate(
+          DateTime.now().add(const Duration(hours: 24)),
+        ),
       });
 
-      WriteBatch batch = _firestore.batch();
-
-      for (var item in items) {
-        String? productId =
-            item['productId']?.toString() ?? item['id']?.toString();
-        int quantityBought = (item['quantity'] as num?)?.toInt() ?? 1;
-
-        if (productId != null && productId.isNotEmpty) {
-          DocumentReference productRef = _firestore
-              .collection('products')
-              .doc(productId);
-
-          batch.update(productRef, {
-            'stock': FieldValue.increment(-quantityBought),
-          });
-        }
-      }
-
-      await batch.commit();
+      await _pushNotificationService.sendNotificationToAdmin(
+        title: 'Pesanan Baru Masuk!',
+        message: 'Pesanan $orderId telah dibuat oleh $fullName.',
+        type: 'order',
+        relatedId: orderId,
+      );
 
       final String apiUrl = '$_backendUrl/create-transaction';
 
@@ -121,6 +120,7 @@ class CheckoutController {
           'customerEmail': email,
           'customerName': customerName,
           'paymentMethod': paymentMethodCode,
+          'expiryPeriod': 1,
         }),
       );
 

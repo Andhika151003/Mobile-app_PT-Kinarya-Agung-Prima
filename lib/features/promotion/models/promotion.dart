@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class PromotionModel {
   final String? id;
@@ -17,6 +18,7 @@ class PromotionModel {
   final String sku;
   final DateTime createdAt;
   final String createdBy;
+  final double? maxDiscount;
 
   PromotionModel({
     this.id,
@@ -35,6 +37,7 @@ class PromotionModel {
     required this.sku,
     required this.createdAt,
     required this.createdBy,
+    this.maxDiscount,
   });
 
   Map<String, dynamic> toMap() {
@@ -54,6 +57,7 @@ class PromotionModel {
       'sku': sku,
       'createdAt': Timestamp.fromDate(createdAt),
       'createdBy': createdBy,
+      'maxDiscount': maxDiscount,
     };
   }
 
@@ -84,6 +88,7 @@ class PromotionModel {
       sku: map['sku'] ?? '',
       createdAt: parseDate(map['createdAt']),
       createdBy: map['createdBy'] ?? '',
+      maxDiscount: map['maxDiscount'] != null ? (map['maxDiscount'] as num).toDouble() : null,
     );
   }
 
@@ -91,7 +96,6 @@ class PromotionModel {
     if (status != 'active') return false;
     final now = DateTime.now();
     
-    // Sesuaikan endDate agar mencakup seluruh hari sampai jam 23:59:59
     final inclusiveEndDate = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
     final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
 
@@ -99,10 +103,17 @@ class PromotionModel {
   }
 
   bool get isUpcoming {
-    if (status != 'active') return false;
+    if (status != 'active' && status != 'upcoming') return false;
     final now = DateTime.now();
     final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
     return now.isBefore(inclusiveStartDate);
+  }
+
+  bool get isStartingSoon {
+    final now = DateTime.now();
+    final fiveDaysFromNow = now.add(const Duration(days: 5));
+    final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
+    return isUpcoming && inclusiveStartDate.isBefore(fiveDaysFromNow);
   }
 
   bool get isEndingSoon {
@@ -111,12 +122,20 @@ class PromotionModel {
     return isActive && endDate.isBefore(threeDaysFromNow);
   }
 
+  bool get isExpired {
+    if (status == 'expired') return true;
+    final now = DateTime.now();
+    final inclusiveEndDate =
+        DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+    return now.isAfter(inclusiveEndDate);
+  }
+
   String get discountText {
     switch (discountType) {
       case 'percentage':
         return '${discountValue.toInt()}% OFF';
       case 'fixed':
-        return 'Rp ${discountValue.toStringAsFixed(0)} OFF';
+        return '${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(discountValue)} OFF';
       case 'bogo':
         return 'BOGO';
       case 'bundle':

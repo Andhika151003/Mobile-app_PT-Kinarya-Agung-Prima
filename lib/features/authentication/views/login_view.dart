@@ -1,10 +1,9 @@
-import 'package:ecommerce/features/shared/main_navigation_admin.dart';
+import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/login_controller.dart';
-import '../../shared/main_navigation_user.dart';
-import '../../shared/main_navigation_cs.dart';
 import 'register_view.dart';
+import 'forgot_password_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -28,38 +27,84 @@ class _LoginViewState extends State<LoginView> {
         password: _passwordController.text,
       );
 
-      if (user != null && mounted) {
-        
-        Widget mainView;
-
-        switch (user.role) {
-          case 'admin':
-            mainView = const MainNavigationAdmin();
-            break;
-          case 'cs':
-          case 'customer_support':
-            mainView = const MainNavigationCs();
-            break;
-          default:
-            mainView = const MainNavigationUser();
-        }
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => mainView),
-        );
-
-      } else if (mounted && controller.errorMessage != null) {
+      if (user == null && mounted && controller.errorMessage != null) {
         // Jika Login Gagal
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(controller.errorMessage!),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        if (controller.errorMessage!.contains('Account Deactivated')) {
+          _showDeactivatedDialog(context, controller.deactivatedAdminPhone);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(controller.errorMessage!),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       }
     }
+  }
+
+  void _showDeactivatedDialog(BuildContext context, String? adminPhone) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Akun Dinonaktifkan', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Maaf, akun Anda telah dinonaktifkan oleh administrator.',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Silakan hubungi Admin untuk informasi lebih lanjut:',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.phone, size: 18, color: Color(0xFF2E7D32)),
+                const SizedBox(width: 8),
+                Text(
+                  adminPhone ?? 'Hubungi CS', 
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2E7D32),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2E7D32),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Hubungi Admin', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -229,15 +274,15 @@ class _LoginViewState extends State<LoginView> {
                         label: 'btn_login_forgot_password',
                         child: TextButton(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Fitur forgot password akan segera hadir'),
-                                duration: Duration(seconds: 2),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ForgotPasswordView(),
                               ),
                             );
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFF2E7D32),
+                          foregroundColor: AppColors.primary,
                           ),
                           child: const Text(
                             'Forgot Password?',
@@ -263,7 +308,7 @@ class _LoginViewState extends State<LoginView> {
                               ? null
                               : () => _handleLogin(controller),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E7D32),
+                            backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -368,7 +413,7 @@ class _LoginViewState extends State<LoginView> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

@@ -1,8 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import '../../notification/services/push_notification_service.dart';
 import 'order_stats_helper.dart';
+import 'order_user_controller.dart';
 
 class OrderAdminController {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+  final PushNotificationService _pushNotificationService;
+  final OrderUserController _userController;
+
+  OrderAdminController({
+    FirebaseFirestore? firestore,
+    PushNotificationService? pushNotificationService,
+    http.Client? client,
+    String? backendUrl,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _pushNotificationService = pushNotificationService ?? PushNotificationService(),
+       _userController = OrderUserController(
+         firestore: firestore,
+         pushNotificationService: pushNotificationService,
+         client: client,
+         backendUrl: backendUrl,
+       );
 
   Future<List<Map<String, dynamic>>> getAllOrdersAdmin() async {
     try {
@@ -34,7 +54,7 @@ class OrderAdminController {
       final bool statsRecorded = data['statsRecorded'] ?? false;
 
       if (!statsRecorded && (status == 'Paid' || status == 'Shipped' || status == 'Delivered')) {
-        await OrderStatsHelper.markOrderAsPaid(orderId);
+        await OrderStatsHelper.markOrderAsPaid(orderId, firestore: _firestore);
         final updatedDoc = await _firestore.collection('orders').doc(orderId).get();
         return updatedDoc.data();
       }
@@ -47,11 +67,40 @@ class OrderAdminController {
 
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     try {
+      final orderDoc = await _firestore.collection('orders').doc(orderId).get();
+      if (!orderDoc.exists) return;
+      final orderData = orderDoc.data() as Map<String, dynamic>;
+      final userId = orderData['userId']?.toString() ?? '';
+
       if (newStatus == 'Paid' || newStatus == 'Shipped' || newStatus == 'Delivered') {
-        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus);
+        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus, firestore: _firestore);
       } else {
         final updateData = <String, dynamic>{'status': newStatus};
         await _firestore.collection('orders').doc(orderId).update(updateData);
+      }
+
+      if (userId.isNotEmpty && userId != 'guest_user') {
+        String title = 'Update Pesanan';
+        String message = 'Status pesanan $orderId Anda berubah menjadi $newStatus.';
+
+        if (newStatus == 'Paid') {
+          title = 'Pembayaran Diterima';
+          message = 'Pembayaran untuk pesanan $orderId telah kami konfirmasi.';
+        } else if (newStatus == 'Shipped') {
+          title = 'Pesanan Sedang Dikirim';
+          message = 'Pesanan $orderId Anda telah diserahkan ke kurir.';
+        } else if (newStatus == 'Delivered') {
+          title = 'Pesanan Telah Tiba';
+          message = 'Pesanan $orderId Anda telah sampai di tujuan.';
+        }
+
+        await _pushNotificationService.sendNotificationToUser(
+          userId: userId,
+          title: title,
+          message: message,
+          type: 'order',
+          relatedId: orderId,
+        );
       }
     } catch (e) {
       throw Exception('Gagal memperbarui status: $e');
@@ -77,21 +126,30 @@ class OrderAdminController {
         'cancelledAt': FieldValue.serverTimestamp(),
       });
 
+      final userId = data['userId']?.toString() ?? '';
+      if (userId.isNotEmpty && userId != 'guest_user') {
+        _pushNotificationService.sendNotificationToUser(
+          userId: userId,
+          title: 'Pesanan Dibatalkan',
+          message: 'Mohon maaf, pesanan $orderId Anda telah dibatalkan oleh admin.',
+          type: 'order',
+          relatedId: orderId,
+        );
+      }
+
       for (var itemMap in itemsData) {
         final productId = itemMap['productId']?.toString() ?? itemMap['id']?.toString();
         final int quantity = (itemMap['quantity'] as num?)?.toInt() ?? 0;
 
         if (productId != null && productId.isNotEmpty && quantity > 0) {
           final productRef = _firestore.collection('products').doc(productId);
-          transaction.update(productRef, {
-            'stock': FieldValue.increment(quantity),
-          });
-
+          
           if (statsRecorded) {
             final int price = (itemMap['price'] as num?)?.toInt() ?? 0;
             final int revenue = price * quantity;
             
             transaction.update(productRef, {
+              'stock': FieldValue.increment(quantity),
               'monthlySales': FieldValue.increment(-quantity),
               'revenue': FieldValue.increment(-revenue),
             });
@@ -124,6 +182,8 @@ class OrderAdminController {
         if (createdAt == null) return false;
         return createdAt.isAfter(weekAgo);
       }).toList();
+    } else if (['Ordered', 'Paid', 'Shipped', 'Delivered', 'Cancelled', 'Expired'].contains(selectedFilter)) {
+      results = results.where((order) => order['status'] == selectedFilter).toList();
     }
 
     if (searchQuery.isNotEmpty) {
@@ -145,5 +205,36 @@ class OrderAdminController {
     }
 
     return results;
+  }
+
+  Future<void> syncAllPendingOrders() async {
+    try {
+      final snapshot = await _firestore
+          .collection('orders')
+          .where('status', whereIn: ['Ordered', 'Pending Payment'])
+          .get();
+
+      if (snapshot.docs.isEmpty) return;
+
+      debugPrint("Admin: Checking ${snapshot.docs.length} pending orders for sync...");
+
+      for (var doc in snapshot.docs) {
+        final orderId = doc.id;
+        final data = doc.data();
+
+        final expiredAt = data['paymentExpiredAt'] as Timestamp?;
+        if (expiredAt != null && DateTime.now().isAfter(expiredAt.toDate())) {
+          await _firestore.collection('orders').doc(orderId).update({
+            'status': 'Expired',
+          });
+          debugPrint("Admin: Order $orderId marked as Expired locally.");
+          continue;
+        }
+
+        await _userController.syncDuitkuPayment(orderId);
+      }
+    } catch (e) {
+      debugPrint("Admin Error syncAllPendingOrders: $e");
+    }
   }
 }

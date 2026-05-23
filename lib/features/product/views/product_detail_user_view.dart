@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/product.dart';
 import '../../cart/controllers/cart_controller.dart';
+import '../../cart/views/cart_view.dart';
+import '../../promotion/models/promotion.dart';
+import '../controllers/product_user_controller.dart';
 
 class ProductDetailUserView extends StatefulWidget {
   final ProductModel product;
@@ -19,6 +22,8 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
   final Color priceGreen = const Color(0xFF1E8F29);
 
   final CartController _cartController = CartController();
+  final ProductUserController _productUserController = ProductUserController();
+  PromotionModel? _activePromo;
 
   @override
   void initState() {
@@ -28,6 +33,21 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
 
     _quantity = moq > stock ? stock : moq;
     if (_quantity < 0) _quantity = 0;
+    _loadPromotion();
+  }
+
+  Future<void> _loadPromotion() async {
+    try {
+      final promosStream = _productUserController.getActivePromotionsStream();
+      final promos = await promosStream.first;
+      if (mounted) {
+        setState(() {
+          _activePromo = _productUserController.getBestPromotionForProduct(widget.product, promos);
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() {});
+    }
   }
 
   void _increment() {
@@ -116,45 +136,47 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                       double finalPrice = widget.product.price.toDouble();
 
                       _cartController.addToCart(
-                        id: widget.product.id!,
-                        title: widget.product.name,
-                        variant: 'Default',
-                        price: finalPrice,
-                        imageUrl: widget.product.imageUrl,
-                        quantity: _quantity,
-                        minOrder: widget.product.moq ?? 1,
-                        stockLimit: currentStock,
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '$_quantity ${widget.product.name} added to cart!',
-                          ),
-                          backgroundColor: primaryGreen,
+                      id: widget.product.id!,
+                      title: widget.product.name,
+                      variant: 'Default',
+                      price: finalPrice,
+                      imageUrl: widget.product.imageUrl,
+                      category: widget.product.category,
+                      quantity: _quantity,
+                      minOrder: widget.product.moq ?? 1,
+                      stockLimit: currentStock,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '$_quantity ${widget.product.name} ditambahkan ke keranjang!',
                         ),
-                      );
-                      Navigator.pop(context);
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryGreen,
-                disabledBackgroundColor: Colors.grey.shade300,
-                elevation: 0,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                        backgroundColor: primaryGreen,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                    Navigator.pop(context);
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryGreen,
+              disabledBackgroundColor: Colors.grey.shade300,
+              elevation: 0,
+              minimumSize: const Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                isOutOfStock ? 'Out of Stock' : 'Add to Cart',
-                style: TextStyle(
-                  color: isOutOfStock ? Colors.grey.shade600 : Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+            ),
+            child: Text(
+              isOutOfStock ? 'Out of Stock' : 'Add to Cart',
+              style: TextStyle(
+                color: isOutOfStock ? Colors.grey.shade600 : Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
         ),
+      ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -180,6 +202,42 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
               'SKU: $displaySku',
               style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
             ),
+            if (currentStock <= 0 || widget.product.isLowStock) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: currentStock <= 0 ? Colors.red.shade50 : Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: currentStock <= 0 ? Colors.red.shade200 : Colors.orange.shade200,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      currentStock <= 0 ? Icons.error_outline : Icons.warning_amber_outlined,
+                      color: currentStock <= 0 ? Colors.red.shade700 : Colors.orange.shade800,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        currentStock <= 0
+                            ? 'Produk ini sedang tidak tersedia (Stok Habis).'
+                            : 'Stok Terbatas! Segera lakukan pemesanan sebelum kehabisan.',
+                        style: TextStyle(
+                          color: currentStock <= 0 ? Colors.red.shade700 : Colors.orange.shade800,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
 
             // 3. HARGA & COUNTER
@@ -255,7 +313,17 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildInfoCard('Stock', '$currentStock pcs')),
+                Expanded(
+                  child: _buildInfoCard(
+                    'Stock',
+                    currentStock <= 0
+                        ? 'Stok Habis'
+                        : (widget.product.isLowStock ? '$currentStock pcs (Stok Menipis)' : '$currentStock pcs'),
+                    valueColor: currentStock <= 0
+                        ? Colors.red
+                        : (widget.product.isLowStock ? Colors.orange.shade800 : Colors.black87),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildInfoCard(
@@ -302,6 +370,55 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
         ),
       ),
       actions: [
+        ListenableBuilder(
+          listenable: _cartController,
+          builder: (context, child) {
+            int cartItemCount = _cartController.items.length;
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.shopping_cart_outlined,
+                    color: Colors.black87,
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CartView()),
+                    );
+                  },
+                ),
+                if (cartItemCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 14,
+                        minHeight: 14,
+                      ),
+                      child: Text(
+                        '$cartItemCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
         Padding(
           padding: const EdgeInsets.only(right: 20.0),
           child: Center(
@@ -333,6 +450,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
     );
   }
 
+
   Widget _buildImageSection() {
     List<String> allImages = [];
     if (widget.product.imageUrl.isNotEmpty) {
@@ -356,48 +474,72 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
       );
     }
 
-    return Column(
+    return Stack(
       children: [
-        SizedBox(
-          height: 250,
-          width: double.infinity,
-          child: PageView.builder(
-            itemCount: allImages.length,
-            onPageChanged: (index) {
-              setState(() {
-                _currentImageIndex = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  image: DecorationImage(
-                    image: NetworkImage(allImages[index]),
-                    fit: BoxFit.contain,
+        Column(
+          children: [
+            SizedBox(
+              height: 250,
+              width: double.infinity,
+              child: PageView.builder(
+                itemCount: allImages.length,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentImageIndex = index;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      image: DecorationImage(
+                        image: NetworkImage(allImages[index]),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (allImages.length > 1)
+              Padding(
+                padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    allImages.length,
+                    (index) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                      width: _currentImageIndex == index ? 10.0 : 8.0,
+                      height: _currentImageIndex == index ? 10.0 : 8.0,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _currentImageIndex == index
+                            ? primaryGreen
+                            : Colors.grey.shade300,
+                      ),
+                    ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+          ],
         ),
-        if (allImages.length > 1)
-          Padding(
-            padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                allImages.length,
-                (index) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                  width: _currentImageIndex == index ? 10.0 : 8.0,
-                  height: _currentImageIndex == index ? 10.0 : 8.0,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _currentImageIndex == index
-                        ? primaryGreen
-                        : Colors.grey.shade300,
-                  ),
+        if (_activePromo != null && _activePromo!.discountType != 'percentage')
+          Positioned(
+            top: 10,
+            left: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                _activePromo!.discountText,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -470,7 +612,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
     );
   }
 
-  Widget _buildInfoCard(String label, String value) {
+  Widget _buildInfoCard(String label, String value, {Color? valueColor}) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -488,10 +630,10 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
+              color: valueColor ?? Colors.black87,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],

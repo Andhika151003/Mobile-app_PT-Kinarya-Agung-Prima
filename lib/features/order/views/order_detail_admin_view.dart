@@ -6,7 +6,13 @@ import '../../shared/services/pdf_service.dart';
 
 class OrderDetailAdminView extends StatefulWidget {
   final String orderId;
-  const OrderDetailAdminView({super.key, required this.orderId});
+  final OrderAdminController? adminController;
+  
+  const OrderDetailAdminView({
+    super.key, 
+    required this.orderId, 
+    this.adminController,
+  });
 
   @override
   State<OrderDetailAdminView> createState() => _OrderDetailAdminViewState();
@@ -16,7 +22,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   static const _primaryColor = Color(0xFF4A7D3C); 
   static const _bgColor = Color(0xFFF7F8FA);
 
-  final OrderAdminController _adminController = OrderAdminController();
+  late final OrderAdminController _adminController;
   
   OrderModel? _order; 
   bool _isLoading = true;
@@ -25,6 +31,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   @override
   void initState() {
     super.initState();
+    _adminController = widget.adminController ?? OrderAdminController();
     _fetchOrder();
   }
 
@@ -32,8 +39,23 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
     try {
       final data = await _adminController.getOrderById(widget.orderId);
       if (data != null && mounted) {
+        final order = OrderModel.fromMap(data);
+
+        if (order.status == 'Ordered') {
+          await _adminController.syncAllPendingOrders();
+          
+          final updatedData = await _adminController.getOrderById(widget.orderId);
+          if (updatedData != null && mounted) {
+            setState(() {
+              _order = OrderModel.fromMap(updatedData);
+              _isLoading = false;
+            });
+            return;
+          }
+        }
+
         setState(() {
-          _order = OrderModel.fromMap(data);
+          _order = order;
           _isLoading = false;
         });
       }
@@ -168,22 +190,35 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         ),
         title: const Text('Order Details', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(
-            icon: Semantics(
-              label: 'btn_print_invoice_header',
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
-                child: const Icon(Icons.print_outlined, size: 16, color: Colors.black87),
+          if (_order != null &&
+              (_order!.status == 'Delivered' ||
+                  _order!.status == 'Cancelled' ||
+                  _order!.status == 'Paid'))
+            IconButton(
+              icon: Semantics(
+                label: 'btn_print_invoice_header',
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey.shade300)),
+                  child: const Icon(Icons.print_outlined,
+                      size: 16, color: Colors.black87),
+                ),
               ),
-            ),
-            onPressed: () {
-              if (_order != null) {
+              onPressed: () {
                 PdfService.generateAndOpenInvoice(_order!);
-              }
-            },
-          ),
-          if (_isUpdating) const Padding(padding: EdgeInsets.only(right: 16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: _primaryColor, strokeWidth: 2))),
+              },
+            ),
+          if (_isUpdating)
+            const Padding(
+                padding: EdgeInsets.only(right: 16),
+                child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        color: _primaryColor, strokeWidth: 2))),
         ],
       ),
       body: SingleChildScrollView(
@@ -256,6 +291,19 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                     order.shippingAddress, 
                     style: TextStyle(fontSize: 13, height: 1.4, color: order.shippingAddress.contains('tidak tersedia') ? Colors.red : Colors.black87)
                   ),
+                  if (order.phoneNumber != null && order.phoneNumber!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.phone_outlined, size: 14, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Text(
+                          order.phoneNumber!,
+                          style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -274,6 +322,14 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                     child: Column(
                       children: [
                         _buildSummaryRow('Subtotal', currency.format(order.subtotal)),
+                        if (order.discountAmount > 0) ...[
+                          const SizedBox(height: 8),
+                          _buildSummaryRow(
+                            'Discount', 
+                            '-${currency.format(order.discountAmount)}',
+                            valueColor: Colors.red.shade600,
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         _buildSummaryRow('Tax (11%)', currency.format(order.tax)),
                         const SizedBox(height: 8),
@@ -345,7 +401,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                       children: [
                         Container(width: 8, height: 8, decoration: BoxDecoration(color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : (status == 'Ordered' ? Colors.orange : _primaryColor), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Flexible(child: Text((status == 'Cancelled' || status == 'Expired') ? 'Expired / Canceled' : (status == 'Ordered' ? 'Unpaid' : 'Paid'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
+                        Flexible(child: Text(status == 'Cancelled' ? 'Canceled' : (status == 'Expired' ? 'Expired' : (status == 'Ordered' ? 'Unpaid' : 'Paid')), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: (status == 'Cancelled' || status == 'Expired') ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                   ],
@@ -361,7 +417,18 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   Widget _buildStatusStepper(String currentStatus, OrderModel order) {
     final steps = ['Ordered', 'Paid', 'Shipped', 'Delivered'];
     int currentIndex = steps.indexOf(currentStatus);
-    if (currentIndex == -1) currentIndex = 0;
+    bool isCancelledOrExpired = currentStatus == 'Cancelled' || currentStatus == 'Expired';
+    if (currentIndex == -1) {
+      if (order.deliveredAt != null) {
+        currentIndex = 3;
+      } else if (order.shippedAt != null) {
+        currentIndex = 2;
+      } else if (order.paidAt != null) {
+        currentIndex = 1;
+      } else {
+        currentIndex = 0;
+      }
+    }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,12 +455,12 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                   Container(
                     width: 24, height: 24,
                     decoration: BoxDecoration(
-                      color: isCompleted ? (currentStatus == 'Cancelled' ? Colors.red : _primaryColor) : Colors.white, 
+                      color: isCompleted ? (isCancelledOrExpired && index == currentIndex ? Colors.red : _primaryColor) : Colors.white, 
                       shape: BoxShape.circle, 
-                      border: Border.all(color: isCompleted ? (currentStatus == 'Cancelled' ? Colors.red : _primaryColor) : Colors.grey.shade300)
+                      border: Border.all(color: isCompleted ? (isCancelledOrExpired && index == currentIndex ? Colors.red : _primaryColor) : Colors.grey.shade300)
                     ),
                     child: Icon(
-                      currentStatus == 'Cancelled' && index == currentIndex ? Icons.close : Icons.check, 
+                      isCancelledOrExpired && index == currentIndex ? Icons.close : Icons.check, 
                       size: 14, 
                       color: isCompleted ? Colors.white : Colors.grey.shade300
                     ),
@@ -452,12 +519,12 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value) {
+  Widget _buildSummaryRow(String label, String value, {Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-        Text(value, style: const TextStyle(fontSize: 13, color: Colors.black87)),
+        Text(value, style: TextStyle(fontSize: 13, color: valueColor ?? Colors.black87)),
       ],
     );
   }
@@ -525,29 +592,34 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
             ),
           ],
         ),
-        const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
-          child: Semantics(
-            label: 'btn_download_invoice',
-            child: ElevatedButton.icon(
-              onPressed: () {
-                if (_order != null) {
+        if (_order != null &&
+            (_order!.status == 'Delivered' ||
+                _order!.status == 'Cancelled' ||
+                _order!.status == 'Paid')) ...[
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: Semantics(
+              label: 'btn_download_invoice',
+              child: ElevatedButton.icon(
+                onPressed: () {
                   PdfService.generateAndOpenInvoice(_order!);
-                }
-              },
-              icon: const Icon(Icons.download_outlined, size: 18),
-              label: const Text('Download Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey.shade100,
-                foregroundColor: Colors.black87,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                },
+                icon: const Icon(Icons.download_outlined, size: 18),
+                label: const Text('Download Invoice',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey.shade100,
+                  foregroundColor: Colors.black87,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -557,8 +629,10 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
 
     if (status == 'Delivered') {
       bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
-    } else if (status == 'Expired' || status == 'Cancelled') {
+    } else if (status == 'Cancelled') {
       bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Expired') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
     } else if (status == 'Ordered') {
       bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
     } else if (status == 'Shipped') {

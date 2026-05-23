@@ -1,12 +1,17 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import '../../authentication/views/profile_admin_view.dart';
+import '../../../core/utils/format_util.dart';
 import '../controllers/dashboard_admin_controller.dart';
 import '../../admin/view/admin_master_view.dart';
 import '../../promotion/views/form_promotion_admin_view.dart';
 import '../../promotion/models/promotion.dart';
-import '../../complaint/views/complaint_history_admin_view.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../shared/main_navigation_admin.dart';
+import '../../shared/widgets/shimmer_loading.dart';
+import '../../notification/views/notif_admin_view.dart';
+import '../../notification/controllers/notif_admin_controller.dart';
+import 'package:ecommerce/features/order/controllers/order_admin_controller.dart';
+
 
 class DashboardAdminView extends StatefulWidget {
   const DashboardAdminView({super.key});
@@ -15,27 +20,34 @@ class DashboardAdminView extends StatefulWidget {
   State<DashboardAdminView> createState() => _DashboardAdminViewState();
 }
 
-class _DashboardAdminViewState extends State<DashboardAdminView> {
+class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticKeepAliveClientMixin {
   final DashboardAdminController _controller = DashboardAdminController();
-  final NumberFormat _currencyFormat = NumberFormat.currency(
-    locale: 'id_ID',
-    symbol: 'Rp ',
-    decimalDigits: 0,
-  );
+  final NotificationAdminController _notifController = NotificationAdminController();
 
   Map<String, dynamic> overviewStats = {};
   List<Map<String, dynamic>> promotions = [];
   List<Map<String, dynamic>> retailers = [];
   bool isLoading = true;
+  Timer? _syncTimer;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
     _loadDashboardData();
+    
+    _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      _loadDashboardData();
+    });
   }
 
   Future<void> _loadDashboardData() async {
     try {
+      final OrderAdminController adminOrderCtrl = OrderAdminController();
+      await adminOrderCtrl.syncAllPendingOrders();
+
       final stats = await _controller.getOverviewStats();
       final proms = await _controller.getPromotions();
       final retails = await _controller.getRetailers();
@@ -55,33 +67,50 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
   }
 
   @override
+  void dispose() {
+    _syncTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       backgroundColor: Colors.white,
-      body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B8A3A)),
-              ),
-            )
-          : SafeArea(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20.0,
-                    vertical: 10.0,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(),
+      body: RefreshIndicator(
+        onRefresh: _loadDashboardData,
+        color: const Color(0xFF1B8A3A),
+        child: isLoading && overviewStats.isEmpty
+            ? const SafeArea(child: DashboardShimmer())
+            : SafeArea(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 10.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isLoading)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 15),
+                            child: LinearProgressIndicator(
+                              backgroundColor: Colors.transparent,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF1B8A3A)),
+                              minHeight: 2,
+                            ),
+                          ),
+                        _buildHeader(),
                       const SizedBox(height: 30),
-                      const Text(
+                      _buildSectionHeader(
                         'Overview',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        'Advanced Analytics',
+                        onAction: () {
+                          MainNavigationAdmin.of(context)?.setIndex(3);
+                        },
                       ),
                       const SizedBox(height: 15),
                       _buildOverviewCards(),
@@ -123,40 +152,50 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                 ),
               ),
             ),
+      ),
     );
   }
+
+
+
 
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Image.asset('assets/images/logo.png', height: 35),
-        Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.history, color: Colors.black87),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AdminComplaintHistoryView(),
+        StreamBuilder<int>(
+          stream: _notifController.getUnreadCount(),
+          builder: (context, snapshot) {
+            final unreadCount = snapshot.data ?? 0;
+            return Stack(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const NotificationAdminView()),
+                    );
+                  },
+                  icon: const Icon(Icons.notifications_none_outlined, color: Colors.black87),
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
                   ),
-                );
-              },
-            ),
-            const SizedBox(width: 5),
-            IconButton(
-              icon: const Icon(Icons.person_outline, color: Colors.black87),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProfileAdminView(),
-                  ),
-                );
-              },
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ],
     );
@@ -170,7 +209,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
             Expanded(
               child: _buildSingleCard(
                 title: 'Total Sales',
-                value: _currencyFormat.format(overviewStats['totalSales'] ?? 0),
+                value: FormatUtil.formatCompact(overviewStats['totalSales'] ?? 0, isCurrency: true),
                 subtitle: 'Real-time revenue',
                 subtitleColor: Colors.blue.shade300,
                 icon: Icons.attach_money,
@@ -181,7 +220,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
             Expanded(
               child: _buildSingleCard(
                 title: 'Orders',
-                value: '${overviewStats['totalOrders'] ?? 0}',
+                value: FormatUtil.formatCompact(overviewStats['totalOrders'] ?? 0),
                 subtitle: 'Paid orders',
                 subtitleColor: Colors.green,
                 icon: Icons.shopping_basket_outlined,
@@ -196,7 +235,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
             Expanded(
               child: _buildSingleCard(
                 title: 'Customers',
-                value: '${overviewStats['totalCustomers'] ?? 0}',
+                value: FormatUtil.formatCompact(overviewStats['totalCustomers'] ?? 0),
                 subtitle: 'Registered Retailers',
                 subtitleColor: Colors.orange.shade300,
                 icon: Icons.people_outline,
@@ -297,11 +336,15 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       );
     }
 
-    final filteredPromos = promotions.map((promoMap) {
-      return PromotionModel.fromMap(promoMap['id'] ?? '', promoMap);
-    }).where((promoModel) {
-      return promoModel.isActive || promoModel.isUpcoming;
-    }).take(3).toList();
+    final filteredPromos = promotions
+        .map((promoMap) {
+          return PromotionModel.fromMap(promoMap['id'] ?? '', promoMap);
+        })
+        .where((promoModel) {
+          return promoModel.isActive || promoModel.isUpcoming;
+        })
+        .take(3)
+        .toList();
 
     if (filteredPromos.isEmpty) {
       return const Center(
@@ -312,47 +355,62 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       );
     }
 
-    return Column(
-      children: [
-        ...filteredPromos.asMap().entries.map((entry) {
-          final isLast = entry.key == filteredPromos.length - 1;
-          final promoModel = entry.value;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          ...filteredPromos.asMap().entries.map((entry) {
+            final isLast = entry.key == filteredPromos.length - 1;
+            final promoModel = entry.value;
 
-          String badgeText;
-          Color badgeColor;
-          Color badgeTextColor;
+            String badgeText;
+            Color badgeColor;
+            Color badgeTextColor;
 
-          if (promoModel.isUpcoming) {
-            badgeText = 'UPCOMING';
-            badgeColor = Colors.cyan.shade50;
-            badgeTextColor = Colors.cyan.shade700;
-          } else if (promoModel.isEndingSoon) {
-            badgeText = 'ENDING SOON';
-            badgeColor = Colors.orange.shade50;
-            badgeTextColor = Colors.orange;
-          } else { 
-            badgeText = 'ACTIVE';
-            badgeColor = Colors.blue.shade50;
-            badgeTextColor = Colors.blue;
-          }
+            if (promoModel.isUpcoming) {
+              badgeText = 'UPCOMING';
+              badgeColor = Colors.cyan.shade50;
+              badgeTextColor = Colors.cyan.shade700;
+            } else if (promoModel.isEndingSoon) {
+              badgeText = 'ENDING SOON';
+              badgeColor = Colors.orange.shade50;
+              badgeTextColor = Colors.orange;
+            } else {
+              badgeText = 'ACTIVE';
+              badgeColor = Colors.blue.shade50;
+              badgeTextColor = Colors.blue;
+            }
 
-          return Column(
-            children: [
-              _buildPromoItem(
-                icon: Icons.local_offer_outlined,
-                title: promoModel.title,
-                subtitle: promoModel.description,
-                badgeText: badgeText,
-                badgeColor: badgeColor,
-                badgeTextColor: badgeTextColor,
-                promotionId: promoModel.id,
-                promotionModel: promoModel,
-              ),
-              if (!isLast) Divider(color: Colors.grey.shade200),
-            ],
-          );
-        }),
-      ],
+            return Column(
+              children: [
+                _buildPromoItem(
+                  icon: Icons.local_offer_outlined,
+                  title: promoModel.title,
+                  subtitle: promoModel.description,
+                  badgeText: badgeText,
+                  badgeColor: badgeColor,
+                  badgeTextColor: badgeTextColor,
+                  promotionId: promoModel.id,
+                  promotionModel: promoModel,
+                ),
+                if (!isLast) Divider(height: 1, color: Colors.grey.shade100),
+              ],
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -367,7 +425,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
     required PromotionModel promotionModel,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.all(12.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -386,6 +444,8 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               children: [
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
@@ -394,6 +454,8 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
               ],
@@ -457,7 +519,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       );
     }
 
-    final displayRetailers = retailers.take(3).toList();
+    final displayRetailers = retailers.take(2).toList();
 
     return Column(
       children: [
@@ -469,7 +531,6 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
             children: [
               _buildRetailerItem(
                 title: retailer['fullName'] ?? 'Retailer',
-                location: retailer['address'] ?? 'No location',
                 phoneNumber: retailer['phoneNumber'] ?? '',
               ),
               if (!isLast) ...[
@@ -486,8 +547,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
   }
 
   Widget _buildRetailerItem({
-    required String title, 
-    required String location,
+    required String title,
     required String phoneNumber,
   }) {
     return Row(
@@ -507,7 +567,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               ),
               const SizedBox(height: 4),
               Text(
-                location,
+                phoneNumber,
                 style: const TextStyle(color: Colors.grey, fontSize: 13),
               ),
             ],
@@ -545,9 +605,10 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
       cleanNumber = '62${cleanNumber.substring(1)}';
     }
 
-    final String message = 'Halo $name,\n\nSaya Admin dari PT Kinarya Agung Prima.';
+    final String message =
+        'Halo $name,\n\nSaya Admin dari PT Kinarya Agung Prima.';
     final Uri whatsappUri = Uri.parse(
-      'whatsapp://send?phone=$cleanNumber&text=${Uri.encodeComponent(message)}'
+      'whatsapp://send?phone=$cleanNumber&text=${Uri.encodeComponent(message)}',
     );
 
     try {
@@ -555,15 +616,15 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
         await launchUrl(whatsappUri);
       } else {
         final Uri webUri = Uri.parse(
-          'https://wa.me/$cleanNumber?text=${Uri.encodeComponent(message)}'
+          'https://wa.me/$cleanNumber?text=${Uri.encodeComponent(message)}',
         );
         await launchUrl(webUri, mode: LaunchMode.externalApplication);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal membuka WhatsApp: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal membuka WhatsApp: $e')));
       }
     }
   }

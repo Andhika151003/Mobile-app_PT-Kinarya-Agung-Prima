@@ -51,7 +51,6 @@ void main() {
 
       await profileController.updateRetailProfile(
         storeName: 'New Toko',
-        location: 'New Location',
         contact: '08123456789',
         businessType: 'Retail Store',
       );

@@ -1,9 +1,12 @@
+import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/product.dart';
 import '../controllers/product_admin_controller.dart';
 import 'product_detail_admin_view.dart';
-import '../../authentication/views/profile_admin_view.dart';
 import 'form_add_product_admin_view.dart';
+import 'see_all_product_admin_view.dart';
+import '../../../core/utils/format_util.dart';
 
 class ProductAdminView extends StatefulWidget {
   const ProductAdminView({super.key});
@@ -12,9 +15,13 @@ class ProductAdminView extends StatefulWidget {
   State<ProductAdminView> createState() => _ProductAdminViewState();
 }
 
-class _ProductAdminViewState extends State<ProductAdminView> {
+class _ProductAdminViewState extends State<ProductAdminView>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final AdminProductController _productController = AdminProductController();
-  final Color primaryGreen = const Color(0xFF00903D);
+  final Color primaryGreen = AppColors.primary;
 
   String _selectedCategory = 'All';
   String _sortBy = 'Best Selling';
@@ -29,6 +36,7 @@ class _ProductAdminViewState extends State<ProductAdminView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
@@ -38,43 +46,108 @@ class _ProductAdminViewState extends State<ProductAdminView> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const FormAddProductAdminView()),
+            MaterialPageRoute(
+              builder: (context) => const FormAddProductAdminView(),
+            ),
           );
         },
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
-      
+
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 25),
-              
-              const Text('Products', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
-              const SizedBox(height: 16),
-              
-              _buildSearchBar(),
-              const SizedBox(height: 16),
-              
-              _buildFilterRow(),
-              const SizedBox(height: 24),
-              
-              _buildSectionHeader('Popular Products', 'See All'),
-              const SizedBox(height: 16),
-              
-              _buildProductStream(),
-              
-              const SizedBox(height: 30),
-              
-              const Text('Categories', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-              const SizedBox(height: 16),
-              
-              _buildCategoriesRow(),
-              const SizedBox(height: 80), 
-            ],
+        child: RefreshIndicator(
+          color: primaryGreen,
+          onRefresh: () async {
+            setState(() {});
+            await Future.delayed(const Duration(milliseconds: 500));
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 10.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: 25),
+
+                const Text(
+                  'Products',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                _buildSearchBar(),
+                const SizedBox(height: 16),
+
+                const Text(
+                  'Quick Filters',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildCategoriesRow(),
+                const SizedBox(height: 24),
+
+                _buildFilterRow(),
+                const SizedBox(height: 24),
+
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AllProductAdminView(),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Most Popular',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      Row(
+                        children: const [
+                          Text(
+                            'See All',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 14,
+                            color: Colors.black54,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                _buildProductStream(),
+                const SizedBox(height: 100),
+              ],
+            ),
           ),
         ),
       ),
@@ -89,16 +162,10 @@ class _ProductAdminViewState extends State<ProductAdminView> {
       children: [
         Image.asset('assets/images/logo.png', height: 35),
         IconButton(
-              icon: const Icon(Icons.person_outline, color: Colors.black87),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProfileAdminView(), 
-                  ),
-                );
-              },
-            ),
+          onPressed: () => setState(() {}),
+          icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
+          tooltip: 'Refresh Product',
+        ),
       ],
     );
   }
@@ -126,7 +193,10 @@ class _ProductAdminViewState extends State<ProductAdminView> {
           ),
           Container(
             margin: const EdgeInsets.all(4),
-            decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(6)),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(6),
+            ),
             child: IconButton(
               icon: const Icon(Icons.search, color: Colors.white, size: 20),
               onPressed: () => setState(() {}),
@@ -152,35 +222,50 @@ class _ProductAdminViewState extends State<ProductAdminView> {
           GestureDetector(
             onTap: () {
               setState(() {
-                _selectedCategory = 'All'; 
+                _selectedCategory = 'All';
               });
             },
             child: Text(
-              'All Categories', 
+              'Reset',
               style: TextStyle(
-                fontSize: 13, 
-                color: _selectedCategory == 'All' ? primaryGreen : Colors.black87, 
-                fontWeight: _selectedCategory == 'All' ? FontWeight.bold : FontWeight.normal
+                fontSize: 13,
+                color: _selectedCategory == 'All' && !_filterInStock
+                    ? primaryGreen
+                    : Colors.black87,
+                fontWeight: _selectedCategory == 'All' && !_filterInStock
+                    ? FontWeight.bold
+                    : FontWeight.normal,
               ),
             ),
           ),
-          
+
           GestureDetector(
             onTap: () => setState(() => _filterInStock = !_filterInStock),
-            child: Text('In Stock', style: TextStyle(
-              fontSize: 13, 
-              color: _filterInStock ? primaryGreen : Colors.black87,
-              fontWeight: _filterInStock ? FontWeight.bold : FontWeight.normal
-            )),
+            child: Text(
+              'In Stock',
+              style: TextStyle(
+                fontSize: 13,
+                color: _filterInStock ? primaryGreen : Colors.black87,
+                fontWeight: _filterInStock
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+              ),
+            ),
           ),
-          
+
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _sortBy,
               icon: const Icon(Icons.arrow_drop_down, size: 20),
               isDense: true,
-              style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold),
-              items: ['Best Selling', 'Name A-Z', 'Stock Low-High'].map((String value) {
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+              ),
+              items: ['Best Selling', 'Name A-Z', 'Stock Low-High'].map((
+                String value,
+              ) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),
@@ -200,16 +285,6 @@ class _ProductAdminViewState extends State<ProductAdminView> {
     );
   }
 
-  Widget _buildSectionHeader(String title, String actionText) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-        Text(actionText, style: TextStyle(color: primaryGreen, fontWeight: FontWeight.bold, fontSize: 13)),
-      ],
-    );
-  }
-
   Widget _buildProductStream() {
     return StreamBuilder<List<ProductModel>>(
       stream: _productController.getSupplyProducts(),
@@ -224,37 +299,41 @@ class _ProductAdminViewState extends State<ProductAdminView> {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
-              child: Text('No products available.\nTap + to add.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade500)),
+              child: Text(
+                'No products available.\nTap + to add.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade500),
+              ),
             ),
           );
         }
 
         final allProducts = snapshot.data!;
-        
-        // DIDELEGASIKAN KE CONTROLLER!
-        final products = _productController.filterAndSortProducts(
-          allProducts, 
-          _selectedCategory, 
-          _searchController.text, 
-          _filterInStock, 
-          _sortBy
+
+        final filteredProducts = _productController.filterAndSortProducts(
+          allProducts,
+          _selectedCategory,
+          _searchController.text,
+          _filterInStock,
+          _sortBy,
         );
 
-        // Jika hasil filter kosong
+        final products = filteredProducts.take(10).toList();
+
         if (products.isEmpty) {
           return Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 40.0),
               child: Text(
-                'No products match your filters.', 
-                style: TextStyle(color: Colors.grey.shade500)
+                'No products match your filters.',
+                style: TextStyle(color: Colors.grey.shade500),
               ),
             ),
           );
         }
 
         return ListView.builder(
-          shrinkWrap: true, 
+          shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: products.length,
           itemBuilder: (context, index) {
@@ -266,16 +345,25 @@ class _ProductAdminViewState extends State<ProductAdminView> {
   }
 
   Widget _buildProductCard(BuildContext context, ProductModel product) {
-    int alertLevel = (product.lowStockAlert != null && product.lowStockAlert! > 0) ? product.lowStockAlert! : 5;
-    bool isInStock = product.stock > alertLevel;
-    
-    String displaySku = (product.sku != null && product.sku!.isNotEmpty) ? product.sku! : 'No SKU';
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+    bool isLowStock = product.isLowStock;
+    bool isOutOfStock = product.stock <= 0;
+
+    String displaySku = (product.sku != null && product.sku!.isNotEmpty)
+        ? product.sku!
+        : 'No SKU';
 
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ProductDetailAdminView(product: product)),
+          MaterialPageRoute(
+            builder: (context) => ProductDetailAdminView(product: product),
+          ),
         );
       },
       child: Container(
@@ -286,7 +374,11 @@ class _ProductAdminViewState extends State<ProductAdminView> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Row(
@@ -294,51 +386,84 @@ class _ProductAdminViewState extends State<ProductAdminView> {
           children: [
             // GAMBAR PRODUK
             Container(
-              width: 80, height: 80,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 color: Colors.white,
                 image: product.imageUrl.isNotEmpty
-                    ? DecorationImage(image: NetworkImage(product.imageUrl), fit: BoxFit.contain)
+                    ? DecorationImage(
+                        image: NetworkImage(product.imageUrl),
+                        fit: BoxFit.contain,
+                      )
                     : null,
               ),
-              child: product.imageUrl.isEmpty ? const Icon(Icons.image_not_supported, color: Colors.grey) : null,
+              child: product.imageUrl.isEmpty
+                  ? const Icon(Icons.image_not_supported, color: Colors.grey)
+                  : null,
             ),
             const SizedBox(width: 16),
-            
+
             // DETAIL TEKS
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product.name, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black),
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Colors.black,
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  Text('SKU: $displaySku', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                  Text(
+                    'SKU: $displaySku',
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  ),
                   const SizedBox(height: 2),
-                  Text('Stock: ${product.stock}', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                  Text(
+                    'Stock: ${FormatUtil.formatCompact(product.stock)}',
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  ),
                   const SizedBox(height: 12),
-                  
-                  // BADGE STATUS 
+
+                  // BADGE STATUS
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: isInStock ? Colors.green.shade100 : Colors.yellow.shade100,
+                      color: isOutOfStock
+                          ? Colors.red.shade50
+                          : (isLowStock ? Colors.orange.shade50 : Colors.green.shade50),
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isOutOfStock
+                            ? Colors.red.shade200
+                            : (isLowStock ? Colors.orange.shade200 : Colors.green.shade200),
+                      ),
                     ),
                     child: Text(
-                      isInStock ? 'In Stock' : 'Low Stock',
+                      isOutOfStock
+                          ? 'Out of Stock'
+                          : (isLowStock ? 'Low Stock Alert' : 'In Stock'),
                       style: TextStyle(
-                        color: isInStock ? primaryGreen : Colors.orange.shade700,
-                        fontSize: 11, fontWeight: FontWeight.bold,
+                        color: isOutOfStock
+                            ? Colors.red.shade700
+                            : (isLowStock ? Colors.orange.shade800 : primaryGreen),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             // HARGA & TOMBOL KANAN
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -348,13 +473,23 @@ class _ProductAdminViewState extends State<ProductAdminView> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Rp ${product.price}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
+                      currencyFormatter.format(product.price),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
                     ),
-                    Text('Per item', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                    Text(
+                      'Per item',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 25), 
+                const SizedBox(height: 25),
                 GestureDetector(
                   onTap: () {
                     showDialog(
@@ -363,13 +498,26 @@ class _ProductAdminViewState extends State<ProductAdminView> {
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(color: primaryGreen, borderRadius: BorderRadius.circular(6)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                     child: const Row(
                       children: [
                         Icon(Icons.add, color: Colors.white, size: 14),
                         SizedBox(width: 4),
-                        Text('Add', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                        Text(
+                          'Add',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -384,6 +532,7 @@ class _ProductAdminViewState extends State<ProductAdminView> {
 
   Widget _buildCategoriesRow() {
     final categories = [
+      {'icon': Icons.all_inclusive, 'label': 'All'},
       {'icon': Icons.face_retouching_natural, 'label': 'Beauty Care'},
       {'icon': Icons.pets, 'label': 'Pet Care'},
       {'icon': Icons.health_and_safety_outlined, 'label': 'Health'},
@@ -405,33 +554,41 @@ class _ProductAdminViewState extends State<ProductAdminView> {
             width: 75,
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              border: Border.all(color: isSelected ? primaryGreen : Colors.grey.shade200),
+              border: Border.all(
+                color: isSelected ? primaryGreen : Colors.grey.shade200,
+              ),
               borderRadius: BorderRadius.circular(12),
-              color: isSelected ? primaryGreen.withValues(alpha: 0.05) : Colors.white,
+              color: isSelected
+                  ? primaryGreen.withValues(alpha: 0.05)
+                  : Colors.white,
             ),
             child: Column(
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: isSelected ? primaryGreen.withValues(alpha: 0.2) : Colors.grey.shade200, 
-                    shape: BoxShape.circle
+                    color: isSelected
+                        ? primaryGreen.withValues(alpha: 0.2)
+                        : Colors.grey.shade200,
+                    shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    cat['icon'] as IconData, 
-                    color: isSelected ? primaryGreen : Colors.grey.shade600, 
-                    size: 20
+                    cat['icon'] as IconData,
+                    color: isSelected ? primaryGreen : Colors.grey.shade600,
+                    size: 20,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  cat['label'] as String, 
+                  cat['label'] as String,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 11, 
+                    fontSize: 11,
                     color: isSelected ? primaryGreen : Colors.grey.shade600,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  )
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
                 ),
               ],
             ),
@@ -458,7 +615,7 @@ class AddStockDialog extends StatefulWidget {
 class _AddStockDialogState extends State<AddStockDialog> {
   int _quantity = 1;
   bool _isLoading = false;
-  final Color primaryGreen = const Color(0xFF4C7D3E);
+  final Color primaryGreen = AppColors.primary;
 
   void _increment() => setState(() => _quantity++);
   void _decrement() {
@@ -471,16 +628,24 @@ class _AddStockDialogState extends State<AddStockDialog> {
       await AdminProductController().addStock(widget.product, _quantity);
 
       if (mounted) {
-        Navigator.pop(context); 
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Berhasil menambah $_quantity stok untuk ${widget.product.name}'), backgroundColor: primaryGreen),
+          SnackBar(
+            content: Text(
+              'Berhasil menambah $_quantity stok untuk ${widget.product.name}',
+            ),
+            backgroundColor: primaryGreen,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menambah stok: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Gagal menambah stok: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -488,8 +653,10 @@ class _AddStockDialogState extends State<AddStockDialog> {
 
   @override
   Widget build(BuildContext context) {
-    // 3. TAMPILKAN SKU ASLI DI DALAM POP-UP
-    String displaySku = (widget.product.sku != null && widget.product.sku!.isNotEmpty) ? widget.product.sku! : 'No SKU';
+    String displaySku =
+        (widget.product.sku != null && widget.product.sku!.isNotEmpty)
+        ? widget.product.sku!
+        : 'No SKU';
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -505,13 +672,27 @@ class _AddStockDialogState extends State<AddStockDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Add Stock', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                const Text(
+                  'Add Stock',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
                 InkWell(
                   onTap: () => Navigator.pop(context),
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
-                    child: const Icon(Icons.close, size: 16, color: Colors.black54),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      size: 16,
+                      color: Colors.black54,
+                    ),
                   ),
                 ),
               ],
@@ -523,22 +704,55 @@ class _AddStockDialogState extends State<AddStockDialog> {
             Row(
               children: [
                 Container(
-                  width: 60, height: 60,
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade200),
-                    image: widget.product.imageUrl.isNotEmpty ? DecorationImage(image: NetworkImage(widget.product.imageUrl), fit: BoxFit.contain) : null,
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade200),
+                    image: widget.product.imageUrl.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(widget.product.imageUrl),
+                            fit: BoxFit.contain,
+                          )
+                        : null,
                   ),
-                  child: widget.product.imageUrl.isEmpty ? const Icon(Icons.image_not_supported, color: Colors.grey) : null,
+                  child: widget.product.imageUrl.isEmpty
+                      ? const Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey,
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(widget.product.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text(
+                        widget.product.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text('SKU: $displaySku', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-                      Text('Stok saat ini: ${widget.product.stock} pcs', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                      Text(
+                        'SKU: $displaySku',
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        'Stok saat ini: ${widget.product.stock} pcs',
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -548,19 +762,54 @@ class _AddStockDialogState extends State<AddStockDialog> {
             Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
             const SizedBox(height: 16),
 
-            Text('Jumlah yang ingin ditambahkan:', style: TextStyle(fontSize: 13, color: Colors.grey.shade800)),
+            Text(
+              'Jumlah yang ingin ditambahkan:',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+            ),
             const SizedBox(height: 12),
             Container(
               height: 36,
-              decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(6)),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(6),
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  InkWell(onTap: _decrement, child: Container(width: 36, alignment: Alignment.center, child: const Text('-', style: TextStyle(fontSize: 18)))),
-                  VerticalDivider(width: 1, thickness: 1, color: Colors.grey.shade300),
-                  Container(width: 50, alignment: Alignment.center, child: Text('$_quantity', style: const TextStyle(fontWeight: FontWeight.bold))),
-                  VerticalDivider(width: 1, thickness: 1, color: Colors.grey.shade300),
-                  InkWell(onTap: _increment, child: Container(width: 36, alignment: Alignment.center, child: const Text('+', style: TextStyle(fontSize: 16)))),
+                  InkWell(
+                    onTap: _decrement,
+                    child: Container(
+                      width: 36,
+                      alignment: Alignment.center,
+                      child: const Text('-', style: TextStyle(fontSize: 18)),
+                    ),
+                  ),
+                  VerticalDivider(
+                    width: 1,
+                    thickness: 1,
+                    color: Colors.grey.shade300,
+                  ),
+                  Container(
+                    width: 50,
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$_quantity',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  VerticalDivider(
+                    width: 1,
+                    thickness: 1,
+                    color: Colors.grey.shade300,
+                  ),
+                  InkWell(
+                    onTap: _increment,
+                    child: Container(
+                      width: 36,
+                      alignment: Alignment.center,
+                      child: const Text('+', style: TextStyle(fontSize: 16)),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -572,24 +821,53 @@ class _AddStockDialogState extends State<AddStockDialog> {
                 OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                     side: BorderSide(color: Colors.grey.shade400),
                   ),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _saveStock,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryGreen,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
                   child: _isLoading
-                      ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Save',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ],
             ),

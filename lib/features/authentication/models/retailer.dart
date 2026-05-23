@@ -8,8 +8,8 @@ class RetailerUser {
   final String role;
   final String phoneNumber;
   final DateTime createdAt;
-  final String address;
   final String? storeName;
+  final bool isActive;
 
   RetailerUser({
     this.id,
@@ -18,9 +18,9 @@ class RetailerUser {
     required this.password,
     required this.phoneNumber,
     required this.createdAt,
-    required this.address,
     this.role = 'retailer',
     this.storeName,
+    this.isActive = true,
   });
 
   Map<String, dynamic> toMap() {
@@ -31,8 +31,8 @@ class RetailerUser {
       'email': email,
       'role': role,
       'phoneNumber': phoneNumber,
-      'address': address,
       'storeName': storeName,
+      'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -52,8 +52,8 @@ class RetailerUser {
       password: '',
       phoneNumber: map['phoneNumber'] ?? '',
       createdAt: parsedDate,
-      address: map['address'] ?? '',
       storeName: map['storeName'],
+      isActive: map['isActive'] ?? true,
     );
   }
 
@@ -64,8 +64,8 @@ class RetailerUser {
     String? password,
     String? phoneNumber,
     DateTime? createdAt,
-    String? address,
     String? storeName,
+    bool? isActive,
   }) {
     return RetailerUser(
       id: id ?? this.id,
@@ -74,8 +74,8 @@ class RetailerUser {
       password: password ?? this.password,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       createdAt: createdAt ?? this.createdAt,
-      address: address ?? this.address,
       storeName: storeName ?? this.storeName,
+      isActive: isActive ?? this.isActive,
     );
   }
 }

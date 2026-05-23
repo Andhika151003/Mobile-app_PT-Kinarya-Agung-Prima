@@ -22,6 +22,7 @@ class _OrderCsViewState extends State<OrderCsView> {
     {'label': 'Paid', 'value': 'Paid'},
     {'label': 'Delivered', 'value': 'Delivered'},
     {'label': 'Cancelled', 'value': 'Cancelled'},
+    {'label': 'Expired', 'value': 'Expired'},
   ];
 
   @override
@@ -30,6 +31,7 @@ class _OrderCsViewState extends State<OrderCsView> {
     _controller = OrderCsController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.fetchAllOrders();
+      _controller.syncAllPendingOrders();
     });
   }
 
@@ -58,7 +60,7 @@ class _OrderCsViewState extends State<OrderCsView> {
           backgroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          automaticallyImplyLeading: false, // ← hapus back button
+          automaticallyImplyLeading: false,
           actions: [
             IconButton(
               icon: const Icon(Icons.search, color: Colors.black),
@@ -68,6 +70,20 @@ class _OrderCsViewState extends State<OrderCsView> {
                   delegate: _OrderSearchDelegate(_controller),
                 );
               },
+            ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.sort, color: Colors.black87),
+              onSelected: (String value) {
+                _controller.setSort(value);
+              },
+              itemBuilder: (BuildContext context) => [
+                const PopupMenuItem(value: 'Newest', child: Text('Newest')),
+                const PopupMenuItem(value: 'Oldest', child: Text('Oldest')),
+                const PopupMenuItem(
+                    value: 'Price (High-Low)', child: Text('Price: High to Low')),
+                const PopupMenuItem(
+                    value: 'Price (Low-High)', child: Text('Price: Low to High')),
+              ],
             ),
           ],
         ),
@@ -174,8 +190,10 @@ class _OrderCsViewState extends State<OrderCsView> {
 
     if (order.status == 'Delivered') {
       statusBgColor = const Color(0xFFE6F4EA); statusColor = const Color(0xFF1E8E3E); statusIcon = Icons.check_circle_outline; statusLabel = 'Delivered';
-    } else if (order.status == 'Expired' || order.status == 'Cancelled') {
+    } else if (order.status == 'Cancelled') {
       statusBgColor = const Color(0xFFFCE8E6); statusColor = const Color(0xFFD93025); statusIcon = Icons.cancel_outlined; statusLabel = 'Cancelled';
+    } else if (order.status == 'Expired') {
+      statusBgColor = const Color(0xFFFCE8E6); statusColor = const Color(0xFFD93025); statusIcon = Icons.timer_off_outlined; statusLabel = 'Expired';
     } else if (order.status == 'Ordered') {
       statusBgColor = const Color(0xFFFEF7E0); statusColor = const Color(0xFFF9AB00); statusIcon = Icons.access_time; statusLabel = 'Ordered';
     } else if (order.status == 'Shipped') {
@@ -188,7 +206,7 @@ class _OrderCsViewState extends State<OrderCsView> {
 
     final paymentStatus = order.paidAt != null
         ? 'Completed'
-        : (order.status == 'Cancelled' ? 'Refunded' : 'Pending');
+        : (order.status == 'Cancelled' ? 'Canceled' : 'Pending');
 
     return GestureDetector(
       onTap: () => Navigator.push(
@@ -196,7 +214,9 @@ class _OrderCsViewState extends State<OrderCsView> {
         MaterialPageRoute(
           builder: (_) => OrderDetailCsView(order: order),
         ),
-      ),
+      ).then((_) {
+        controller.fetchAllOrders();
+      }),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
@@ -237,8 +257,10 @@ class _OrderCsViewState extends State<OrderCsView> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      ...[
                       Icon(statusIcon, size: 12, color: statusColor),
                       const SizedBox(width: 4),
+                    ],
                       Text(
                         statusLabel,
                         style: TextStyle(

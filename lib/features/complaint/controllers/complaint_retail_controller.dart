@@ -4,11 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/complaint.dart';
 import '../../../supabase_storage_service.dart';
+import '../../notification/services/push_notification_service.dart';
 
 class ComplaintUserController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final SupabaseStorageService _storageService = SupabaseStorageService();
+  final PushNotificationService _pushNotificationService = PushNotificationService();
 
   Future<bool> submitComplaint({
     required String orderId,
@@ -55,6 +57,13 @@ class ComplaintUserController {
       );
 
       await _firestore.collection('complaints').add(complaint.toMap());
+
+      await _pushNotificationService.sendNotificationToAdmin(
+        title: 'Komplain Baru!',
+        message: 'Ada komplain baru untuk pesanan $orderId: $issueType.',
+        type: 'complaint',
+        relatedId: orderId,
+      );
 
       return true;
     } catch (e) {

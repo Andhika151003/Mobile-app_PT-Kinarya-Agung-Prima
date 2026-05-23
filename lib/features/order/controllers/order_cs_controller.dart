@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/order.dart';
 import 'order_stats_helper.dart';
+import 'order_user_controller.dart';
 
 class OrderCsController extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+
+  OrderCsController({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -20,6 +24,8 @@ class OrderCsController extends ChangeNotifier {
 
   String _searchQuery = '';
   String _statusFilter = 'all';
+  String _selectedSort = 'Newest';
+  String get selectedSort => _selectedSort;
 
   Future<void> fetchAllOrders() async {
     _setLoading(true);
@@ -77,6 +83,11 @@ class OrderCsController extends ChangeNotifier {
     _applyFilters();
   }
 
+  void setSort(String sort) {
+    _selectedSort = sort;
+    _applyFilters();
+  }
+
   void _applyFilters() {
     var filtered = List<OrderModel>.from(_orders);
 
@@ -90,7 +101,21 @@ class OrderCsController extends ChangeNotifier {
     }
 
     if (_statusFilter != 'all') {
-      filtered = filtered.where((order) => order.status == _statusFilter).toList();
+      filtered =
+          filtered.where((order) => order.status == _statusFilter).toList();
+    }
+
+    // Sort
+    if (_selectedSort == 'Newest') {
+      filtered.sort((a, b) =>
+          (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Oldest') {
+      filtered.sort((a, b) =>
+          (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
+    } else if (_selectedSort == 'Price (High-Low)') {
+      filtered.sort((a, b) => b.total.compareTo(a.total));
+    } else if (_selectedSort == 'Price (Low-High)') {
+      filtered.sort((a, b) => a.total.compareTo(b.total));
     }
 
     _filteredOrders = filtered;
@@ -103,7 +128,7 @@ class OrderCsController extends ChangeNotifier {
 
     try {
       if (newStatus == 'Paid' || newStatus == 'Shipped' || newStatus == 'Delivered') {
-        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus);
+        await OrderStatsHelper.markOrderAsPaid(orderId, targetStatus: newStatus, firestore: _firestore);
       } else {
         final updateData = {
           'status': newStatus,
@@ -160,15 +185,13 @@ class OrderCsController extends ChangeNotifier {
 
           if (productId != null && productId.isNotEmpty && quantity > 0) {
             final productRef = _firestore.collection('products').doc(productId);
-            transaction.update(productRef, {
-              'stock': FieldValue.increment(quantity),
-            });
-
+            
             if (statsRecorded) {
               final int price = (itemMap['price'] as num?)?.toInt() ?? 0;
               final int revenue = price * quantity;
               
               transaction.update(productRef, {
+                'stock': FieldValue.increment(quantity),
                 'monthlySales': FieldValue.increment(-quantity),
                 'revenue': FieldValue.increment(-revenue),
               });
@@ -220,5 +243,28 @@ class OrderCsController extends ChangeNotifier {
   void _clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  Future<void> syncAllPendingOrders() async {
+    try {
+      final snapshot = await _firestore
+          .collection('orders')
+          .where('status', whereIn: ['Ordered', 'Pending Payment'])
+          .get();
+
+      if (snapshot.docs.isEmpty) return;
+
+      debugPrint("CS: Checking ${snapshot.docs.length} pending orders for sync...");
+
+      final userCtrl = OrderUserController(firestore: _firestore);
+      for (var doc in snapshot.docs) {
+        final orderId = doc.id;
+        await userCtrl.syncDuitkuPayment(orderId);
+      }
+      
+      await fetchAllOrders();
+    } catch (e) {
+      debugPrint("CS Error syncAllPendingOrders: $e");
+    }
   }
 }

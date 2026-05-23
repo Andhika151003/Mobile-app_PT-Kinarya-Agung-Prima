@@ -13,6 +13,7 @@ void main() {
         quantity: 2,
         minOrder: 1,
         stockLimit: 10,
+        category: 'Test Category',
       );
 
       final map = item.toMap();
@@ -34,6 +35,7 @@ void main() {
         imageUrl: 'url1',
         minOrder: 1,
         stockLimit: 10,
+        category: 'Test Category',
       );
 
       expect(item.quantity, equals(1));

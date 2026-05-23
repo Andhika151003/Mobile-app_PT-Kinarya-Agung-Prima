@@ -47,6 +47,8 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
     'Lainnya',
   ];
 
+  final _formKey = GlobalKey<FormState>();
+
   @override
   void initState() {
     super.initState();
@@ -121,11 +123,14 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
   }
 
   Future<void> _submitComplaint() async {
-    if (_selectedIssueType == null ||
-        _descriptionController.text.trim().isEmpty) {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_attachedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Harap pilih jenis kendala dan isi deskripsi.'),
+          content: Text('Harap lampirkan setidaknya satu gambar bukti.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -214,367 +219,379 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+      body: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.support_agent_rounded,
+                            size: 36,
+                            color: _primaryColor,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Tim Support',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Tersedia 24/7',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  'Online',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.support_agent_rounded,
-                          size: 36,
-                          color: _primaryColor,
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+  
+                    // --- FORM FIELDS ---
+                    _buildFormCard(
+                      title: 'Pilih Jenis Kendala',
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _selectedIssueType,
+                        validator: (value) => value == null ? 'Pilih jenis kendala' : null,
+                        decoration: InputDecoration(
+                          hintText: 'Pilih jenis kendala...',
+                          hintStyle: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade400,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: _primaryColor),
+                          ),
+                        ),
+                        items: _issueTypes.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(
+                              type,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) =>
+                            setState(() => _selectedIssueType = val),
+                      ),
+                    ),
+  
+                    _buildFormCard(
+                      title: 'Deskripsikan Kendala Anda',
+                      child: TextFormField(
+                        controller: _descriptionController,
+                        maxLines: 4,
+                        maxLength: 1000,
+                        textInputAction: TextInputAction.done,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Harap isi deskripsi kendala';
+                          }
+                          if (value.trim().length < 20) {
+                            return 'Minimal 20 karakter';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          hintText:
+                              'Barang yang diterima tidak sesuai pesanan, spesifikasi berbeda, dan kemasan rusak...',
+                          hintStyle: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade400,
+                          ),
+                          contentPadding: const EdgeInsets.all(16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: _primaryColor),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Column(
+                    ),
+  
+                    _buildFormCard(
+                      title: 'Tambahkan Lampiran',
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Tim Support',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                          OutlinedButton.icon(
+                            onPressed: _pickImage,
+                            icon: const Icon(Icons.upload_file, size: 16),
+                            label: const Text('Upload Gambar'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.grey.shade700,
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Tersedia 24/7',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade600,
+                          if (_attachedImages.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _attachedImages.map((file) {
+                                return Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.file(
+                                        file,
+                                        width: 60,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: -8,
+                                      right: -8,
+                                      child: IconButton(
+                                        icon: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.close,
+                                            size: 12,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          setState(
+                                            () => _attachedImages.remove(file),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }).toList(),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Colors.green,
-                                  shape: BoxShape.circle,
+                          ],
+                        ],
+                      ),
+                    ),
+  
+                    _buildFormCard(
+                      title: 'Informasi Pesanan',
+                      child: Column(
+                        children: [
+                          DropdownButtonFormField<String>(
+                            initialValue:
+                                _purchasedProducts.any(
+                                  (p) =>
+                                      p['key'] ==
+                                      '${_currentOrderId}_$_currentProductName',
+                                )
+                                ? '${_currentOrderId}_$_currentProductName'
+                                : null,
+                            isExpanded: true,
+                            validator: (value) => value == null ? 'Pilih produk bermasalah' : null,
+                            decoration: InputDecoration(
+                              hintText: 'Pilih Produk yang Bermasalah...',
+                              hintStyle: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade400,
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.inventory_2_outlined,
+                                size: 20,
+                                color: _primaryColor,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                              const Text(
-                                'Online',
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                            ),
+                            items: _purchasedProducts.map((product) {
+                              return DropdownMenuItem(
+                                value: product['key'] as String,
+                                child: Text(
+                                  '${product['productName']} (Order: ${product['orderId']})',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                final selectedProduct = _purchasedProducts
+                                    .firstWhere((p) => p['key'] == val);
+                                setState(() {
+                                  _currentOrderId = selectedProduct['orderId'];
+                                  _currentProductName =
+                                      selectedProduct['productName'];
+                                  _currentOrderDate =
+                                      selectedProduct['orderDate'];
+                                });
+                              }
+                            },
+                          ),
+                          if (_isLoadingOrders)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8),
+                              child: LinearProgressIndicator(minHeight: 2),
+                            ),
+                          const SizedBox(height: 12),
+                          if (_purchasedProducts.isEmpty && !_isLoadingOrders)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                'Hanya pesanan yang sudah diterima (Delivered) yang dapat diajukan komplain.',
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
+                                  fontSize: 11,
+                                  color: Colors.orange.shade800,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildOrderInfoChip(
+                                  'ID: ${_currentOrderId ?? '-'}',
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildOrderInfoChip(
+                                  _currentOrderDate ?? '-',
                                 ),
                               ),
                             ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
-
-                  // --- FORM FIELDS ---
-                  _buildFormCard(
-                    title: 'Pilih Jenis Kendala',
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _selectedIssueType,
-                      decoration: InputDecoration(
-                        hintText: 'Pilih jenis kendala...',
-                        hintStyle: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade400,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: _primaryColor),
-                        ),
-                      ),
-                      items: _issueTypes.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(
-                            type,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (val) =>
-                          setState(() => _selectedIssueType = val),
                     ),
-                  ),
-
-                  _buildFormCard(
-                    title: 'Deskripsikan Kendala Anda',
-                    child: TextField(
-                      controller: _descriptionController,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText:
-                            'Barang yang diterima tidak sesuai pesanan, spesifikasi berbeda, dan kemasan rusak...',
-                        hintStyle: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade400,
-                        ),
-                        contentPadding: const EdgeInsets.all(16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: _primaryColor),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  _buildFormCard(
-                    title: 'Tambahkan Lampiran',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: _pickImage,
-                          icon: const Icon(Icons.upload_file, size: 16),
-                          label: const Text('Upload Gambar'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.grey.shade700,
-                            side: BorderSide(color: Colors.grey.shade300),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                          ),
-                        ),
-                        if (_attachedImages.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: _attachedImages.map((file) {
-                              return Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.file(
-                                      file,
-                                      width: 60,
-                                      height: 60,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: -8,
-                                    right: -8,
-                                    child: IconButton(
-                                      icon: Container(
-                                        padding: const EdgeInsets.all(2),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.close,
-                                          size: 12,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      onPressed: () {
-                                        setState(
-                                          () => _attachedImages.remove(file),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-
-                  _buildFormCard(
-                    title: 'Informasi Pesanan',
-                    child: Column(
-                      children: [
-                        DropdownButtonFormField<String>(
-                          initialValue:
-                              _purchasedProducts.any(
-                                (p) =>
-                                    p['key'] ==
-                                    '${_currentOrderId}_$_currentProductName',
-                              )
-                              ? '${_currentOrderId}_$_currentProductName'
-                              : null,
-                          isExpanded: true,
-                          decoration: InputDecoration(
-                            hintText: 'Pilih Produk yang Bermasalah...',
-                            hintStyle: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade400,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.inventory_2_outlined,
-                              size: 20,
-                              color: _primaryColor,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                          ),
-                          items: _purchasedProducts.map((product) {
-                            return DropdownMenuItem(
-                              value: product['key'] as String,
-                              child: Text(
-                                '${product['productName']} (Order: ${product['orderId']})',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            if (val != null) {
-                              final selectedProduct = _purchasedProducts
-                                  .firstWhere((p) => p['key'] == val);
-                              setState(() {
-                                _currentOrderId = selectedProduct['orderId'];
-                                _currentProductName =
-                                    selectedProduct['productName'];
-                                _currentOrderDate =
-                                    selectedProduct['orderDate'];
-                              });
-                            }
-                          },
-                        ),
-                        if (_isLoadingOrders)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 8),
-                            child: LinearProgressIndicator(minHeight: 2),
-                          ),
-                        const SizedBox(height: 12),
-                        if (_purchasedProducts.isEmpty && !_isLoadingOrders)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Text(
-                              'Hanya pesanan yang sudah diterima (Delivered) yang dapat diajukan komplain.',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.orange.shade800,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildOrderInfoChip(
-                                'ID: ${_currentOrderId ?? '-'}',
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildOrderInfoChip(
-                                _currentOrderDate ?? '-',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  ],
+                ),
+              ),
+            ),
+  
+            // --- BOTTOM BUTTON ---
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
                   ),
                 ],
               ),
-            ),
-          ),
-
-          // --- BOTTOM BUTTON ---
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _submitComplaint,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _submitComplaint,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
                   ),
-                  elevation: 0,
-                ),
-                child: _isLoading
+                  child: _isLoading 
                     ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
                     : const Text(
                         'Kirim',
@@ -584,10 +601,11 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                           color: Colors.white,
                         ),
                       ),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

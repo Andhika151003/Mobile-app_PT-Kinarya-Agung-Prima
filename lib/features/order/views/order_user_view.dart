@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 import '../models/order.dart';
 import '../controllers/order_user_controller.dart';
 import 'order_detail_user_view.dart';
+import '../../shared/widgets/shimmer_loading.dart';
+import '../../notification/views/notif_user_view.dart';
+import '../../notification/controllers/notif_user_controller.dart';
 
 class OrderUserView extends StatefulWidget {
   const OrderUserView({super.key});
@@ -13,24 +16,37 @@ class OrderUserView extends StatefulWidget {
 }
 
 class _OrderUserViewState extends State<OrderUserView>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  final NotificationUserController _notifController = NotificationUserController();
+  @override
+  bool get wantKeepAlive => true;
+
   late final TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
   String _searchQuery = '';
+  String _selectedSort = 'Newest';
 
   final List<_TabConfig> _tabs = const [
     _TabConfig(label: 'All Orders', statusFilter: null),
     _TabConfig(label: 'Pending', statusFilter: ['Ordered', 'Pending Payment']),
     _TabConfig(label: 'Processing', statusFilter: ['Paid', 'Shipped']),
     _TabConfig(label: 'Delivered', statusFilter: ['Delivered', 'Settled']),
-    _TabConfig(label: 'Cancelled', statusFilter: ['Expired', 'Cancelled']),
+    _TabConfig(label: 'Cancelled', statusFilter: ['Cancelled']),
+    _TabConfig(label: 'Expired', statusFilter: ['Expired']),
   ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        OrderUserController().syncAllPendingOrders(uid);
+      }
+    });
   }
 
   @override
@@ -42,6 +58,7 @@ class _OrderUserViewState extends State<OrderUserView>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -97,14 +114,56 @@ class _OrderUserViewState extends State<OrderUserView>
               },
             ),
           ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.sort, color: Colors.black87),
+            onSelected: (String value) {
+              setState(() {
+                _selectedSort = value;
+              });
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem(value: 'Newest', child: Text('Newest')),
+              const PopupMenuItem(value: 'Oldest', child: Text('Oldest')),
+              const PopupMenuItem(value: 'Price (High-Low)', child: Text('Price: High to Low')),
+              const PopupMenuItem(value: 'Price (Low-High)', child: Text('Price: Low to High')),
+            ],
+          ),
           if (!_isSearching)
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_none_outlined,
-                color: Colors.black87,
-                size: 24,
-              ),
-              onPressed: () {},
+            StreamBuilder<int>(
+              stream: _notifController.getUnreadCount(),
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.data ?? 0;
+                return Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none_outlined,
+                          color: Colors.black87, size: 24),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationUserView(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           const SizedBox(width: 8),
         ],
@@ -147,7 +206,11 @@ class _OrderUserViewState extends State<OrderUserView>
       body: TabBarView(
         controller: _tabController,
         children: _tabs
-            .map((tab) => _OrderList(tab: tab, searchQuery: _searchQuery))
+            .map((tab) => _OrderList(
+                  tab: tab,
+                  searchQuery: _searchQuery,
+                  selectedSort: _selectedSort,
+                ))
             .toList(),
       ),
     );
@@ -166,8 +229,13 @@ class _TabConfig {
 class _OrderList extends StatelessWidget {
   final _TabConfig tab;
   final String searchQuery;
+  final String selectedSort;
 
-  const _OrderList({required this.tab, required this.searchQuery});
+  const _OrderList({
+    required this.tab,
+    required this.searchQuery,
+    required this.selectedSort,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -180,8 +248,11 @@ class _OrderList extends StatelessWidget {
       stream: userController.getUserOrdersStream(uid),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF4A7D3C)),
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+            itemCount: 5,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) => const OrderCardShimmer(),
           );
         }
 
@@ -190,7 +261,19 @@ class _OrderList extends StatelessWidget {
         }
 
         final docs = snapshot.data?.docs ?? [];
-        if (docs.isEmpty) return _EmptyState(hasSearch: searchQuery.isNotEmpty);
+        if (docs.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: () async => await userController.syncAllPendingOrders(uid),
+            color: Colors.black,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.7,
+                child: _EmptyState(hasSearch: searchQuery.isNotEmpty),
+              ),
+            ),
+          );
+        }
 
         List<OrderModel> allOrders = docs
             .map((doc) => OrderModel.fromMap(doc.data()))
@@ -215,24 +298,42 @@ class _OrderList extends StatelessWidget {
         }
 
         if (allOrders.isEmpty) {
-          return _EmptyState(hasSearch: searchQuery.isNotEmpty);
+          return RefreshIndicator(
+            onRefresh: () async => await userController.syncAllPendingOrders(uid),
+            color: Colors.black,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.7,
+                child: _EmptyState(hasSearch: searchQuery.isNotEmpty),
+              ),
+            ),
+          );
         }
 
-        // Urutkan dari yang terbaru
-        allOrders.sort((a, b) {
-          final aTs = a.createdAt;
-          final bTs = b.createdAt;
-          if (aTs == null && bTs == null) return 0;
-          if (aTs == null) return 1;
-          if (bTs == null) return -1;
-          return bTs.compareTo(aTs);
-        });
+        // Urutkan
+        if (selectedSort == 'Newest') {
+          allOrders.sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+        } else if (selectedSort == 'Oldest') {
+          allOrders.sort((a, b) => (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)));
+        } else if (selectedSort == 'Price (High-Low)') {
+          allOrders.sort((a, b) => b.total.compareTo(a.total));
+        } else if (selectedSort == 'Price (Low-High)') {
+          allOrders.sort((a, b) => a.total.compareTo(b.total));
+        }
 
-        return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-          itemCount: allOrders.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 16),
-          itemBuilder: (context, i) => _OrderCard(order: allOrders[i]),
+        return RefreshIndicator(
+          onRefresh: () async {
+            await userController.syncAllPendingOrders(uid);
+          },
+          color: Colors.black,
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: allOrders.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            itemBuilder: (context, i) => _OrderCard(order: allOrders[i]),
+          ),
         );
       },
     );
@@ -408,15 +509,11 @@ class _StatusBadge extends StatelessWidget {
     String label;
 
     if (status == 'Delivered') {
-      bg = const Color(0xFFE6F4EA);
-      fg = const Color(0xFF1E8E3E);
-      icon = Icons.check_circle_outline;
-      label = 'Delivered';
-    } else if (status == 'Expired' || status == 'Cancelled') {
-      bg = const Color(0xFFFCE8E6);
-      fg = const Color(0xFFD93025);
-      icon = Icons.cancel_outlined;
-      label = 'Cancelled';
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+    } else if (status == 'Cancelled') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+    } else if (status == 'Expired') {
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
     } else if (status == 'Ordered') {
       bg = const Color(0xFFFEF7E0);
       fg = const Color(0xFFF9AB00);

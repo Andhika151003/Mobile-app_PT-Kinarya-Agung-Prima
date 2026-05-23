@@ -5,20 +5,53 @@ import 'features/authentication/views/auth_gate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'features/notification/services/push_notification_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    debugPrint('--- Memulai Inisialisasi Aplikasi ---');
 
-  await dotenv.load(fileName: ".env");
+    debugPrint('Loading .env...');
+    await dotenv.load(fileName: ".env");
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    debugPrint('Inisialisasi Firebase...');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL']!,
-    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-  );
+    debugPrint('Inisialisasi Supabase...');
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL']!,
+      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    );
+    debugPrint('Supabase berhasil diinisialisasi.');
 
-  runApp(const MyApp());
+    debugPrint('Mengatur Background Message Handler...');
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    debugPrint('Inisialisasi Layanan Notifikasi...');
+    PushNotificationService().initialize().catchError((e) {
+      debugPrint('Gagal inisialisasi notifikasi: $e');
+    });
+
+    debugPrint('Menjalankan Aplikasi (runApp)...');
+    runApp(const MyApp());
+  } catch (e, stackTrace) {
+    debugPrint('Kritikal Error saat Startup: $e');
+    debugPrint('Stack Trace: $stackTrace');
+
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SelectableText('Error saat memuat aplikasi:\n$e'),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -34,10 +67,7 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('id', 'ID'),
-        Locale('en', 'US'),
-      ],
+      supportedLocales: const [Locale('id', 'ID'), Locale('en', 'US')],
       home: const AuthGate(),
     );
   }

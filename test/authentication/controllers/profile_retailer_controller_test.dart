@@ -51,7 +51,6 @@ void main() {
 
       await retailController.updateRetailProfile(
         storeName: 'New Store',
-        location: 'New Location',
         contact: '08123456789',
         businessType: 'Retail',
         profileImage: null, 

@@ -4,15 +4,18 @@ import 'package:mocktail/mocktail.dart';
 import 'package:http/http.dart' as http;
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
+import 'package:ecommerce/features/notification/services/push_notification_service.dart';
 import 'package:ecommerce/features/payment%20&%20checkout/controllers/checkout_controller.dart';
 
 class MockHttpClient extends Mock implements http.Client {}
+class MockPushNotificationService extends Mock implements PushNotificationService {}
 
 void main() {
   late CheckoutController checkoutController;
   late FakeFirebaseFirestore fakeFirestore;
   late MockFirebaseAuth mockAuth;
   late MockHttpClient mockHttpClient;
+  late MockPushNotificationService mockPushNotificationService;
   late MockUser mockUser;
 
   setUpAll(() async {
@@ -28,12 +31,22 @@ void main() {
     mockAuth = MockFirebaseAuth(mockUser: mockUser, signedIn: true);
     fakeFirestore = FakeFirebaseFirestore();
     mockHttpClient = MockHttpClient();
+    mockPushNotificationService = MockPushNotificationService();
+
+    // Mock notification service calls
+    when(() => mockPushNotificationService.sendNotificationToAdmin(
+          title: any(named: 'title'),
+          message: any(named: 'message'),
+          type: any(named: 'type'),
+          relatedId: any(named: 'relatedId'),
+        )).thenAnswer((_) async => true);
 
     checkoutController = CheckoutController(
       firestore: fakeFirestore,
       auth: mockAuth,
       client: mockHttpClient,
       backendUrl: 'https://test.url',
+      pushNotificationService: mockPushNotificationService,
     );
   });
 
@@ -64,6 +77,7 @@ void main() {
         fullName: 'Test User',
         shippingAddress: 'Alamat Test',
         paymentMethod: 'Duitku',
+        phoneNumber: '08123456789',
         paymentMethodCode: 'VC',
         promoCode: 'NONE',
         subtotal: 200.0,
@@ -82,7 +96,7 @@ void main() {
 
       // 5. Verifikasi pembaruan Firestore
       final productDoc = await fakeFirestore.collection('products').doc('p1').get();
-      expect(productDoc.data()!['stock'], equals(8)); // 10 - 2
+      expect(productDoc.data()!['stock'], equals(10));
 
       final orderDoc = await fakeFirestore.collection('orders').doc(result['orderId']!).get();
       expect(orderDoc.exists, isTrue);
@@ -102,6 +116,7 @@ void main() {
         fullName: 'Test User',
         shippingAddress: 'Alamat Test',
         paymentMethod: 'Duitku',
+        phoneNumber: '08123456789',
         paymentMethodCode: 'VC',
         promoCode: 'NONE',
         subtotal: 200.0,
@@ -147,6 +162,7 @@ void main() {
         fullName: 'Test User',
         shippingAddress: 'Alamat Test',
         paymentMethod: 'Duitku',
+        phoneNumber: '08123456789',
         paymentMethodCode: 'VC',
         promoCode: 'NONE',
         subtotal: 100.0,

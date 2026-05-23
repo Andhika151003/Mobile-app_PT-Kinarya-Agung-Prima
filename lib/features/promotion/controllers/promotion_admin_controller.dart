@@ -5,10 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/promotion.dart';
 import '../../../supabase_storage_service.dart';
+import '../../notification/services/push_notification_service.dart';
 
 class PromotionAdminController extends ChangeNotifier {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  final PushNotificationService _pushNotificationService = PushNotificationService();
 
   PromotionAdminController({FirebaseFirestore? firestore, FirebaseAuth? auth})
       : _firestore = firestore ?? FirebaseFirestore.instance,
@@ -31,6 +33,9 @@ class PromotionAdminController extends ChangeNotifier {
 
   String _selectedStatus = 'all';
   String get selectedStatus => _selectedStatus;
+
+  String _selectedType = 'all';
+  String get selectedType => _selectedType;
 
   Future<void> fetchAllPromotions() async {
     _setLoading(true);
@@ -65,6 +70,11 @@ class PromotionAdminController extends ChangeNotifier {
     _applyFilters();
   }
 
+  void filterByType(String type) {
+    _selectedType = type;
+    _applyFilters();
+  }
+
   void _applyFilters() {
     var filtered = List<PromotionModel>.from(_promotions);
 
@@ -80,9 +90,16 @@ class PromotionAdminController extends ChangeNotifier {
     if (_selectedStatus != 'all') {
       filtered = filtered.where((promo) {
         if (_selectedStatus == 'active') return promo.isActive;
-        if (_selectedStatus == 'expired') return promo.status == 'expired';
+        if (_selectedStatus == 'upcoming') return promo.isUpcoming;
+        if (_selectedStatus == 'expired') return promo.isExpired;
         if (_selectedStatus == 'ending_soon') return promo.isEndingSoon;
         return promo.status == _selectedStatus;
+      }).toList();
+    }
+
+    if (_selectedType != 'all') {
+      filtered = filtered.where((promo) {
+        return promo.discountType == _selectedType;
       }).toList();
     }
 
@@ -102,12 +119,26 @@ class PromotionAdminController extends ChangeNotifier {
     required String startTime,
     required String endTime,
     required String sku,
+    double? maxDiscount,
     File? imageFile,
   }) async {
     _setLoading(true);
     _clearError();
 
     try {
+      final conflicts = await _checkConflicts(
+        applicableTo: applicableTo,
+        productIds: productIds,
+        startDate: startDate,
+        endDate: endDate,
+      );
+
+      if (conflicts.isNotEmpty) {
+        _setError(conflicts.join('\n'));
+        _setLoading(false);
+        return false;
+      }
+
       final user = _auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
@@ -115,7 +146,7 @@ class PromotionAdminController extends ChangeNotifier {
       if (imageFile != null) {
         final storageService = SupabaseStorageService();
         final fileName = 'promo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        imageUrl = await storageService.uploadProductImage(imageFile, fileName);
+        imageUrl = await storageService.uploadPromotionImage(imageFile, fileName);
       }
 
       final newPromo = PromotionModel(
@@ -132,11 +163,19 @@ class PromotionAdminController extends ChangeNotifier {
         status: 'active',
         imageUrl: imageUrl,
         sku: sku,
+        maxDiscount: maxDiscount,
         createdAt: DateTime.now(),
         createdBy: user.uid,
       );
 
-      await _firestore.collection('promotions').add(newPromo.toMap());
+      final docRef = await _firestore.collection('promotions').add(newPromo.toMap());
+
+      await _pushNotificationService.broadcastNotification(
+        title: 'Promo Spesial Hari Ini!',
+        message: 'Jangan lewatkan: $title. Cek sekarang sebelum kehabisan!',
+        type: 'promo',
+        relatedId: docRef.id,
+      );
 
       await fetchAllPromotions();
       _setLoading(false);
@@ -163,6 +202,7 @@ class PromotionAdminController extends ChangeNotifier {
     required String endTime,
     required String status,
     required String sku,
+    double? maxDiscount,
     File? imageFile,
     String? currentImageUrl,
   }) async {
@@ -170,13 +210,29 @@ class PromotionAdminController extends ChangeNotifier {
     _clearError();
 
     try {
+      if (status == 'active') {
+        final conflicts = await _checkConflicts(
+          applicableTo: applicableTo,
+          productIds: productIds,
+          startDate: startDate,
+          endDate: endDate,
+          excludePromotionId: promotionId,
+        );
+
+        if (conflicts.isNotEmpty) {
+          _setError(conflicts.join('\n'));
+          _setLoading(false);
+          return false;
+        }
+      }
+
       final promotionRef = _firestore.collection('promotions').doc(promotionId);
       
       String? imageUrl = currentImageUrl;
       if (imageFile != null) {
         final storageService = SupabaseStorageService();
         final fileName = 'promo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        imageUrl = await storageService.uploadProductImage(imageFile, fileName);
+        imageUrl = await storageService.uploadPromotionImage(imageFile, fileName);
       }
 
       await promotionRef.update({
@@ -193,6 +249,7 @@ class PromotionAdminController extends ChangeNotifier {
         'status': status,
         'imageUrl': imageUrl,
         'sku': sku,
+        'maxDiscount': maxDiscount,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
@@ -262,5 +319,59 @@ class PromotionAdminController extends ChangeNotifier {
   void _clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  Future<List<String>> _checkConflicts({
+    required String applicableTo,
+    required List<String> productIds,
+    required DateTime startDate,
+    required DateTime endDate,
+    String? excludePromotionId,
+  }) async {
+    final List<String> conflicts = [];
+    
+    final start = DateTime(startDate.year, startDate.month, startDate.day);
+    final end = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+
+    if (_promotions.isEmpty) {
+      await fetchAllPromotions();
+    }
+
+    for (var promo in _promotions) {
+      if (promo.id == excludePromotionId) continue;
+      
+      if (promo.status != 'active') continue;
+
+      final pStart = DateTime(promo.startDate.year, promo.startDate.month, promo.startDate.day);
+      final pEnd = DateTime(promo.endDate.year, promo.endDate.month, promo.endDate.day, 23, 59, 59);
+
+      bool overlaps = start.isBefore(pEnd) && end.isAfter(pStart);
+      if (!overlaps) continue;
+
+      if (applicableTo == 'all' || promo.applicableTo == 'all') {
+        conflicts.add('Bentrokan promo global: "${promo.title}" (${promo.formattedDateRange})');
+      } else {
+        final intersectingProducts = productIds.where((id) => promo.productIds.contains(id)).toList();
+        if (intersectingProducts.isNotEmpty) {
+          conflicts.add('Produk sudah terdaftar di promo: "${promo.title}"');
+          break;
+        }
+      }
+    }
+
+    return conflicts;
+  }
+
+  Future<List<Map<String, dynamic>>> getAllProducts() async {
+    try {
+      final snapshot = await _firestore.collection('products').get();
+      return snapshot.docs.map((doc) => {
+        'id': doc.id,
+        ...doc.data(),
+      }).toList();
+    } catch (e) {
+      debugPrint('Error getting products: $e');
+      return [];
+    }
   }
 }

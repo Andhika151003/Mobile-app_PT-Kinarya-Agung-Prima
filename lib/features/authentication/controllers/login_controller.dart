@@ -15,9 +15,11 @@ class LoginController extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  bool _isDisposed = false;
+  String? _deactivatedAdminPhone;
+  String? get deactivatedAdminPhone => _deactivatedAdminPhone;
 
-  // Validasi untuk field "Username" (diisi email)
+  bool _isDisposed = false;
+  
   String? validateEmailInput(String? value) {
     if (value == null || value.isEmpty) {
       return 'Email is required';
@@ -44,6 +46,7 @@ class LoginController extends ChangeNotifier {
   }) async {
     _setLoading(true);
     _clearError();
+    _deactivatedAdminPhone = null;
 
     try {
       // 1. Login ke Firebase Authentication
@@ -52,19 +55,41 @@ class LoginController extends ChangeNotifier {
         password: password,
       );
 
-      // 2. Ambil data user dari Firestore
       final docSnapshot = await _firestore
           .collection('users')
           .doc(userCredential.user!.uid)
-          .get();
+          .get(const GetOptions(source: Source.server));
 
       if (!docSnapshot.exists) {
         throw Exception('User data not found');
       }
 
       final data = docSnapshot.data()!;
+      final bool isActive = data['isActive'] ?? true;
+      final String role = (data['role']?.toString().trim().toLowerCase()) ?? 'retailer';
+
+      // 3. Cek status aktif (khusus untuk retailer atau semua role jika diperlukan)
+      if (!isActive) {
+        await _auth.signOut(); // Pastikan logout dari Firebase
+        
+        // Ambil nomor admin dari Firestore
+        try {
+          final adminSnapshot = await _firestore
+              .collection('users')
+              .where('role', isEqualTo: 'admin')
+              .limit(1)
+              .get();
+          
+          if (adminSnapshot.docs.isNotEmpty) {
+            _deactivatedAdminPhone = adminSnapshot.docs.first.data()['phoneNumber'];
+          }
+        } catch (e) {
+          debugPrint('Error fetching admin phone: $e');
+        }
+
+        throw Exception('Account Deactivated. Please contact admin.');
+      }
       
-      final String role = data['role']?.toString().toLowerCase() ?? 'retailer';
       dynamic user;
 
       if (role == 'admin') {

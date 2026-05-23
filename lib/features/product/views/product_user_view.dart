@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/product.dart';
 import '../controllers/product_admin_controller.dart';
 import '../controllers/product_user_controller.dart';
 import 'product_detail_user_view.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../../cart/views/cart_view.dart';
+import '../../shared/widgets/shimmer_loading.dart';
+import '../../promotion/models/promotion.dart';
 
 class ProductUserView extends StatefulWidget {
   const ProductUserView({super.key});
@@ -14,13 +17,21 @@ class ProductUserView extends StatefulWidget {
 }
 
 class _ProductUserViewState extends State<ProductUserView> {
-  final AdminProductController _productController = AdminProductController();
+  final AdminProductController _adminProductController = AdminProductController();
+  final ProductUserController _productUserController = ProductUserController();
   final CartController _cartController = CartController();
 
+  final NumberFormat currencyFormatter = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
+  
   final Color primaryGreen = const Color(0xFF00903D);
   String _selectedCategory = 'All Products';
   String _sortBy = 'Name A-Z';
   final TextEditingController _searchController = TextEditingController();
+  int _refreshKey = 0;
 
   final List<String> _categories = [
     'All Products',
@@ -36,49 +47,55 @@ class _ProductUserViewState extends State<ProductUserView> {
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    setState(() {
+      _refreshKey++; 
+    });
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 20),
-
-              const Text(
-                'Product Catalog',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+        child: RefreshIndicator(
+          color: primaryGreen,
+          onRefresh: _onRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: 20),
+                
+                const Text(
+                  'Product Catalog',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+                
+                _buildSearchBar(),
+                const SizedBox(height: 16),
+                
+                _buildCategoryTabs(),
+                const SizedBox(height: 20),
+                
+                _buildSortDropdown(),
+                const SizedBox(height: 8),
 
-              _buildSearchBar(),
-              const SizedBox(height: 16),
-
-              _buildCategoryTabs(),
-              const SizedBox(height: 20),
-
-              _buildSortDropdown(),
-              const SizedBox(height: 8),
-
-              _buildProductGridStream(),
-
-              const SizedBox(height: 80),
-            ],
+                _buildProductGridStream(),
+                
+                const SizedBox(height: 80),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
-  // --- WIDGET BUILDERS ---
 
   Widget _buildHeader(BuildContext context) {
     return Row(
@@ -90,19 +107,49 @@ class _ProductUserViewState extends State<ProductUserView> {
           errorBuilder: (context, error, stackTrace) =>
               const Icon(Icons.eco, color: Colors.green, size: 35),
         ),
-        IconButton(
-          icon: Semantics(
-            label: 'btn_product_cart_header',
-            child: const Icon(
-              Icons.shopping_cart_outlined,
-              color: Colors.black87,
-              size: 26,
-            ),
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CartView()),
+        ListenableBuilder(
+          listenable: _cartController,
+          builder: (context, child) {
+            int cartItemCount = _cartController.items.length;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black87, size: 26),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CartView()),
+                    );
+                  },
+                ),
+                
+                if (cartItemCount > 0)
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        '$cartItemCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),
@@ -201,67 +248,92 @@ class _ProductUserViewState extends State<ProductUserView> {
   }
 
   Widget _buildProductGridStream() {
-    return StreamBuilder<List<ProductModel>>(
-      stream: _productController.getSupplyProducts(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: primaryGreen));
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(40.0),
-              child: Text(
-                'Catalog is currently empty.',
-                style: TextStyle(color: Colors.grey.shade500),
+    return StreamBuilder<List<PromotionModel>>(
+      stream: _productUserController.getActivePromotionsStream(),
+      builder: (context, promoSnapshot) {
+        final activePromotions = promoSnapshot.data ?? [];
+
+        return StreamBuilder<List<ProductModel>>(
+          key: ValueKey(_refreshKey),
+          stream: _adminProductController.getSupplyProducts(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.65,
+                ),
+                itemCount: 6,
+                itemBuilder: (context, index) => const ProductCardShimmer(),
+              );
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40.0),
+                  child: Text(
+                    'Catalog is currently empty.',
+                    style: TextStyle(color: Colors.grey.shade500),
+                  ),
+                ),
+              );
+            }
+
+            final allProducts = snapshot.data!;
+            final displayProducts =
+                _productUserController.filterAndSortProducts(
+                    allProducts,
+                    _selectedCategory,
+                    _searchController.text,
+                    _sortBy);
+
+            if (displayProducts.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40.0),
+                  child: Text('No products match your search/filter.',
+                      style: TextStyle(color: Colors.grey.shade500)),
+                ),
+              );
+            }
+
+            // --- GRID VIEW ---
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.65,
               ),
-            ),
-          );
-        }
+              itemCount: displayProducts.length,
+              itemBuilder: (context, index) {
+                final product = displayProducts[index];
+                final bestPromo = _productUserController
+                    .getBestPromotionForProduct(product, activePromotions);
 
-        final allProducts = snapshot.data!;
-        final displayProducts = ProductUserController().filterAndSortProducts(
-          allProducts,
-          _selectedCategory,
-          _searchController.text,
-          _sortBy,
-        );
-
-        if (displayProducts.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(40.0),
-              child: Text(
-                'No products match your search/filter.',
-                style: TextStyle(color: Colors.grey.shade500),
-              ),
-            ),
-          );
-        }
-
-        // --- GRID VIEW ---
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 0.65,
-          ),
-          itemCount: displayProducts.length,
-          itemBuilder: (context, index) {
-            return _buildProductCard(context, displayProducts[index]);
+                return _buildProductCard(
+                    context, product, currencyFormatter, bestPromo);
+              },
+            );
           },
         );
       },
     );
   }
 
-  Widget _buildProductCard(BuildContext context, ProductModel product) {
+  Widget _buildProductCard(BuildContext context, ProductModel product,
+      NumberFormat currencyFormatter, PromotionModel? activePromo) {
+    bool hasPromo = activePromo != null;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -289,22 +361,45 @@ class _ProductUserViewState extends State<ProductUserView> {
             // 1. Gambar Produk
             Expanded(
               flex: 5,
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                  color: Colors.white,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: product.imageUrl.isNotEmpty
-                      ? Image.network(product.imageUrl, fit: BoxFit.contain)
-                      : Icon(
-                          Icons.image_outlined,
-                          size: 50,
-                          color: Colors.grey.shade300,
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(16)),
+                      color: Colors.white,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: product.imageUrl.isNotEmpty
+                          ? Image.network(product.imageUrl, fit: BoxFit.contain)
+                          : Icon(Icons.image_outlined,
+                              size: 50, color: Colors.grey.shade300),
+                    ),
+                  ),
+                  if (hasPromo)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(4),
                         ),
-                ),
+                        child: Text(
+                          activePromo.discountText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
 
@@ -340,12 +435,15 @@ class _ProductUserViewState extends State<ProductUserView> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Sisa stok: ${product.stock}',
+                          product.stock <= 0
+                              ? 'Stok Habis'
+                              : (product.isLowStock ? 'Stok Menipis (Sisa: ${product.stock})' : 'Sisa stok: ${product.stock}'),
                           style: TextStyle(
-                            color: product.stock < 10
+                            color: product.stock <= 0
                                 ? Colors.red
-                                : Colors.grey.shade600,
+                                : (product.isLowStock ? Colors.orange.shade800 : Colors.grey.shade600),
                             fontSize: 11,
+                            fontWeight: product.isLowStock ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -360,16 +458,16 @@ class _ProductUserViewState extends State<ProductUserView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Rp ${product.price}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  color: Colors.black,
+                                Text(
+                                  currencyFormatter.format(product.price),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: Colors.black,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
                             ],
                           ),
                         ),
@@ -407,9 +505,7 @@ class _ProductUserViewState extends State<ProductUserView> {
                               if ((qtyInCart + moq) > currentStock) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(
-                                      'Stok terbatas! Anda sudah memiliki $qtyInCart di keranjang (Sisa stok di gudang: $currentStock)',
-                                    ),
+                                    content: Text('Stok terbatas! Anda sudah memiliki $qtyInCart di keranjang (Sisa stok di gudang: $currentStock)'),
                                     backgroundColor: Colors.orange.shade700,
                                   ),
                                 );
@@ -421,9 +517,10 @@ class _ProductUserViewState extends State<ProductUserView> {
                               _cartController.addToCart(
                                 id: product.id!,
                                 title: product.name,
-                                variant: product.category,
+                                variant: 'Default',
                                 price: finalPrice,
                                 imageUrl: product.imageUrl,
+                                category: product.category,
                                 quantity: moq,
                                 minOrder: moq,
                                 stockLimit: currentStock,
@@ -431,20 +528,14 @@ class _ProductUserViewState extends State<ProductUserView> {
 
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(
-                                    '${product.name} dimasukkan ke keranjang!',
-                                  ),
-                                  backgroundColor: primaryGreen,
+                                  content: Text('${product.name} ditambahkan ke keranjang!'),
+                                  backgroundColor: primaryGreen, 
                                   duration: const Duration(seconds: 2),
                                 ),
                               );
-                            },
-                            child: const Icon(
-                              Icons.add_shopping_cart,
-                              size: 20,
-                              color: Colors.black54,
-                            ),
-                          ),
+                          },
+                          child: const Icon(Icons.add_shopping_cart, size: 20, color: Colors.black54),
+                        ),
                         ),
                       ],
                     ),

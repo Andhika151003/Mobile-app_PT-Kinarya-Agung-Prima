@@ -1,7 +1,10 @@
+import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../controllers/register_controller.dart';
 import 'login_view.dart';
+import 'verify_email_view.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -16,92 +19,22 @@ class _RegisterViewState extends State<RegisterView> {
   final _emailController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  String? _selectedBusinessType;
+  final List<String> _businessTypes = [
+    'Pet Shop',
+    'Skincare',
+    'UD (Usaha Dagang)',
+    'Toko Kelontong / Perseorangan',
+    'Lainnya'
+  ];
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  void _showSuccessDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2E7D32),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 48,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Akun Anda Berhasil Dibuat',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Inter',
-                  color: Color(0xFF1F2937),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context); // tutup dialog
-                    // Navigasi ke halaman Login
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginView(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Semantics(
-                    label: 'btn_register_success_login',
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
 
   Future<void> _handleRegister(RegisterController controller) async {
     if (_formKey.currentState!.validate()) {
@@ -109,12 +42,17 @@ class _RegisterViewState extends State<RegisterView> {
         fullName: _fullNameController.text,
         email: _emailController.text,
         phoneNumber: _phoneController.text,
-        address: _addressController.text,
+        businessType: _selectedBusinessType ?? 'Lainnya',
         password: _passwordController.text,
       );
 
       if (success && mounted) {
-        _showSuccessDialog(context);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const VerifyEmailView(),
+          ),
+        );
       } else if (mounted && controller.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -203,6 +141,7 @@ class _RegisterViewState extends State<RegisterView> {
                       child: TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        maxLength: 255,
                         decoration: _inputDecoration('Enter your email'),
                         validator: controller.validateEmail,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -225,9 +164,49 @@ class _RegisterViewState extends State<RegisterView> {
                       label: 'input_register_fullname',
                       child: TextFormField(
                         controller: _fullNameController,
+                        maxLength: 100,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+                        ],
                         decoration: _inputDecoration('Enter your full name'),
                         validator: controller.validateFullName,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Business Type Field (Dropdown)
+                    const Text(
+                      'Business Type',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Inter',
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Semantics(
+                      label: 'input_register_business_type',
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _selectedBusinessType,
+                        items: _businessTypes.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(type, style: const TextStyle(fontSize: 14, fontFamily: 'Inter')),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedBusinessType = value;
+                          });
+                        },
+                        decoration: _inputDecoration('Select business type'),
+                        validator: (value) => value == null ? 'Please select your business type' : null,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        icon: const Icon(Icons.keyboard_arrow_down),
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -248,35 +227,31 @@ class _RegisterViewState extends State<RegisterView> {
                       child: TextFormField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
-                        decoration: _inputDecoration('Enter your phone number'),
+                        maxLength: 15,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        decoration: _inputDecoration('Contoh: 8123456789')
+                            .copyWith(
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            child: Text(
+                              '+62',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                        ),
                         validator: controller.validatePhoneNumber,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
                     ),
                     const SizedBox(height: 20),
 
-                    // Address Field
-                    const Text(
-                      'Address',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Inter',
-                        color: Color(0xFF374151),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Semantics(
-                      label: 'input_register_address',
-                      child: TextFormField(
-                        controller: _addressController,
-                        maxLines: 3,
-                        decoration: _inputDecoration('Enter your address'),
-                        validator: controller.validateAddress,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
 
                     // Password Field
                     const Text(
@@ -294,6 +269,7 @@ class _RegisterViewState extends State<RegisterView> {
                       child: TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
+                        maxLength: 64,
                         decoration: _inputDecoration('Create a password').copyWith(
                           suffixIcon: IconButton(
                           icon: Semantics(
@@ -332,6 +308,7 @@ class _RegisterViewState extends State<RegisterView> {
                       child: TextFormField(
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirmPassword,
+                        maxLength: 64,
                         decoration: _inputDecoration('Confirm your password').copyWith(
                           suffixIcon: IconButton(
                           icon: Semantics(
@@ -368,7 +345,7 @@ class _RegisterViewState extends State<RegisterView> {
                               ? null
                               : () => _handleRegister(controller),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E7D32),
+                            backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -473,7 +450,7 @@ class _RegisterViewState extends State<RegisterView> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -492,7 +469,6 @@ class _RegisterViewState extends State<RegisterView> {
     _emailController.dispose();
     _fullNameController.dispose();
     _phoneController.dispose();
-    _addressController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();

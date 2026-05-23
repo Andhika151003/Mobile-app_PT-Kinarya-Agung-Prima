@@ -17,6 +17,7 @@ dependencies:
   firebase_auth: ^6.3.0
   cloud_firestore: ^6.2.0
   intl: ^0.20.2
+  fl_chart: ^0.70.2
   supabase_flutter: ^2.12.2
   image_picker: ^1.2.1
   flutter_dotenv: ^6.0.0
@@ -30,6 +31,9 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   url_launcher: ^6.3.2
+  shimmer: ^3.0.0
+  firebase_messaging: ^16.2.0
+  flutter_local_notifications: ^21.0.0
 
 dev_dependencies:
   flutter_test:
@@ -42,6 +46,7 @@ dev_dependencies:
   mocktail: ^1.0.5
   patrol: ^4.5.0
  
+  test_api: any
 flutter:
   uses-material-design: true
 
