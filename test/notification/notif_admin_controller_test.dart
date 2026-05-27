@@ -25,19 +25,16 @@ void main() {
   });
 
   group('Notifikasi Admin - Permintaan Pembatalan', () {
-    test(
-      'Harus menghasilkan notifikasi yang benar untuk cancellation_requested',
-      () {
-        final data = {'retailerName': 'Body Shop Store', 'orderId': 'ORD-5787'};
-        final result = controller.buildAdminNotification(
-          'cancellation_requested',
-          data,
-        );
+    test('menghasilkan notifikasi yang benar untuk cancellation_requested', () {
+      final data = {'retailerName': 'Body Shop Store', 'orderId': 'ORD-5787'};
+      final result = controller.buildAdminNotification(
+        'cancellation_requested',
+        data,
+      );
 
-        expect(result['title'], 'Permintaan Pembatalan Pesanan');
-        expect(result['body'], contains('Body Shop Store'));
-        expect(result['body'], contains('ORD-5787'));
-      },
-    );
+      expect(result['title'], 'Permintaan Pembatalan Pesanan');
+      expect(result['body'], contains('Body Shop Store'));
+      expect(result['body'], contains('ORD-5787'));
+    });
   });
 }

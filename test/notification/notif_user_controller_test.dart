@@ -72,7 +72,10 @@ void main() {
 
       expect(result['title'], 'Pengiriman Disetujui');
       expect(result['body'], contains('ORD-5785'));
-      expect(result['body'], contains('sedang dalam proses pengiriman'));
+      expect(
+        result['body'],
+        contains('pesanan sedang dalam proses pengiriman'),
+      );
     });
   });
 
