@@ -39,14 +39,14 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-  build_runner: ^2.13.1
+  build_runner: ^2.15.0
   fake_cloud_firestore: ^4.1.0+1
   firebase_auth_mocks: ^0.15.1
   flutter_launcher_icons: ^0.13.1
   mocktail: ^1.0.5
   patrol: ^4.5.0
- 
   test_api: any
+
 flutter:
   uses-material-design: true
 

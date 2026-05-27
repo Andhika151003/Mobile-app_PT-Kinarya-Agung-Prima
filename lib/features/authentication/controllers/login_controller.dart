@@ -6,8 +6,12 @@ import '../models/cs.dart';
 import '../models/retailer.dart';
 
 class LoginController extends ChangeNotifier {
-  FirebaseAuth get _auth => FirebaseAuth.instance;
-  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
+  LoginController({FirebaseAuth? auth, FirebaseFirestore? firestore})
+      : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

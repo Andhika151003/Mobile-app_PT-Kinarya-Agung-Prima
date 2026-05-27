@@ -23,6 +23,9 @@ class AdminCsController extends ChangeNotifier {
   Future<void> fetchAllCS() async {
     _setLoading(true);
     try {
+      if (!await _isAdmin()) {
+        throw Exception("Unauthorized: Only Admin can access Customer Support management");
+      }
       final snapshot = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'cs')
