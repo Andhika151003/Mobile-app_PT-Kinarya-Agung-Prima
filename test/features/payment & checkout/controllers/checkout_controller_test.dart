@@ -64,7 +64,7 @@ void main() {
     when(mockProductsCollection.doc(any)).thenReturn(mockProductDoc);
     when(mockProductDoc.get()).thenAnswer((_) async => mockProductSnapshot);
     when(mockProductSnapshot.exists).thenReturn(true);
-    when(mockProductSnapshot.data()).thenReturn({'stock': 100}); // Stok aman
+    when(mockProductSnapshot.data()).thenReturn({'stock': 100});
 
     // Mock Order Document (Menyimpan dan Update Order)
     when(mockOrdersCollection.doc(any)).thenReturn(mockOrderDoc);
@@ -91,6 +91,41 @@ void main() {
   });
 
   group('Sprint 4: Payment & Checkout Test Suite', () {
+    // =========================================================================
+    // TEST DATA BUILDER (Helper Method)
+    // =========================================================================
+    Future<Map<String, dynamic>> executeCheckoutWithDefaults({
+      String fullName = 'Retailer Test',
+      String shippingAddress = 'Jl. Rungkut Surabaya',
+      String phoneNumber = '08123456789',
+      String paymentMethod = 'Bank Transfer',
+      String paymentMethodCode = 'BT',
+      String promoCode = '',
+      double subtotal = 250000.0,
+      double shippingCost = 20000.0,
+      double tax = 0.0,
+      double total = 270000.0,
+      List<Map<String, dynamic>>? items,
+    }) async {
+      return await checkoutController.processCheckout(
+        fullName: fullName,
+        shippingAddress: shippingAddress,
+        phoneNumber: phoneNumber,
+        paymentMethod: paymentMethod,
+        paymentMethodCode: paymentMethodCode,
+        promoCode: promoCode,
+        subtotal: subtotal,
+        shippingCost: shippingCost,
+        tax: tax,
+        total: total,
+        items:
+            items ??
+            [
+              {'productId': 'prod1', 'quantity': 1, 'title': 'Produk A'},
+            ],
+      );
+    }
+
     // 1. REQ-24 | TC-104
     test(
       '[TC-104] Retailer melakukan pembayaran sesuai nominal tagihan -> Sistem menampilkan halaman Transaction Verification dengan status "Payment Processing"',
@@ -112,27 +147,13 @@ void main() {
           ),
         );
 
-        // Act - Parameter disesuaikan tipe datanya dengan method processCheckout()
-        final result = await checkoutController.processCheckout(
-          fullName: 'Retailer Test',
-          shippingAddress: 'Jl. Rungkut Surabaya',
-          phoneNumber: '08123456789',
-          paymentMethod: 'Bank Transfer',
-          paymentMethodCode: 'BT',
-          promoCode: '',
-          subtotal: 250000.0,
-          shippingCost: 20000.0,
-          tax: 0.0,
-          total: 270000.0,
-          items: [
-            {'productId': 'prod1', 'quantity': 1, 'title': 'Produk A'},
-          ],
-        );
+        // Act - Super bersih, menggunakan data default
+        final result = await executeCheckoutWithDefaults();
 
         // Assert
         expect(result.containsKey('paymentUrl'), true);
         expect(result['paymentUrl'], 'https://duitku.com/pay/123');
-        verify(mockOrderDoc.set(any)).called(1); // Verifikasi data tersimpan
+        verify(mockOrderDoc.set(any)).called(1);
       },
     );
 
@@ -154,21 +175,12 @@ void main() {
           ),
         );
 
-        // Act
-        final result = await checkoutController.processCheckout(
-          fullName: 'Retailer Test',
+        // Act - Hanya menimpa (override) nilai yang perlu disalahkan untuk test ini
+        final result = await executeCheckoutWithDefaults(
           shippingAddress: 'Surabaya',
-          phoneNumber: '08123456789',
-          paymentMethod: 'Bank Transfer',
-          paymentMethodCode: 'BT',
-          promoCode: '',
           subtotal: 200000.0,
           shippingCost: 0.0,
-          tax: 0.0,
-          total: 200000.0, // Misal Backend tahu nominal asli harusnya 270k
-          items: [
-            {'productId': 'prod1', 'quantity': 1, 'title': 'Produk A'},
-          ],
+          total: 200000.0,
         );
 
         // Assert
@@ -204,18 +216,19 @@ void main() {
       },
     );
 
-    // 4. REQ-25 | TC-107 (Mock Webhook update expired)
+    // 4. REQ-25 | TC-107
     test(
       '[TC-107] Retailer tidak menyelesaikan pembayaran hingga waktu jatuh tempo habis -> Menampilkan pesan pembayaran cancel',
       () async {
-        // Logika aslinya order di set expired 24 jam ke depan di controller ini
-        // Kita mensimulasikan update yang biasanya dilakukan backend Duitku
+        // Arrange & Act
         final docData = {
           'status': 'Cancelled',
           'paymentExpiredAt': Timestamp.fromDate(
             DateTime.now().subtract(const Duration(hours: 1)),
           ),
         };
+
+        // Assert
         expect(docData['status'], 'Cancelled');
       },
     );
@@ -224,7 +237,7 @@ void main() {
     test(
       '[TC-108] Retailer memeriksa status pembayaran pada halaman Transaction Verification -> Jika belum diverifikasi, status tetap "Payment Processing"',
       () async {
-        // Arrange simulasi get document order
+        // Arrange
         when(mockOrderDoc.get()).thenAnswer((_) async => mockProductSnapshot);
         when(
           mockProductSnapshot.data(),
@@ -244,6 +257,7 @@ void main() {
       () async {
         // Act
         await mockOrderDoc.update({'status': 'Verified'});
+
         // Assert
         verify(mockOrderDoc.update({'status': 'Verified'})).called(1);
       },
@@ -255,6 +269,7 @@ void main() {
       () async {
         // Act
         await mockOrderDoc.update({'status': 'Rejected'});
+
         // Assert
         verify(mockOrderDoc.update({'status': 'Rejected'})).called(1);
       },
@@ -266,8 +281,10 @@ void main() {
       () async {
         // Arrange
         final orderStatus = 'Completed';
+
         // Act
         final canDownload = orderStatus == 'Completed';
+
         // Assert
         expect(canDownload, true);
       },
@@ -279,8 +296,10 @@ void main() {
       () async {
         // Arrange
         final orderStatus = 'Pending';
+
         // Act
         final canDownload = orderStatus == 'Completed';
+
         // Assert
         expect(canDownload, false);
       },
@@ -292,6 +311,7 @@ void main() {
       () async {
         // Act
         await mockOrderDoc.update({'status': 'Delivery Approved'});
+
         // Assert
         verify(mockOrderDoc.update({'status': 'Delivery Approved'})).called(1);
       },
@@ -303,6 +323,7 @@ void main() {
       () async {
         // Act
         await mockOrderDoc.update({'status': 'Cancellation Requested'});
+
         // Assert
         verify(
           mockOrderDoc.update({'status': 'Cancellation Requested'}),
@@ -316,8 +337,10 @@ void main() {
       () async {
         // Arrange
         final status = 'Delivery Approved';
+
         // Act
         final canCancel = status != 'Delivery Approved';
+
         // Assert
         expect(canCancel, false);
       },
@@ -329,6 +352,7 @@ void main() {
       () async {
         // Act
         await mockOrderDoc.update({'status': 'Cancelled'});
+
         // Assert
         verify(mockOrderDoc.update({'status': 'Cancelled'})).called(1);
       },
@@ -340,6 +364,7 @@ void main() {
       () async {
         // Act
         await mockOrderDoc.update({'status': 'Payment Verified'});
+
         // Assert
         verify(mockOrderDoc.update({'status': 'Payment Verified'})).called(1);
       },
