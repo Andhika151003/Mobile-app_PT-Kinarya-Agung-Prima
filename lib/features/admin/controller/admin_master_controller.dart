@@ -32,6 +32,9 @@ class AdminMasterController extends ChangeNotifier {
     _clearError();
 
     try {
+      if (!await _isAdmin()) {
+        throw Exception("Unauthorized: Only Admin can access retailer management");
+      }
       final snapshot = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'retailer')
@@ -97,6 +100,9 @@ class AdminMasterController extends ChangeNotifier {
   Future<bool> disableRetailer(String retailerId) async {
     _setLoading(true);
     try {
+      if (!await _isAdmin()) {
+        throw Exception("Unauthorized: Only Admin can disable retailers");
+      }
       await _firestore.collection('users').doc(retailerId).update({
         'isActive': false,
         'disabledAt': FieldValue.serverTimestamp(),
@@ -124,6 +130,9 @@ class AdminMasterController extends ChangeNotifier {
   Future<bool> enableRetailer(String retailerId) async {
     _setLoading(true);
     try {
+      if (!await _isAdmin()) {
+        throw Exception("Unauthorized: Only Admin can enable retailers");
+      }
       await _firestore.collection('users').doc(retailerId).update({
         'isActive': true,
         'activatedAt': FieldValue.serverTimestamp(),
@@ -151,6 +160,9 @@ class AdminMasterController extends ChangeNotifier {
   Future<bool> deleteRetailer(String retailerId) async {
     _setLoading(true);
     try {
+      if (!await _isAdmin()) {
+        throw Exception("Unauthorized: Only Admin can delete retailers");
+      }
       await _firestore.collection('users').doc(retailerId).delete();
 
       _retailers.removeWhere((r) => r['id'] == retailerId);
@@ -181,6 +193,14 @@ class AdminMasterController extends ChangeNotifier {
   }
 
   // ==================== PRIVATE HELPERS ====================
+
+  Future<bool> _isAdmin() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    final doc = await _firestore.collection('users').doc(user.uid).get();
+    if (!doc.exists) return false;
+    return doc.data()?['role'] == 'admin';
+  }
 
   void _setLoading(bool value) {
     _isLoading = value;
