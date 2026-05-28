@@ -124,6 +124,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
               _order.status == 'Cancelled' ||
               _order.status == 'Paid')
             IconButton(
+              key: const Key('btn_print_invoice_header_cs'),
               icon: const Icon(Icons.print_outlined, color: Colors.black),
               onPressed: () {
                 PdfService.generateAndOpenInvoice(_order);
@@ -730,6 +731,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
+        key: const Key('btn_download_invoice_cs'),
         onPressed: () {
           PdfService.generateAndOpenInvoice(_order);
         },

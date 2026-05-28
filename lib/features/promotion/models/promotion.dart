@@ -95,25 +95,19 @@ class PromotionModel {
   bool get isActive {
     if (status != 'active') return false;
     final now = DateTime.now();
-    
-    final inclusiveEndDate = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
-    final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
-
-    return !now.isBefore(inclusiveStartDate) && !now.isAfter(inclusiveEndDate);
+    return !now.isBefore(startDate) && !now.isAfter(endDate);
   }
 
   bool get isUpcoming {
     if (status != 'active' && status != 'upcoming') return false;
     final now = DateTime.now();
-    final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
-    return now.isBefore(inclusiveStartDate);
+    return now.isBefore(startDate);
   }
 
   bool get isStartingSoon {
     final now = DateTime.now();
     final fiveDaysFromNow = now.add(const Duration(days: 5));
-    final inclusiveStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
-    return isUpcoming && inclusiveStartDate.isBefore(fiveDaysFromNow);
+    return isUpcoming && startDate.isBefore(fiveDaysFromNow);
   }
 
   bool get isEndingSoon {
@@ -125,9 +119,7 @@ class PromotionModel {
   bool get isExpired {
     if (status == 'expired') return true;
     final now = DateTime.now();
-    final inclusiveEndDate =
-        DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
-    return now.isAfter(inclusiveEndDate);
+    return now.isAfter(endDate);
   }
 
   String get discountText {

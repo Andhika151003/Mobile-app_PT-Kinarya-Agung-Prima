@@ -65,6 +65,7 @@ class _OrderCsViewState extends State<OrderCsView> {
           automaticallyImplyLeading: false,
           actions: [
             IconButton(
+              key: const Key('btn_search_cs'),
               icon: const Icon(Icons.search, color: Colors.black),
               onPressed: () {
                 showSearch(
@@ -104,6 +105,7 @@ class _OrderCsViewState extends State<OrderCsView> {
                       children: _tabs.map((tab) {
                         final isSelected = _selectedStatus == tab['value'];
                         return GestureDetector(
+                          key: Key('tab_cs_${tab['value']}'),
                           onTap: () {
                             setState(() => _selectedStatus = tab['value']!);
                             controller.filterByStatus(tab['value']!);
@@ -211,6 +213,7 @@ class _OrderCsViewState extends State<OrderCsView> {
         : (order.status == 'Cancelled' ? 'Dibatalkan' : 'Belum bayar');
 
     return GestureDetector(
+      key: Key('card_cs_order_${order.orderId}'),
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(

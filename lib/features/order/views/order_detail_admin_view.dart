@@ -473,6 +473,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
+                        key: const Key('btn_reject_cancellation'),
                         onPressed: _rejectCancellation,
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Colors.red),
@@ -484,6 +485,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton(
+                        key: const Key('btn_accept_cancellation'),
                         onPressed: _acceptCancellation,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,

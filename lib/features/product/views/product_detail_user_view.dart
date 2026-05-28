@@ -105,6 +105,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: ElevatedButton(
+            key: const Key('btn_add_to_cart_detail'),
             onPressed: isOutOfStock
                 ? null
                 : () {
@@ -375,6 +376,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
               alignment: Alignment.center,
               children: [
                 IconButton(
+                  key: const Key('btn_cart_appbar'),
                   icon: const Icon(
                     Icons.shopping_cart_outlined,
                     color: Colors.black87,
@@ -425,6 +427,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                 shape: BoxShape.circle,
               ),
               child: IconButton(
+                key: const Key('btn_close_detail'),
                 icon: const Icon(Icons.close, size: 20, color: Colors.black54),
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 padding: EdgeInsets.zero,
@@ -546,6 +549,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           InkWell(
+            key: const Key('btn_decrement_qty_detail'),
             onTap: _decrement,
             child: Container(
               width: 32,
@@ -567,6 +571,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
           ),
           VerticalDivider(width: 1, thickness: 1, color: Colors.grey.shade400),
           InkWell(
+            key: const Key('btn_increment_qty_detail'),
             onTap: _increment,
             child: Container(
               width: 32,

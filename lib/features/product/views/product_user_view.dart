@@ -114,6 +114,7 @@ class _ProductUserViewState extends State<ProductUserView> {
               clipBehavior: Clip.none,
               children: [
                 IconButton(
+                  key: const Key('btn_cart_catalog'),
                   icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black87, size: 26),
                   onPressed: () {
                     Navigator.push(
@@ -453,6 +454,7 @@ class _ProductUserViewState extends State<ProductUserView> {
                           ),
                         ),
                         InkWell(
+                          key: Key('btn_add_to_cart_${product.id ?? ''}'),
                           onTap: () {
                             int currentStock = product.stock; 
                             int moq = product.moq ?? 1;

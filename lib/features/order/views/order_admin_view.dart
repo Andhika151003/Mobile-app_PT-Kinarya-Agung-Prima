@@ -214,6 +214,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                       height: 46,
                       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
                       child: TextField(
+                        key: const Key('input_search_order'),
                         controller: _searchController,
                         onChanged: (v) => setState(() => _applySearch(v.trim())),
                         style: const TextStyle(fontSize: 14),
@@ -228,6 +229,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                   ),
                   const SizedBox(width: 10),
                    GestureDetector(
+                    key: const Key('btn_search_order'),
                     onTap: () => setState(() => _applySearch(_searchController.text.trim())),
                     child: Container(
                       width: 46, height: 46,
@@ -273,6 +275,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: InkWell(
+                      key: Key('tab_${filter.toLowerCase().replaceAll(' ', '_')}'),
                       onTap: () {
                         setState(() {
                           _selectedFilter = filter;
@@ -349,6 +352,7 @@ class _OrderCard extends StatelessWidget {
     final paymentLabel = order.status == 'Ordered' ? 'Unpaid' : 'Paid';
 
     return GestureDetector(
+      key: Key('card_admin_order_${order.orderId}'),
       onTap: () async {
         await Navigator.push(
           context,

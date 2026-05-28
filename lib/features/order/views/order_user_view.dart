@@ -185,7 +185,7 @@ class _OrderUserViewState extends State<OrderUserView>
                   fontWeight: FontWeight.w500,
                   fontSize: 13,
                 ),
-                tabs: _tabs.map((t) => Tab(text: t.label, height: 44)).toList(),
+                tabs: _tabs.map((t) => Tab(key: Key('tab_${t.label.toLowerCase().replaceAll(' ', '_')}'), text: t.label, height: 44)).toList(),
               ),
             ),
           ),
@@ -343,6 +343,7 @@ class _OrderCard extends StatelessWidget {
 
 
     return GestureDetector(
+      key: Key('card_order_${order.orderId}'),
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(

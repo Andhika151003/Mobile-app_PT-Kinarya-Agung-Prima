@@ -233,6 +233,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
+                  key: const Key('btn_confirm_received'),
                   onPressed: () async {
                     setState(() => _isLoading = true);
                     final success = await _userController.receiveOrder(order.orderId);
@@ -466,6 +467,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton(
+              key: const Key('btn_pay_now'),
               onPressed: () {
                 final paymentUrl = _order?.paymentUrl; 
 
@@ -508,6 +510,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
           child: SizedBox(
             width: double.infinity,
             child: OutlinedButton(
+              key: const Key('btn_cancel_order'),
               onPressed: () => _showCancelDialog(),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.red),
