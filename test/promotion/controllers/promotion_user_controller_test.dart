@@ -13,13 +13,17 @@ void main() {
     );
   });
 
-  group('PromotionUserController Tests', () {
-    test('getActivePromotions returns only active and unexpired promos', () async {
+  group('Unit Test PromotionUserController', () {
+    test('getActivePromotions harus mengembalikan hanya promo yang aktif dan belum kedaluwarsa', () async {
+      // Arrange — Menambahkan 3 promo ke Fake Firestore dengan kondisi berbeda:
+      //   promo1: expired (endDate sudah lewat)
+      //   promo2: active (masih dalam rentang tanggal)
+      //   promo3: inactive (status bukan 'active')
       final now = DateTime.now();
 
       // Expired promo
       await fakeFirestore.collection('promotions').doc('promo1').set({
-        'title': 'Expired Promo',
+        'title': 'Promo Kedaluwarsa',
         'description': '',
         'discountType': '',
         'discountValue': 0,
@@ -37,7 +41,7 @@ void main() {
 
       // Active promo
       await fakeFirestore.collection('promotions').doc('promo2').set({
-        'title': 'Active Promo',
+        'title': 'Promo Aktif',
         'description': '',
         'discountType': '',
         'discountValue': 0,
@@ -55,7 +59,7 @@ void main() {
 
       // Inactive promo
       await fakeFirestore.collection('promotions').doc('promo3').set({
-        'title': 'Inactive Promo',
+        'title': 'Promo Nonaktif',
         'description': '',
         'discountType': '',
         'discountValue': 0,
@@ -71,9 +75,12 @@ void main() {
         'createdBy': 'user1'
       });
 
+      // Act — Memanggil getActivePromotions() untuk mengambil promo yang aktif saja
       final activePromos = await userPromotionController.getActivePromotions();
+
+      // Assert — Memverifikasi hanya 1 promo aktif yang dikembalikan (promo2)
       expect(activePromos.length, 1);
-      expect(activePromos.first.title, 'Active Promo');
+      expect(activePromos.first.title, 'Promo Aktif');
     });
   });
 }

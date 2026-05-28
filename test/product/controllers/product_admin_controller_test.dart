@@ -24,8 +24,9 @@ void main() {
     );
   });
 
-  group('AdminProductController Tests', () {
-    test('filterAndSortProducts sorts and filters correctly', () {
+  group('Unit Test AdminProductController', () {
+    test('filterAndSortProducts harus mengurutkan dan memfilter produk dengan benar', () {
+      // Arrange — Membuat 2 produk dengan kategori, nama, stok, dan penjualan berbeda
       final p1 = ProductModel(
         id: '1', retailerId: 'admin123', name: 'Zebra', sku: 'Z-1', category: 'Cat1', brand: 'B1', 
         price: 15000, moq: 1, stock: 10, imageUrl: '', isAvailable: true, monthlySales: 5, lowStockAlert: 5, description: ''
@@ -37,54 +38,60 @@ void main() {
 
       final List<ProductModel> list = [p1, p2];
 
-      // Test category filter
+      // Act & Assert — Menguji filter berdasarkan kategori
       final c1Filtered = adminProductController.filterAndSortProducts(list, 'Cat1', '', false, 'Name A-Z');
       expect(c1Filtered.length, 1);
       expect(c1Filtered.first.name, 'Zebra');
 
-      // Test sort A-Z
+      // Act & Assert — Menguji sorting berdasarkan nama A-Z
       final sortedAZ = adminProductController.filterAndSortProducts(list, 'All', '', false, 'Name A-Z');
       expect(sortedAZ.first.name, 'Alpha');
       
-      // Test search
+      // Act & Assert — Menguji filter berdasarkan pencarian nama
       final searchFiltered = adminProductController.filterAndSortProducts(list, 'All', 'Alpha', false, 'Name A-Z');
       expect(searchFiltered.length, 1);
       expect(searchFiltered.first.name, 'Alpha');
 
-      // Test In Stock
+      // Act & Assert — Menguji filter In Stock (hanya produk dengan stok > lowStockAlert)
       final inStockFiltered = adminProductController.filterAndSortProducts(list, 'All', '', true, 'Name A-Z');
       expect(inStockFiltered.length, 1); 
       expect(inStockFiltered.first.name, 'Zebra');
 
-      // Test sort Best Selling
+      // Act & Assert — Menguji sorting berdasarkan Best Selling (penjualan terbanyak di atas)
       final sortedBestSelling = adminProductController.filterAndSortProducts(list, 'All', '', false, 'Best Selling');
       expect(sortedBestSelling.first.name, 'Alpha'); 
     });
 
-    test('addSupplyProduct sets retailerId and saves to firestore', () async {
+    test('addSupplyProduct harus mengatur retailerId dan menyimpan produk ke Firestore', () async {
+      // Arrange — Membuat produk baru dengan retailerId kosong (akan diisi dari user login)
       final product = ProductModel(
-        retailerId: '', name: 'Test Product', category: 'Cat', price: 10, stock: 10, description: 'Desc', imageUrl: ''
+        retailerId: '', name: 'Produk Uji', category: 'Kategori', price: 10000, stock: 10, description: 'Deskripsi Uji', imageUrl: ''
       );
 
+      // Act — Memanggil addSupplyProduct() untuk menyimpan produk ke Firestore
       await adminProductController.addSupplyProduct(product);
 
+      // Assert — Memverifikasi produk tersimpan dan retailerId diisi dari mockAuth
       final snapshot = await fakeFirestore.collection('products').get();
       expect(snapshot.docs.length, 1);
       expect(snapshot.docs.first.data()['retailerId'], 'admin123');
-      expect(snapshot.docs.first.data()['name'], 'Test Product');
+      expect(snapshot.docs.first.data()['name'], 'Produk Uji');
     });
 
-    test('updateSupplyProduct updates firestore document correctly', () async {
+    test('updateSupplyProduct harus memperbarui dokumen Firestore dengan benar', () async {
+      // Arrange — Menambahkan produk awal ke Fake Firestore
       final product = ProductModel(
-        id: 'prod1', retailerId: 'admin123', name: 'Old Product', category: 'Cat', price: 10, stock: 10, description: 'Desc', imageUrl: ''
+        id: 'prod1', retailerId: 'admin123', name: 'Produk Lama', category: 'Kategori', price: 10000, stock: 10, description: 'Deskripsi Lama', imageUrl: ''
       );
       await fakeFirestore.collection('products').doc('prod1').set(product.toMap());
 
-      product.name = 'New Name Update';
+      // Act — Mengubah nama produk lalu memanggil updateSupplyProduct()
+      product.name = 'Nama Produk Baru';
       await adminProductController.updateSupplyProduct(product);
 
+      // Assert — Memverifikasi nama berubah dan field updatedAt ditambahkan
       final doc = await fakeFirestore.collection('products').doc('prod1').get();
-      expect(doc.data()!['name'], 'New Name Update');
+      expect(doc.data()!['name'], 'Nama Produk Baru');
       expect(doc.data()!.containsKey('updatedAt'), true);
     });
   });

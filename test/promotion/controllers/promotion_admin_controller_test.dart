@@ -20,11 +20,12 @@ void main() {
     );
   });
 
-  group('PromotionAdminController Tests', () {
-    test('fetchAllPromotions fetches data and sets to list', () async {
+  group('Unit Test PromotionAdminController', () {
+    test('fetchAllPromotions harus mengambil data dan memasukkannya ke dalam list', () async {
+      // Arrange — Menambahkan dokumen promo ke Fake Firestore sebagai data simulasi
       await fakeFirestore.collection('promotions').doc('promo1').set({
         'title': 'Promo A',
-        'description': 'Desc A',
+        'description': 'Deskripsi A',
         'discountType': 'percentage',
         'discountValue': 10,
         'productIds': [],
@@ -40,17 +41,22 @@ void main() {
         'createdBy': 'admin123'
       });
 
+      // Act — Memanggil fetchAllPromotions() untuk mengambil data dari Firestore
       await adminPromotionController.fetchAllPromotions();
       
+      // Assert — Memverifikasi data berhasil masuk ke list promotions dan filteredPromotions
       expect(adminPromotionController.promotions.length, 1);
       expect(adminPromotionController.promotions.first.title, 'Promo A');
       expect(adminPromotionController.filteredPromotions.length, 1);
     });
 
-    test('createPromotion inserts into firestore', () async {
+    test('createPromotion harus menyimpan data ke Firestore', () async {
+      // Arrange — Menyiapkan parameter untuk membuat promo baru (tidak perlu data awal di Firestore)
+
+      // Act — Memanggil createPromotion() dengan data promo baru
       final result = await adminPromotionController.createPromotion(
-        title: 'New Promo',
-        description: 'Promo Baru',
+        title: 'Promo Baru',
+        description: 'Deskripsi Promo Baru',
         discountType: 'fixed',
         discountValue: 5000,
         productIds: [],
@@ -62,17 +68,21 @@ void main() {
         sku: 'NEW-PROMO-5000',
       );
 
+      // Assert — Memverifikasi promo berhasil disimpan ke Firestore
       expect(result, isTrue);
       final snapshot = await fakeFirestore.collection('promotions').get();
       expect(snapshot.docs.length, 1);
-      expect(snapshot.docs.first.data()['title'], 'New Promo');
+      expect(snapshot.docs.first.data()['title'], 'Promo Baru');
     });
 
-    test('deletePromotion removes document from firestore', () async {
+    test('deletePromotion harus menghapus dokumen dari Firestore', () async {
+      // Arrange — Menambahkan dokumen promo yang akan dihapus
       await fakeFirestore.collection('promotions').doc('promo1').set({'title': 'Promo A'});
 
+      // Act — Memanggil deletePromotion() untuk menghapus dokumen
       final result = await adminPromotionController.deletePromotion('promo1');
       
+      // Assert — Memverifikasi dokumen berhasil dihapus dari Firestore
       expect(result, isTrue);
       final snapshot = await fakeFirestore.collection('promotions').get();
       expect(snapshot.docs.length, 0);
