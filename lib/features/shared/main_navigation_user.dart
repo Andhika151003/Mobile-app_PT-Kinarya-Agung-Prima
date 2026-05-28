@@ -5,7 +5,8 @@ import '../product/views/product_user_view.dart';
 import '../order/views/order_user_view.dart';
 
 class MainNavigationUser extends StatefulWidget {
-  const MainNavigationUser({super.key});
+  final List<Widget>? pages;
+  const MainNavigationUser({super.key, this.pages});
 
   @override
   State<MainNavigationUser> createState() => _MainNavigationUserState();
@@ -14,7 +15,7 @@ class MainNavigationUser extends StatefulWidget {
 class _MainNavigationUserState extends State<MainNavigationUser> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
+  late final List<Widget> _pages = widget.pages ?? [
     const DashboardUserView(),
     const ProductUserView(),
     const OrderUserView(),

@@ -79,6 +79,7 @@ class DashboardAdminController {
       final snapshot = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'retailer')
+          .limit(10)
           .get();
 
       return snapshot.docs

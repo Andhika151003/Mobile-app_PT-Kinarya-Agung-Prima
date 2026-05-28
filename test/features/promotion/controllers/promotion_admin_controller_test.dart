@@ -2,21 +2,42 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:ecommerce/features/promotion/controllers/promotion_admin_controller.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:ecommerce/features/notification/services/push_notification_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+class MockPushNotificationService extends Mock implements PushNotificationService {}
 
 void main() {
   late PromotionAdminController adminPromotionController;
   late MockFirebaseAuth mockAuth;
   late FakeFirebaseFirestore fakeFirestore;
   late MockUser mockUser;
+  late MockPushNotificationService mockPushNotificationService;
+
+  setUpAll(() {
+    try {
+      dotenv.loadFromString(envString: 'FCM_SERVER_KEY=dummy');
+    } catch (_) {}
+  });
 
   setUp(() {
     mockUser = MockUser(isAnonymous: false, uid: 'admin123');
     mockAuth = MockFirebaseAuth(mockUser: mockUser, signedIn: true);
     fakeFirestore = FakeFirebaseFirestore();
+    mockPushNotificationService = MockPushNotificationService();
+
+    when(() => mockPushNotificationService.broadcastNotification(
+          title: any(named: 'title'),
+          message: any(named: 'message'),
+          type: any(named: 'type'),
+          relatedId: any(named: 'relatedId'),
+        )).thenAnswer((_) async => true);
 
     adminPromotionController = PromotionAdminController(
       firestore: fakeFirestore,
       auth: mockAuth,
+      pushNotificationService: mockPushNotificationService,
     );
   });
 

@@ -19,6 +19,9 @@ class LoginController extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  String? _deactivatedAdminPhone;
+  String? get deactivatedAdminPhone => _deactivatedAdminPhone;
+
   bool _isDisposed = false;
   
   String? validateEmailInput(String? value) {
@@ -47,6 +50,7 @@ class LoginController extends ChangeNotifier {
   }) async {
     _setLoading(true);
     _clearError();
+    _deactivatedAdminPhone = null;
 
     try {
       // 1. Login ke Firebase Authentication
@@ -65,6 +69,27 @@ class LoginController extends ChangeNotifier {
       }
 
       final data = docSnapshot.data()!;
+
+      // Cek status aktif/non-aktif
+      if (data['isActive'] == false) {
+        try {
+          final adminDocs = await _firestore
+              .collection('users')
+              .where('role', isEqualTo: 'admin')
+              .limit(1)
+              .get();
+          if (adminDocs.docs.isNotEmpty) {
+            _deactivatedAdminPhone = adminDocs.docs.first.data()['phoneNumber']?.toString();
+          }
+        } catch (e) {
+          debugPrint('Error fetching admin phone: $e');
+        }
+
+        await _auth.signOut();
+        _setError('Account Deactivated');
+        _setLoading(false);
+        return null;
+      }
 
       final String role = (data['role']?.toString().trim().toLowerCase()) ?? 'retailer';
       

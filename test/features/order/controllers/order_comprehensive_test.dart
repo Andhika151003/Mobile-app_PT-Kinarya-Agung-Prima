@@ -6,6 +6,7 @@ import 'package:ecommerce/features/order/controllers/order_admin_controller.dart
 import 'package:ecommerce/features/order/controllers/order_cs_controller.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ecommerce/features/notification/services/push_notification_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class MockPushNotificationService extends Mock implements PushNotificationService {}
 
@@ -15,6 +16,14 @@ void main() {
   late OrderAdminController adminController;
   late OrderCsController csController;
   late MockPushNotificationService mockPushNotificationService;
+
+  setUpAll(() {
+    try {
+      dotenv.loadFromString(envString: 'FCM_SERVER_KEY=dummy\nBACKEND_URL=mock');
+    } catch (_) {
+      // Ignore if not available
+    }
+  });
 
   setUp(() {
     fakeFirestore = FakeFirebaseFirestore();

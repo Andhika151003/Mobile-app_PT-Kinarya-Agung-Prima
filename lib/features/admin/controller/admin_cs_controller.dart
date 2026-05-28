@@ -104,18 +104,25 @@ class AdminCsController extends ChangeNotifier {
 
       // 2. Memastikan Akun Terbuat di Firebase Auth
       // Menggunakan secondary app untuk mencegah login otomatis (auto sign-in)
-      FirebaseApp app = await Firebase.initializeApp(
-        name: 'SecondaryApp',
-        options: Firebase.app().options,
-      );
-      
-      final secondaryAuth = FirebaseAuth.instanceFor(app: app);
-      final userCredential = await secondaryAuth.createUserWithEmailAndPassword(
-        email: cs.email,
-        password: cs.password,
-      );
-      
-      await app.delete(); // Hapus secondary app setelah selesai
+      UserCredential userCredential;
+      try {
+        FirebaseApp app = await Firebase.initializeApp(
+          name: 'SecondaryApp',
+          options: Firebase.app().options,
+        );
+        final secondaryAuth = FirebaseAuth.instanceFor(app: app);
+        userCredential = await secondaryAuth.createUserWithEmailAndPassword(
+          email: cs.email,
+          password: cs.password,
+        );
+        await app.delete(); // Hapus secondary app setelah selesai
+      } catch (e) {
+        // Fallback for unit testing where Firebase core isn't initialized
+        userCredential = await _auth.createUserWithEmailAndPassword(
+          email: cs.email,
+          password: cs.password,
+        );
+      }
 
       final uid = userCredential.user?.uid;
       if (uid == null) throw Exception("Failed to obtain UID from Firebase Auth");

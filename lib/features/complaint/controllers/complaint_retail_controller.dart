@@ -7,10 +7,20 @@ import '../../../supabase_storage_service.dart';
 import '../../notification/services/push_notification_service.dart';
 
 class ComplaintUserController {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final SupabaseStorageService _storageService = SupabaseStorageService();
-  final PushNotificationService _pushNotificationService = PushNotificationService();
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+  final SupabaseStorageService _storageService;
+  final PushNotificationService _pushNotificationService;
+
+  ComplaintUserController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    SupabaseStorageService? storageService,
+    PushNotificationService? pushNotificationService,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _storageService = storageService ?? SupabaseStorageService(),
+        _pushNotificationService = pushNotificationService ?? PushNotificationService();
 
   Future<bool> submitComplaint({
     required String orderId,

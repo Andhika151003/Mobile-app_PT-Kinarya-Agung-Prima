@@ -8,7 +8,8 @@ import '../authentication/views/profile_admin_view.dart';
 import 'package:provider/provider.dart';
 
 class MainNavigationAdmin extends StatefulWidget {
-  const MainNavigationAdmin({super.key});
+  final List<Widget>? pages;
+  const MainNavigationAdmin({super.key, this.pages});
 
   @override
   State<MainNavigationAdmin> createState() => MainNavigationAdminState();
@@ -46,7 +47,7 @@ class MainNavigationAdminState extends State<MainNavigationAdmin> {
     );
   }
 
-  final List<Widget> _pages = [
+  late final List<Widget> _pages = widget.pages ?? [
     const DashboardAdminView(),
     const ProductAdminView(),
     const OrderAdminView(),

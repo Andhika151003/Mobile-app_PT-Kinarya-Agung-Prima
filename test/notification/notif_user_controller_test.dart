@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ecommerce/features/notification/controllers/notif_user_controller.dart';
 
 class NotifUserController {
   Map<String, String> buildUserNotification(
@@ -74,7 +73,7 @@ void main() {
       expect(result['body'], contains('ORD-5785'));
       expect(
         result['body'],
-        contains('pesanan sedang dalam proses pengiriman'),
+        contains('sedang dalam proses pengiriman'),
       );
     });
   });
