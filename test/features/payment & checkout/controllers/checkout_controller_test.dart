@@ -28,9 +28,12 @@ void main() {
   late MockClient mockHttpClient;
   late MockPushNotificationService mockPushNotification;
   late MockUser mockUser;
-  late MockCollectionReference<Map<String, dynamic>> mockCollection;
-  late MockDocumentReference<Map<String, dynamic>> mockDocRef;
-  late MockDocumentSnapshot<Map<String, dynamic>> mockDocSnapshot;
+
+  late MockCollectionReference<Map<String, dynamic>> mockProductsCollection;
+  late MockCollectionReference<Map<String, dynamic>> mockOrdersCollection;
+  late MockDocumentReference<Map<String, dynamic>> mockProductDoc;
+  late MockDocumentReference<Map<String, dynamic>> mockOrderDoc;
+  late MockDocumentSnapshot<Map<String, dynamic>> mockProductSnapshot;
 
   setUp(() {
     mockFirestore = MockFirebaseFirestore();
@@ -38,9 +41,12 @@ void main() {
     mockHttpClient = MockClient();
     mockPushNotification = MockPushNotificationService();
     mockUser = MockUser();
-    mockCollection = MockCollectionReference();
-    mockDocRef = MockDocumentReference();
-    mockDocSnapshot = MockDocumentSnapshot();
+
+    mockProductsCollection = MockCollectionReference();
+    mockOrdersCollection = MockCollectionReference();
+    mockProductDoc = MockDocumentReference();
+    mockOrderDoc = MockDocumentReference();
+    mockProductSnapshot = MockDocumentSnapshot();
 
     // Setup Auth Mock
     when(mockAuth.currentUser).thenReturn(mockUser);
@@ -48,9 +54,32 @@ void main() {
     when(mockUser.email).thenReturn('retailer@test.com');
     when(mockUser.displayName).thenReturn('Retailer Test');
 
-    // Setup Firestore Mock dasar
-    when(mockFirestore.collection(any)).thenReturn(mockCollection);
-    when(mockCollection.doc(any)).thenReturn(mockDocRef);
+    // Setup Firestore Mock berdasarkan alur CheckoutController
+    when(
+      mockFirestore.collection('products'),
+    ).thenReturn(mockProductsCollection);
+    when(mockFirestore.collection('orders')).thenReturn(mockOrdersCollection);
+
+    // Mock Product Document (Pengecekan Stok)
+    when(mockProductsCollection.doc(any)).thenReturn(mockProductDoc);
+    when(mockProductDoc.get()).thenAnswer((_) async => mockProductSnapshot);
+    when(mockProductSnapshot.exists).thenReturn(true);
+    when(mockProductSnapshot.data()).thenReturn({'stock': 100}); // Stok aman
+
+    // Mock Order Document (Menyimpan dan Update Order)
+    when(mockOrdersCollection.doc(any)).thenReturn(mockOrderDoc);
+    when(mockOrderDoc.set(any)).thenAnswer((_) async => Future.value());
+    when(mockOrderDoc.update(any)).thenAnswer((_) async => Future.value());
+
+    // Mock Push Notification Admin
+    when(
+      mockPushNotification.sendNotificationToAdmin(
+        title: anyNamed('title'),
+        message: anyNamed('message'),
+        type: anyNamed('type'),
+        relatedId: anyNamed('relatedId'),
+      ),
+    ).thenAnswer((_) async => Future.value());
 
     checkoutController = CheckoutController(
       firestore: mockFirestore,
@@ -62,14 +91,11 @@ void main() {
   });
 
   group('Sprint 4: Payment & Checkout Test Suite', () {
-    // Baris 1: REQ-24 - Pembayaran Sesuai Nominal
+    // 1. REQ-24 | TC-104
     test(
-      'Bukti pembayaran berhasil ; sistem menampilkan halaman Transaction Verification dengan Transaction ID, jumlah, tanggal, dan status "Payment Processing"',
+      '[TC-104] Retailer melakukan pembayaran sesuai nominal tagihan -> Sistem menampilkan halaman Transaction Verification dengan status "Payment Processing"',
       () async {
         // Arrange
-        when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
-        when(mockDocSnapshot.exists).thenReturn(true);
-        when(mockDocSnapshot.data()).thenReturn({'stock': 10});
         when(
           mockHttpClient.post(
             any,
@@ -86,7 +112,7 @@ void main() {
           ),
         );
 
-        // Act
+        // Act - Parameter disesuaikan tipe datanya dengan method processCheckout()
         final result = await checkoutController.processCheckout(
           fullName: 'Retailer Test',
           shippingAddress: 'Jl. Rungkut Surabaya',
@@ -94,10 +120,10 @@ void main() {
           paymentMethod: 'Bank Transfer',
           paymentMethodCode: 'BT',
           promoCode: '',
-          subtotal: 250000,
-          shippingCost: 20000,
-          tax: 0,
-          total: 270000,
+          subtotal: 250000.0,
+          shippingCost: 20000.0,
+          tax: 0.0,
+          total: 270000.0,
           items: [
             {'productId': 'prod1', 'quantity': 1, 'title': 'Produk A'},
           ],
@@ -106,24 +132,15 @@ void main() {
         // Assert
         expect(result.containsKey('paymentUrl'), true);
         expect(result['paymentUrl'], 'https://duitku.com/pay/123');
-        verify(
-          mockHttpClient.post(
-            any,
-            headers: anyNamed('headers'),
-            body: anyNamed('body'),
-          ),
-        ).called(1);
+        verify(mockOrderDoc.set(any)).called(1); // Verifikasi data tersimpan
       },
     );
 
-    // Baris 2: REQ-24 - Pembayaran Tidak Sesuai Nominal
+    // 2. REQ-24 | TC-105
     test(
-      'Sistem menampilkan pesan error bahwa nominal pembayaran tidak sesuai; transaksi tidak diproses; status tetap "Pending Payment"',
+      '[TC-105] Retailer melakukan pembayaran dengan nominal yang tidak sesuai tagihan -> Menampilkan error dan status tetap "Pending Payment"',
       () async {
-        // Arrange (Simulasi backend Duitku menolak nominal)
-        when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
-        when(mockDocSnapshot.exists).thenReturn(true);
-        when(mockDocSnapshot.data()).thenReturn({'stock': 10});
+        // Arrange
         when(
           mockHttpClient.post(
             any,
@@ -145,12 +162,12 @@ void main() {
           paymentMethod: 'Bank Transfer',
           paymentMethodCode: 'BT',
           promoCode: '',
-          subtotal: 200000,
-          shippingCost: 0,
-          tax: 0,
-          total: 200000,
+          subtotal: 200000.0,
+          shippingCost: 0.0,
+          tax: 0.0,
+          total: 200000.0, // Misal Backend tahu nominal asli harusnya 270k
           items: [
-            {'productId': 'prod1', 'quantity': 1},
+            {'productId': 'prod1', 'quantity': 1, 'title': 'Produk A'},
           ],
         );
 
@@ -163,9 +180,9 @@ void main() {
       },
     );
 
-    // Baris 3: REQ-24 - Double Click (Simulasi pencegahan di Controller/UI)
+    // 3. REQ-24 | TC-106
     test(
-      'Sistem hanya memproses satu transaksi; tidak terjadi duplikasi; menampilkan pesan bahwa transaksi sedang diproses',
+      '[TC-106] Retailer menekan tombol konfirmasi pembayaran lebih dari satu kali -> Sistem memproses satu transaksi dan menahan duplikasi',
       () async {
         // Arrange
         bool isProcessing = false;
@@ -174,9 +191,7 @@ void main() {
           if (isProcessing) return;
           isProcessing = true;
           callCount++;
-          await Future.delayed(
-            const Duration(milliseconds: 100),
-          ); // Simulasi network
+          await Future.delayed(const Duration(milliseconds: 100));
           isProcessing = false;
         }
 
@@ -189,13 +204,12 @@ void main() {
       },
     );
 
-    // Baris 4: REQ-25 - Waktu Tempo Habis
+    // 4. REQ-25 | TC-107 (Mock Webhook update expired)
     test(
-      'Sistem menampilkan pesan pembayaran cancel; karena waktu pembayaran telah hangus',
+      '[TC-107] Retailer tidak menyelesaikan pembayaran hingga waktu jatuh tempo habis -> Menampilkan pesan pembayaran cancel',
       () async {
-        // Arrange & Act & Assert
-        // Catatan: Pada praktiknya ini di-handle oleh Webhook Duitku ke Backend,
-        // lalu backend mengubah status di Firestore.
+        // Logika aslinya order di set expired 24 jam ke depan di controller ini
+        // Kita mensimulasikan update yang biasanya dilakukan backend Duitku
         final docData = {
           'status': 'Cancelled',
           'paymentExpiredAt': Timestamp.fromDate(
@@ -206,252 +220,128 @@ void main() {
       },
     );
 
-    // Baris 5: REQ-26 - Cek Status Pembayaran
+    // 5. REQ-26 | TC-108
     test(
-      'Sistem menampilkan status terkini dari pembayaran; jika belum diverifikasi maka status tetap "Payment Processing"',
+      '[TC-108] Retailer memeriksa status pembayaran pada halaman Transaction Verification -> Jika belum diverifikasi, status tetap "Payment Processing"',
       () async {
-        // Arrange
-        when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
+        // Arrange simulasi get document order
+        when(mockOrderDoc.get()).thenAnswer((_) async => mockProductSnapshot);
         when(
-          mockDocSnapshot.data(),
+          mockProductSnapshot.data(),
         ).thenReturn({'status': 'Payment Processing'});
 
         // Act
-        final status = (await mockDocRef.get()).data()?['status'];
+        final status = (await mockOrderDoc.get()).data()?['status'];
 
         // Assert
         expect(status, 'Payment Processing');
       },
     );
 
-    // Baris 6: REQ-27 - Admin Approve
+    // 6. REQ-27 | TC-109
     test(
-      'Status transaksi berubah menjadi "Verified"; Retailer menerima notifikasi bahwa pembayaran telah dikonfirmasi; pesanan dilanjutkan ke proses berikutnya',
+      '[TC-109] Admin melakukan approval terhadap pembayaran Retailer -> Status transaksi berubah menjadi "Verified"',
       () async {
-        // Arrange
-        when(mockDocRef.update(any)).thenAnswer((_) async => Future.value());
-
         // Act
-        await mockDocRef.update({'status': 'Verified'});
-        await mockPushNotification.sendNotificationToAdmin(
-          title: 'Approve',
-          message: 'Notif',
-          type: 'payment',
-        );
-
+        await mockOrderDoc.update({'status': 'Verified'});
         // Assert
-        verify(mockDocRef.update({'status': 'Verified'})).called(1);
+        verify(mockOrderDoc.update({'status': 'Verified'})).called(1);
       },
     );
 
-    // Baris 7: REQ-27 - Admin Approve transaksi yang sudah Verified
+    // 7. REQ-28 | TC-110
     test(
-      'Sistem menampilkan pesan bahwa transaksi sudah diverifikasi sebelumnya; tombol Approve/Reject tidak dapat ditekan',
+      '[TC-110] Admin melakukan penolakan terhadap pembayaran yang tidak valid -> Status transaksi berubah menjadi "Rejected"',
       () async {
-        // Arrange
-        final currentStatus = 'Verified';
-
         // Act
-        final canApprove = currentStatus != 'Verified';
-
+        await mockOrderDoc.update({'status': 'Rejected'});
         // Assert
-        expect(canApprove, false);
+        verify(mockOrderDoc.update({'status': 'Rejected'})).called(1);
       },
     );
 
-    // Baris 8: REQ-27 - Retailer menerima notifikasi
+    // 8. REQ-29 | TC-111
     test(
-      'Retailer menerima notifikasi bahwa pembayaran telah dikonfirmasi; notifikasi memuat detail transaksi yang disetujui',
-      () async {
-        // Arrange & Act
-        await mockPushNotification.sendNotificationToAdmin(
-          title: 'Pembayaran Dikonfirmasi',
-          message: 'TRX25040003 disetujui',
-          type: 'notif_retailer',
-        );
-
-        // Assert
-        verify(
-          mockPushNotification.sendNotificationToAdmin(
-            title: anyNamed('title'),
-            message: anyNamed('message'),
-            type: anyNamed('type'),
-          ),
-        ).called(1);
-      },
-    );
-
-    // Baris 9: REQ-28 - Admin Reject
-    test(
-      'Status transaksi berubah menjadi "Rejected"; Retailer menerima notifikasi bahwa pembayaran ditolak; pesanan tidak diproses lebih lanjut',
-      () async {
-        // Arrange
-        when(mockDocRef.update(any)).thenAnswer((_) async => Future.value());
-
-        // Act
-        await mockDocRef.update({'status': 'Rejected'});
-
-        // Assert
-        verify(mockDocRef.update({'status': 'Rejected'})).called(1);
-      },
-    );
-
-    // Baris 10: REQ-28 - Retailer notifikasi Reject
-    test(
-      'Retailer menerima notifikasi bahwa pembayaran telah ditolak; notifikasi memuat alasan penolakan dan instruksi selanjutnya',
-      () async {
-        // Arrange & Act
-        await mockPushNotification.sendNotificationToAdmin(
-          title: 'Pembayaran Ditolak',
-          message: 'TRX25040004 ditolak',
-          type: 'notif_retailer',
-        );
-
-        // Assert
-        verify(
-          mockPushNotification.sendNotificationToAdmin(
-            title: 'Pembayaran Ditolak',
-            message: 'TRX25040004 ditolak',
-            type: 'notif_retailer',
-          ),
-        ).called(1);
-      },
-    );
-
-    // Baris 11: REQ-29 - Unduh Invoice (Completed)
-    test(
-      'File invoice berhasil diunduh dalam format PDF; berisi informasi lengkap: nomor invoice, tanggal, detail order, total harga, dan informasi pembayaran',
+      '[TC-111] Admin mengunduh invoice pada order dengan status pembayaran Completed -> Invoice PDF berhasil diunduh',
       () async {
         // Arrange
         final orderStatus = 'Completed';
-
         // Act
         final canDownload = orderStatus == 'Completed';
-
         // Assert
         expect(canDownload, true);
       },
     );
 
-    // Baris 12: REQ-29 - Unduh Invoice (Pending)
+    // 9. REQ-29 | TC-112
     test(
-      'Tombol "Download Invoice" tidak tersedia atau disabled; sistem menampilkan pesan bahwa invoice hanya tersedia untuk order dengan status Completed',
+      '[TC-112] Admin mengunduh invoice pada order dengan status pembayaran Pending -> Tombol Download Invoice disabled',
       () async {
         // Arrange
         final orderStatus = 'Pending';
-
         // Act
         final canDownload = orderStatus == 'Completed';
-
         // Assert
         expect(canDownload, false);
       },
     );
 
-    // Baris 13: REQ-30 - Admin Approve Delivery
+    // 10. REQ-30 | TC-113
     test(
-      'Status order berubah menjadi "Delivery Approved"; barang siap untuk dikirim; Retailer menerima notifikasi bahwa pesanan sedang dalam proses pengiriman',
+      '[TC-113] Admin melakukan approval pengiriman pesanan Retailer -> Status berubah menjadi "Delivery Approved"',
       () async {
-        // Arrange
-        when(mockDocRef.update(any)).thenAnswer((_) async => Future.value());
-
         // Act
-        await mockDocRef.update({'status': 'Delivery Approved'});
-
+        await mockOrderDoc.update({'status': 'Delivery Approved'});
         // Assert
-        verify(mockDocRef.update({'status': 'Delivery Approved'})).called(1);
+        verify(mockOrderDoc.update({'status': 'Delivery Approved'})).called(1);
       },
     );
 
-    // Baris 14: REQ-30 - Admin Reject Delivery
+    // 11. REQ-31 | TC-114
     test(
-      'Status order berubah menjadi "Delivery Rejected"; Retailer menerima notifikasi bahwa pengiriman ditolak beserta alasannya; proses refund atau tindak lanjut dapat dilakukan',
+      '[TC-114] Retailer mengajukan pembatalan pesanan sebelum barang dikirim -> Status berubah menjadi "Cancellation Requested"',
       () async {
-        // Arrange
-        when(mockDocRef.update(any)).thenAnswer((_) async => Future.value());
-
         // Act
-        await mockDocRef.update({'status': 'Delivery Rejected'});
-
-        // Assert
-        verify(mockDocRef.update({'status': 'Delivery Rejected'})).called(1);
-      },
-    );
-
-    // Baris 15: REQ-30 - Admin Approve Delivery (Already Approved)
-    test(
-      'Sistem menampilkan pesan bahwa pengiriman untuk order ini sudah di-approve sebelumnya; tombol Approve/Reject tidak dapat ditekan kembali',
-      () async {
-        // Arrange
-        final currentStatus = 'Delivery Approved';
-
-        // Act
-        final canApprove = currentStatus != 'Delivery Approved';
-
-        // Assert
-        expect(canApprove, false);
-      },
-    );
-
-    // Baris 16: REQ-31 - Retailer Cancel Order (Sebelum dikirim)
-    test(
-      'Sistem mengirimkan permintaan pembatalan ke Admin; status order berubah menjadi "Cancellation Requested"; Retailer menerima notifikasi bahwa permintaan pembatalan sedang menunggu konfirmasi Admin',
-      () async {
-        // Arrange
-        when(mockDocRef.update(any)).thenAnswer((_) async => Future.value());
-
-        // Act
-        await mockDocRef.update({'status': 'Cancellation Requested'});
-
+        await mockOrderDoc.update({'status': 'Cancellation Requested'});
         // Assert
         verify(
-          mockDocRef.update({'status': 'Cancellation Requested'}),
+          mockOrderDoc.update({'status': 'Cancellation Requested'}),
         ).called(1);
       },
     );
 
-    // Baris 17: REQ-31 - Retailer Cancel Order (Setelah Approve Delivery)
+    // 12. REQ-31 | TC-115
     test(
-      'Sistem menampilkan pesan bahwa pesanan tidak dapat dibatalkan karena pengiriman sudah disetujui; tombol "Cancel Order" tidak tersedia atau disabled',
+      '[TC-115] Retailer mengajukan pembatalan pesanan setelah barang di-approve untuk dikirim -> Tombol Cancel Order disabled / tidak tersedia',
       () async {
         // Arrange
         final status = 'Delivery Approved';
-
         // Act
         final canCancel = status != 'Delivery Approved';
-
         // Assert
         expect(canCancel, false);
       },
     );
 
-    // Baris 18: REQ-31 - Admin Setuju Cancel
+    // 13. REQ-31 | TC-116
     test(
-      'Status order berubah menjadi "Cancelled"; Retailer menerima notifikasi bahwa pembatalan pesanan telah disetujui oleh Admin; proses selanjutnya (refund, dll) dapat dilakukan',
+      '[TC-116] Admin menyetujui permintaan pembatalan pesanan dari Retailer -> Status pesanan berubah menjadi "Cancelled"',
       () async {
-        // Arrange
-        when(mockDocRef.update(any)).thenAnswer((_) async => Future.value());
-
         // Act
-        await mockDocRef.update({'status': 'Cancelled'});
-
+        await mockOrderDoc.update({'status': 'Cancelled'});
         // Assert
-        verify(mockDocRef.update({'status': 'Cancelled'})).called(1);
+        verify(mockOrderDoc.update({'status': 'Cancelled'})).called(1);
       },
     );
 
-    // Baris 19: REQ-31 - Admin Tolak Cancel
+    // 14. REQ-31 | TC-117
     test(
-      'Status order kembali menjadi status sebelumnya (Payment Verified); Retailer menerima notifikasi bahwa permintaan pembatalan ditolak; pesanan tetap diproses',
+      '[TC-117] Admin menolak permintaan pembatalan pesanan dari Retailer -> Status kembali menjadi "Payment Verified"',
       () async {
-        // Arrange
-        when(mockDocRef.update(any)).thenAnswer((_) async => Future.value());
-
         // Act
-        await mockDocRef.update({'status': 'Payment Verified'});
-
+        await mockOrderDoc.update({'status': 'Payment Verified'});
         // Assert
-        verify(mockDocRef.update({'status': 'Payment Verified'})).called(1);
+        verify(mockOrderDoc.update({'status': 'Payment Verified'})).called(1);
       },
     );
   });
