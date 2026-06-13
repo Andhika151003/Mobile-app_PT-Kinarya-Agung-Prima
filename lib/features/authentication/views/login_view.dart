@@ -119,6 +119,7 @@ class _LoginViewState extends State<LoginView> {
                     Semantics(
                       label: 'input_login_email',
                       child: TextFormField(
+                        key: const Key('input_login_email'),
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: _inputDecoration('Enter your email'),
@@ -161,6 +162,7 @@ class _LoginViewState extends State<LoginView> {
                     Semantics(
                       label: 'input_login_password',
                       child: TextFormField(
+                        key: const Key('input_login_password'),
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         decoration: _inputDecoration('Enter your password').copyWith(
@@ -241,6 +243,7 @@ class _LoginViewState extends State<LoginView> {
                       child: Semantics(
                         label: 'btn_login_submit',
                         child: ElevatedButton(
+                          key: const Key('btn_login_submit'),
                           onPressed: controller.isLoading
                               ? null
                               : () => _handleLogin(controller),

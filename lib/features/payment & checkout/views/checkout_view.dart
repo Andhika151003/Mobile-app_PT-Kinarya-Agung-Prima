@@ -905,6 +905,7 @@ class _CheckoutViewState extends State<CheckoutView> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
+                  key: const Key('btn_place_order'),
                   onPressed: _isProcessing
                       ? null
                       : () async {
