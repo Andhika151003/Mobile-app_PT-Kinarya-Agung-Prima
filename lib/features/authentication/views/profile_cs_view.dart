@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/utils/format_util.dart';
-import 'login_view.dart';
+import 'auth_gate.dart';
 import '../controllers/profile_cs_controller.dart';
 import '../../notification/services/push_notification_service.dart';
 
@@ -167,7 +167,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const LoginView(),
+                                  builder: (context) => const AuthGate(),
                                 ),
                                 (route) => false,
                               );
@@ -358,13 +358,11 @@ class _ProfileCsViewState extends State<ProfileCsView> {
     );
   }
 
-  // UPDATE: Tombol Log Out sekarang memanggil _showLogoutDialog
   Widget _buildLogoutButton(BuildContext context) {
     return Align(
       alignment: Alignment.centerRight,
       child: ElevatedButton(
         onPressed: () {
-          // MEMANGGIL POP-UP KONFIRMASI
           _showLogoutDialog(context);
         },
         style: ElevatedButton.styleFrom(

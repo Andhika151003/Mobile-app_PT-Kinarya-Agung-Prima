@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/status_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../controllers/order_cs_controller.dart';
@@ -17,12 +18,13 @@ class _OrderCsViewState extends State<OrderCsView> {
   late final OrderCsController _controller;
 
   final List<Map<String, String>> _tabs = [
-    {'label': 'All Orders', 'value': 'all'},
-    {'label': 'Pending', 'value': 'Ordered'},
-    {'label': 'Paid', 'value': 'Paid'},
-    {'label': 'Delivered', 'value': 'Delivered'},
-    {'label': 'Cancelled', 'value': 'Cancelled'},
-    {'label': 'Expired', 'value': 'Expired'},
+    {'label': 'Semua', 'value': 'all'},
+    {'label': 'Belum bayar', 'value': 'Ordered'},
+    {'label': 'Dikemas', 'value': 'Paid'},
+    {'label': 'Dikirim', 'value': 'Shipped'},
+    {'label': 'Selesai', 'value': 'Delivered'},
+    {'label': 'Dibatalkan', 'value': 'Cancelled'},
+    {'label': 'Kedaluwarsa', 'value': 'Expired'},
   ];
 
   @override
@@ -31,6 +33,7 @@ class _OrderCsViewState extends State<OrderCsView> {
     _controller = OrderCsController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.fetchAllOrders();
+      _controller.syncAllPendingOrders();
     });
   }
 
@@ -62,6 +65,7 @@ class _OrderCsViewState extends State<OrderCsView> {
           automaticallyImplyLeading: false,
           actions: [
             IconButton(
+              key: const Key('btn_search_cs'),
               icon: const Icon(Icons.search, color: Colors.black),
               onPressed: () {
                 showSearch(
@@ -76,12 +80,12 @@ class _OrderCsViewState extends State<OrderCsView> {
                 _controller.setSort(value);
               },
               itemBuilder: (BuildContext context) => [
-                const PopupMenuItem(value: 'Newest', child: Text('Newest')),
-                const PopupMenuItem(value: 'Oldest', child: Text('Oldest')),
+                const PopupMenuItem(value: 'Newest', child: Text('Terbaru')),
+                const PopupMenuItem(value: 'Oldest', child: Text('Terlama')),
                 const PopupMenuItem(
-                    value: 'Price (High-Low)', child: Text('Price: High to Low')),
+                    value: 'Price (High-Low)', child: Text('Harga (Tertinggi)')),
                 const PopupMenuItem(
-                    value: 'Price (Low-High)', child: Text('Price: Low to High')),
+                    value: 'Price (Low-High)', child: Text('Harga (Terendah)')),
               ],
             ),
           ],
@@ -101,6 +105,7 @@ class _OrderCsViewState extends State<OrderCsView> {
                       children: _tabs.map((tab) {
                         final isSelected = _selectedStatus == tab['value'];
                         return GestureDetector(
+                          key: Key('tab_cs_${tab['value']}'),
                           onTap: () {
                             setState(() => _selectedStatus = tab['value']!);
                             controller.filterByStatus(tab['value']!);
@@ -185,35 +190,38 @@ class _OrderCsViewState extends State<OrderCsView> {
     Color statusColor;
     Color statusBgColor;
     IconData? statusIcon;
-    String statusLabel;
+    String statusLabel = order.status.displayStatus;
 
     if (order.status == 'Delivered') {
-      statusBgColor = const Color(0xFFE6F4EA); statusColor = const Color(0xFF1E8E3E); statusIcon = Icons.check_circle_outline; statusLabel = 'Delivered';
+      statusBgColor = const Color(0xFFE6F4EA); statusColor = const Color(0xFF1E8E3E); statusIcon = Icons.check_circle_outline;
     } else if (order.status == 'Cancelled') {
-      statusBgColor = const Color(0xFFFCE8E6); statusColor = const Color(0xFFD93025); statusIcon = Icons.cancel_outlined; statusLabel = 'Cancelled';
+      statusBgColor = const Color(0xFFFCE8E6); statusColor = const Color(0xFFD93025); statusIcon = Icons.cancel_outlined;
     } else if (order.status == 'Expired') {
-      statusBgColor = const Color(0xFFFCE8E6); statusColor = const Color(0xFFD93025); statusIcon = Icons.timer_off_outlined; statusLabel = 'Expired';
+      statusBgColor = const Color(0xFFFCE8E6); statusColor = const Color(0xFFD93025); statusIcon = Icons.timer_off_outlined;
     } else if (order.status == 'Ordered') {
-      statusBgColor = const Color(0xFFFEF7E0); statusColor = const Color(0xFFF9AB00); statusIcon = Icons.access_time; statusLabel = 'Ordered';
+      statusBgColor = const Color(0xFFFEF7E0); statusColor = const Color(0xFFF9AB00); statusIcon = Icons.access_time;
     } else if (order.status == 'Shipped') {
-      statusBgColor = const Color(0xFFE3F2FD); statusColor = const Color(0xFF1976D2); statusIcon = Icons.local_shipping_outlined; statusLabel = 'Shipped';
+      statusBgColor = const Color(0xFFE3F2FD); statusColor = const Color(0xFF1976D2); statusIcon = Icons.local_shipping_outlined;
     } else if (order.status == 'Paid') {
-      statusBgColor = const Color(0xFFE8EAF6); statusColor = const Color(0xFF3949AB); statusIcon = Icons.payment; statusLabel = 'Paid';
+      statusBgColor = const Color(0xFFE8EAF6); statusColor = const Color(0xFF3949AB); statusIcon = Icons.payment;
     } else {
-      statusBgColor = const Color(0xFFE8EAF6); statusColor = const Color(0xFF3949AB); statusIcon = Icons.info_outline; statusLabel = order.status; 
+      statusBgColor = const Color(0xFFE8EAF6); statusColor = const Color(0xFF3949AB); statusIcon = Icons.info_outline;
     }
 
     final paymentStatus = order.paidAt != null
-        ? 'Completed'
-        : (order.status == 'Cancelled' ? 'Canceled' : 'Pending');
+        ? 'Lunas'
+        : (order.status == 'Cancelled' ? 'Dibatalkan' : 'Belum bayar');
 
     return GestureDetector(
+      key: Key('card_cs_order_${order.orderId}'),
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => OrderDetailCsView(order: order),
         ),
-      ),
+      ).then((_) {
+        controller.fetchAllOrders();
+      }),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),

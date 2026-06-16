@@ -17,6 +17,11 @@ class ProductModel {
   // --- INVENTORY ---
   int stock;
   int? lowStockAlert;
+
+  bool get isLowStock {
+    final alertLevel = (lowStockAlert != null && lowStockAlert! > 0) ? lowStockAlert! : 5;
+    return stock <= alertLevel;
+  }
   
   // --- SPECIFICATIONS ---
   String description;

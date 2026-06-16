@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../controller/admin_cs_controller.dart';
 import '../../authentication/models/cs.dart';
 
@@ -103,7 +104,8 @@ class _FormAddCsViewState extends State<FormAddCsView> {
               _buildLabel('Phone Number'),
               TextFormField(
                 controller: _phoneController,
-                keyboardType: TextInputType.phone,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: _inputDecoration('Enter phone number'),
                 validator: (v) => v!.isEmpty ? 'Required' : null,
               ),

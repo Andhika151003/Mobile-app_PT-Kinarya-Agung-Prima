@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../controllers/register_controller.dart';
-import 'login_view.dart';
 import 'verify_email_view.dart';
+
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -393,12 +393,7 @@ class _RegisterViewState extends State<RegisterView> {
                           button: true,
                           child: TextButton(
                             onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginView(),
-                                ),
-                              );
+                              Navigator.of(context).popUntil((route) => route.isFirst);
                             },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,

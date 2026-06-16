@@ -350,11 +350,8 @@ class _ProductAdminViewState extends State<ProductAdminView>
       symbol: 'Rp ',
       decimalDigits: 0,
     );
-    int alertLevel =
-        (product.lowStockAlert != null && product.lowStockAlert! > 0)
-        ? product.lowStockAlert!
-        : 5;
-    bool isInStock = product.stock > alertLevel;
+    bool isLowStock = product.isLowStock;
+    bool isOutOfStock = product.stock <= 0;
 
     String displaySku = (product.sku != null && product.sku!.isNotEmpty)
         ? product.sku!
@@ -440,22 +437,24 @@ class _ProductAdminViewState extends State<ProductAdminView>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: isInStock
-                          ? Colors.green.shade50
-                          : Colors.red.shade50,
+                      color: isOutOfStock
+                          ? Colors.red.shade50
+                          : (isLowStock ? Colors.orange.shade50 : Colors.green.shade50),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isInStock
-                            ? Colors.green.shade200
-                            : Colors.red.shade200,
+                        color: isOutOfStock
+                            ? Colors.red.shade200
+                            : (isLowStock ? Colors.orange.shade200 : Colors.green.shade200),
                       ),
                     ),
                     child: Text(
-                      isInStock ? 'In Stock' : 'Low Stock Alert',
+                      isOutOfStock
+                          ? 'Out of Stock'
+                          : (isLowStock ? 'Low Stock Alert' : 'In Stock'),
                       style: TextStyle(
-                        color: isInStock
-                            ? primaryGreen
-                            : Colors.red.shade700,
+                        color: isOutOfStock
+                            ? Colors.red.shade700
+                            : (isLowStock ? Colors.orange.shade800 : primaryGreen),
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
@@ -540,62 +539,70 @@ class _ProductAdminViewState extends State<ProductAdminView>
       {'icon': Icons.fastfood_outlined, 'label': 'Foods'},
     ];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: categories.map((cat) {
-        bool isSelected = _selectedCategory == cat['label'];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: categories.asMap().entries.map((entry) {
+          int index = entry.key;
+          var cat = entry.value;
+          bool isSelected = _selectedCategory == cat['label'];
 
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedCategory = isSelected ? 'All' : cat['label'] as String;
-            });
-          },
-          child: Container(
-            width: 75,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected ? primaryGreen : Colors.grey.shade200,
+          return Padding(
+            padding: EdgeInsets.only(right: index == categories.length - 1 ? 0 : 12.0),
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedCategory = isSelected ? 'All' : cat['label'] as String;
+                });
+              },
+              child: Container(
+                width: 75,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: isSelected ? primaryGreen : Colors.grey.shade200,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  color: isSelected
+                      ? primaryGreen.withValues(alpha: 0.05)
+                      : Colors.white,
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? primaryGreen.withValues(alpha: 0.2)
+                            : Colors.grey.shade200,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        cat['icon'] as IconData,
+                        color: isSelected ? primaryGreen : Colors.grey.shade600,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      cat['label'] as String,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isSelected ? primaryGreen : Colors.grey.shade600,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              borderRadius: BorderRadius.circular(12),
-              color: isSelected
-                  ? primaryGreen.withValues(alpha: 0.05)
-                  : Colors.white,
             ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? primaryGreen.withValues(alpha: 0.2)
-                        : Colors.grey.shade200,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    cat['icon'] as IconData,
-                    color: isSelected ? primaryGreen : Colors.grey.shade600,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  cat['label'] as String,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isSelected ? primaryGreen : Colors.grey.shade600,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }

@@ -43,7 +43,10 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
           backgroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          automaticallyImplyLeading: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1F2937), size: 18),
+            onPressed: () => Navigator.pop(context),
+          ),
           title: const Text(
             'Promotions',
             style: TextStyle(

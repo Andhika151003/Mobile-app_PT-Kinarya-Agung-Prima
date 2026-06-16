@@ -6,8 +6,12 @@ import '../models/cs.dart';
 import '../models/retailer.dart';
 
 class LoginController extends ChangeNotifier {
-  FirebaseAuth get _auth => FirebaseAuth.instance;
-  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
+  LoginController({FirebaseAuth? auth, FirebaseFirestore? firestore})
+      : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -55,41 +59,39 @@ class LoginController extends ChangeNotifier {
         password: password,
       );
 
-      // 2. Ambil data user dari Firestore
       final docSnapshot = await _firestore
           .collection('users')
           .doc(userCredential.user!.uid)
-          .get();
+          .get(const GetOptions(source: Source.server));
 
       if (!docSnapshot.exists) {
         throw Exception('User data not found');
       }
 
       final data = docSnapshot.data()!;
-      final bool isActive = data['isActive'] ?? true;
-      final String role = data['role']?.toString().toLowerCase() ?? 'retailer';
 
-      // 3. Cek status aktif (khusus untuk retailer atau semua role jika diperlukan)
-      if (!isActive) {
-        await _auth.signOut(); // Pastikan logout dari Firebase
-        
-        // Ambil nomor admin dari Firestore
+      // Cek status aktif/non-aktif
+      if (data['isActive'] == false) {
         try {
-          final adminSnapshot = await _firestore
+          final adminDocs = await _firestore
               .collection('users')
               .where('role', isEqualTo: 'admin')
               .limit(1)
               .get();
-          
-          if (adminSnapshot.docs.isNotEmpty) {
-            _deactivatedAdminPhone = adminSnapshot.docs.first.data()['phoneNumber'];
+          if (adminDocs.docs.isNotEmpty) {
+            _deactivatedAdminPhone = adminDocs.docs.first.data()['phoneNumber']?.toString();
           }
         } catch (e) {
           debugPrint('Error fetching admin phone: $e');
         }
 
-        throw Exception('Account Deactivated. Please contact admin.');
+        await _auth.signOut();
+        _setError('Account Deactivated');
+        _setLoading(false);
+        return null;
       }
+
+      final String role = (data['role']?.toString().trim().toLowerCase()) ?? 'retailer';
       
       dynamic user;
 

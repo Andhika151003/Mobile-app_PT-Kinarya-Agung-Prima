@@ -7,6 +7,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ecommerce/features/notification/services/push_notification_service.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class MockPushNotificationService extends Mock implements PushNotificationService {}
 
 void main() {
@@ -25,6 +27,7 @@ void main() {
   });
 
   testWidgets('17. Validasi UI garis status pesanan (Order Stepper)', (WidgetTester tester) async {
+    dotenv.loadFromString(envString: 'FCM_SERVER_KEY=dummy\nBACKEND_URL=mock');
     final fakeFirestore = FakeFirebaseFirestore();
     
     // Setup data pesanan dengan status 'Shipped'
@@ -64,9 +67,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verifikasi apakah tahapan status muncul (Gunakan findsAtLeastNWidgets karena teks bisa muncul di info juga)
-    expect(find.text('Ordered'), findsAtLeastNWidgets(1));
-    expect(find.text('Paid'), findsAtLeastNWidgets(1));
-    expect(find.text('Shipped'), findsAtLeastNWidgets(1));
-    expect(find.text('Delivered'), findsAtLeastNWidgets(1));
+    expect(find.text('Belum bayar'), findsAtLeastNWidgets(1));
+    expect(find.text('Dikemas'), findsAtLeastNWidgets(1));
+    expect(find.text('Dikirim'), findsAtLeastNWidgets(1));
+    expect(find.text('Selesai'), findsAtLeastNWidgets(1));
   });
 }

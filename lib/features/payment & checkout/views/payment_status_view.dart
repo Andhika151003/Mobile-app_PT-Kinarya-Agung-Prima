@@ -155,12 +155,12 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
       case 'Paid':
       case 'Shipped':
       case 'Delivered':
-        return 'Payment Successful';
+        return 'Pembayaran Berhasil';
       case 'Expired':
       case 'Cancelled':
-        return 'Payment Expired';
+        return 'Pembayaran Kedaluwarsa';
       default:
-        return 'Payment Processing';
+        return 'Memproses Pembayaran';
     }
   }
 
@@ -169,12 +169,12 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
       case 'Paid':
       case 'Shipped':
       case 'Delivered':
-        return 'Your payment has been confirmed.';
+        return 'Pembayaran Anda telah dikonfirmasi.';
       case 'Expired':
       case 'Cancelled':
-        return 'This transaction has expired/cancelled.';
+        return 'Transaksi ini telah kedaluwarsa/dibatalkan.';
       default:
-        return 'Your payment is being verified. Please wait.';
+        return 'Pembayaran Anda sedang diverifikasi. Harap tunggu.';
     }
   }
 
@@ -285,7 +285,7 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  'Transaction Details',
+                                  'Detail Transaksi',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
@@ -294,22 +294,22 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                                 ),
                                 const SizedBox(height: 16),
                                 _DetailRow(
-                                  label: 'Transaction ID',
+                                  label: 'ID Transaksi',
                                   value:
                                       '#${widget.orderId.substring(0, 12).toUpperCase()}',
                                 ),
                                 _DetailRow(
-                                  label: 'Amount',
+                                  label: 'Total',
                                   value: currencyFmt.format(total),
                                 ),
                                 _DetailRow(
-                                  label: 'Date',
+                                  label: 'Tanggal',
                                   value: date != null
                                       ? DateFormat('MMM dd, yyyy').format(date)
                                       : '-',
                                 ),
                                 _DetailRow(
-                                  label: 'Time',
+                                  label: 'Waktu',
                                   value: date != null
                                       ? DateFormat('hh:mm a').format(date)
                                       : '-',
@@ -326,7 +326,7 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  'Payment Method',
+                                  'Metode Pembayaran',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
@@ -364,7 +364,7 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                                           ),
                                         ),
                                         Text(
-                                          'Order via Kinarya App',
+                                          'Pesanan melalui Aplikasi Kinarya',
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: Colors.grey.shade500,
@@ -420,7 +420,7 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                                         ),
                                       )
                                     : const Text(
-                                        'Check Status Again',
+                                        'Cek Status Lagi',
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.bold,
@@ -446,7 +446,7 @@ class _PaymentStatusViewState extends State<PaymentStatusView> {
                               side: const BorderSide(color: Color(0xFFD0D0D0)),
                             ),
                             child: const Text(
-                              'Back to Home',
+                              'Kembali ke Beranda',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,

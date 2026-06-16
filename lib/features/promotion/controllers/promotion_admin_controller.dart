@@ -10,11 +10,16 @@ import '../../notification/services/push_notification_service.dart';
 class PromotionAdminController extends ChangeNotifier {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
-  final PushNotificationService _pushNotificationService = PushNotificationService();
+  final PushNotificationService _pushNotificationService;
 
-  PromotionAdminController({FirebaseFirestore? firestore, FirebaseAuth? auth})
+  PromotionAdminController({
+    FirebaseFirestore? firestore, 
+    FirebaseAuth? auth,
+    PushNotificationService? pushNotificationService,
+  })
       : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+        _auth = auth ?? FirebaseAuth.instance,
+        _pushNotificationService = pushNotificationService ?? PushNotificationService();
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

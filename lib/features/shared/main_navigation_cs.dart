@@ -5,7 +5,8 @@ import '../../features/authentication/views/profile_cs_view.dart';
 import '../../features/complaint/views/complaint_list_cs_view.dart';
 
 class MainNavigationCs extends StatefulWidget {
-  const MainNavigationCs({super.key});
+  final List<Widget>? pages;
+  const MainNavigationCs({super.key, this.pages});
 
   @override
   State<MainNavigationCs> createState() => _MainNavigationCsState();
@@ -14,7 +15,7 @@ class MainNavigationCs extends StatefulWidget {
 class _MainNavigationCsState extends State<MainNavigationCs> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
+  late final List<Widget> _pages = widget.pages ?? [
     const DashboardCsView(),
     const OrderCsView(), 
     const ComplaintListCsView(),

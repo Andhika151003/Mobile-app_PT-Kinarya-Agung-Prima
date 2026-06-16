@@ -64,9 +64,9 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                   _buildInfoRow(
                     'Stock Available', 
                     '${_currentProduct.stock} units',
-                    valueColor: _currentProduct.stock <= 0 
-                        ? Colors.red 
-                        : (_currentProduct.stock <= (_currentProduct.lowStockAlert ?? 0) ? Colors.orange.shade800 : Colors.black),
+                    valueColor: _currentProduct.stock <= 0
+                        ? Colors.red
+                        : (_currentProduct.isLowStock ? Colors.orange.shade800 : Colors.black),
                   ),
                 ],
               ),
@@ -276,25 +276,24 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
   }
 
   Widget _buildTitleAndBadge() {
-    String badgeText;
-    Color badgeColor;
-    Color textColor;
+    final bool isOut = _currentProduct.stock <= 0;
+    final bool isLow = _currentProduct.isLowStock;
 
-    final int threshold = _currentProduct.lowStockAlert ?? 0;
+    final String statusText = isOut
+        ? 'Out of Stock'
+        : (isLow ? 'Low Stock Alert' : 'In Stock');
 
-    if (_currentProduct.stock <= 0) {
-      badgeText = 'Out of Stock';
-      badgeColor = Colors.red.shade50;
-      textColor = Colors.red;
-    } else if (_currentProduct.stock <= threshold) {
-      badgeText = 'Low Stock';
-      badgeColor = Colors.orange.shade50;
-      textColor = Colors.orange.shade800;
-    } else {
-      badgeText = 'In Stock';
-      badgeColor = Colors.green.shade50;
-      textColor = const Color(0xFF458833);
-    }
+    final Color bgColor = isOut
+        ? Colors.red.shade50
+        : (isLow ? Colors.orange.shade50 : Colors.green.shade50);
+
+    final Color borderColor = isOut
+        ? Colors.red.shade200
+        : (isLow ? Colors.orange.shade200 : Colors.green.shade200);
+
+    final Color textColor = isOut
+        ? Colors.red.shade700
+        : (isLow ? Colors.orange.shade800 : const Color(0xFF458833));
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,11 +305,12 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: badgeColor,
+            color: bgColor,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
           ),
           child: Text(
-            badgeText,
+            statusText,
             style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.bold),
           ),
         ),
@@ -318,12 +318,19 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {Color valueColor = Colors.black}) {
+  Widget _buildInfoRow(String label, String value, {Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: valueColor)),
+        Text(
+          value, 
+          style: TextStyle(
+            fontSize: 14, 
+            fontWeight: FontWeight.bold, 
+            color: valueColor ?? Colors.black,
+          ),
+        ),
       ],
     );
   }

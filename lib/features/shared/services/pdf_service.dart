@@ -6,11 +6,17 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../order/models/order.dart';
 
+
 class PdfService {
   static final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
   static final dateFormat = DateFormat('dd MMMM yyyy, HH:mm');
 
   static Future<void> generateAndOpenInvoice(OrderModel order) async {
+    if (order.status != 'Delivered' &&
+        order.status != 'Cancelled' &&
+        order.status != 'Paid') {
+      return;
+    }
     final pdf = pw.Document();
 
     final invoiceId = order.orderId;
@@ -88,13 +94,7 @@ class PdfService {
                             pw.Text(order.paymentMethod, style: const pw.TextStyle(fontSize: 10)),
                           ],
                         ),
-                        pw.Row(
-                          children: [
-                            pw.Text('Status:', style: const pw.TextStyle(fontSize: 10)),
-                            pw.Spacer(),
-                            pw.Text(order.status, style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: order.status == 'Paid' || order.status == 'Delivered' ? PdfColors.green : PdfColors.orange)),
-                          ],
-                        ),
+
                         pw.SizedBox(height: 4),
                         pw.Divider(color: PdfColors.grey200, thickness: 0.5),
                         pw.SizedBox(height: 4),

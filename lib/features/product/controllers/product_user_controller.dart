@@ -3,7 +3,10 @@ import '../models/product.dart';
 import '../../promotion/models/promotion.dart';
 
 class ProductUserController {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+
+  ProductUserController({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   Stream<List<PromotionModel>> getActivePromotionsStream() {
     return _firestore

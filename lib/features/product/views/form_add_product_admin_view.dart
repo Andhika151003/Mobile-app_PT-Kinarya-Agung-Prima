@@ -230,7 +230,17 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
                 isDecimal: false,
                 maxLength: 6,
                 hint: '10',
-                isRequired: false,
+                isRequired: true,
+                customValidator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '* Wajib diisi';
+                  }
+                  final intValue = int.tryParse(value);
+                  if (intValue == null || intValue < 1) {
+                    return 'Min. Order minimal 1';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 24),
 
@@ -385,6 +395,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
     bool isRequired = true,
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? customValidator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -400,9 +411,9 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               : [FilteringTextInputFormatter.digitsOnly]) 
           : null),
       maxLines: maxLines,
-        validator: (value) {
+        validator: customValidator ?? (value) {
           if (isRequired && (value == null || value.trim().isEmpty)) {
-            return '* Required';
+            return '* Wajib diisi';
           }
           return null;
         },
@@ -481,7 +492,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
             _selectedCategory = newValue;
           });
         },
-        validator: (value) => value == null ? '* Category is required' : null,
+        validator: (value) => value == null ? '* Kategori wajib diisi' : null,
       ),
     );
   }

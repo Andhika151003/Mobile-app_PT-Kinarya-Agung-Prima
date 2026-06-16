@@ -48,6 +48,8 @@ class OrderUserController {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final String? duitkuStatus = data['statusCode'] as String?;
+        
         if (data['success'] == true && data['status'] == 'Paid') {
           await OrderStatsHelper.markOrderAsPaid(orderId, firestore: _firestore);
           
@@ -58,6 +60,11 @@ class OrderUserController {
             relatedId: orderId,
           );
           
+          return true;
+        } else if (duitkuStatus == '02') {
+          await _firestore.collection('orders').doc(orderId).update({
+            'status': 'Expired',
+          });
           return true;
         }
       }
@@ -87,6 +94,59 @@ class OrderUserController {
     } catch (e) {
       debugPrint("Error updating order status: $e");
       return false;
+    }
+  }
+
+  Future<bool> requestCancellation(String orderId, String reason) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'cancellationReason': reason,
+        'cancellationStatus': 'Requested',
+      });
+
+      await _pushNotificationService.sendNotificationToAdmin(
+        title: 'Pengajuan Pembatalan',
+        message: 'Pesanan $orderId diajukan pembatalan oleh retailer.',
+        type: 'order',
+        relatedId: orderId,
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint("Error requesting cancellation: $e");
+      return false;
+    }
+  }
+
+  Future<void> syncAllPendingOrders(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('orders')
+          .where('userId', isEqualTo: userId)
+          .where('status', whereIn: ['Ordered', 'Pending Payment'])
+          .get();
+
+      if (snapshot.docs.isEmpty) return;
+
+      debugPrint("Checking ${snapshot.docs.length} pending orders for sync...");
+
+      for (var doc in snapshot.docs) {
+        final orderId = doc.id;
+        final data = doc.data();
+        
+        final expiredAt = data['paymentExpiredAt'] as Timestamp?;
+        if (expiredAt != null && DateTime.now().isAfter(expiredAt.toDate())) {
+          await _firestore.collection('orders').doc(orderId).update({
+            'status': 'Expired',
+          });
+          debugPrint("Order $orderId marked as Expired locally.");
+          continue;
+        }
+
+        await syncDuitkuPayment(orderId);
+      }
+    } catch (e) {
+      debugPrint("Error syncAllPendingOrders: $e");
     }
   }
 }

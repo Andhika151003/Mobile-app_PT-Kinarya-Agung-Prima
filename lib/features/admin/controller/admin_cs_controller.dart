@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../authentication/models/cs.dart';
 
@@ -23,6 +24,9 @@ class AdminCsController extends ChangeNotifier {
   Future<void> fetchAllCS() async {
     _setLoading(true);
     try {
+      if (!await _isAdmin()) {
+        throw Exception("Unauthorized: Only Admin can access Customer Support management");
+      }
       final snapshot = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'cs')
@@ -99,12 +103,26 @@ class AdminCsController extends ChangeNotifier {
       }
 
       // 2. Memastikan Akun Terbuat di Firebase Auth
-      // Menggunakan secondary app (jika mungkin) atau createUser standard.
-      // Note: Di unit test kita menggunakan MockFirebaseAuth yang mensimulasikan Auth.
-      final userCredential = await _auth.createUserWithEmailAndPassword(
-        email: cs.email,
-        password: cs.password,
-      );
+      // Menggunakan secondary app untuk mencegah login otomatis (auto sign-in)
+      UserCredential userCredential;
+      try {
+        FirebaseApp app = await Firebase.initializeApp(
+          name: 'SecondaryApp',
+          options: Firebase.app().options,
+        );
+        final secondaryAuth = FirebaseAuth.instanceFor(app: app);
+        userCredential = await secondaryAuth.createUserWithEmailAndPassword(
+          email: cs.email,
+          password: cs.password,
+        );
+        await app.delete(); // Hapus secondary app setelah selesai
+      } catch (e) {
+        // Fallback for unit testing where Firebase core isn't initialized
+        userCredential = await _auth.createUserWithEmailAndPassword(
+          email: cs.email,
+          password: cs.password,
+        );
+      }
 
       final uid = userCredential.user?.uid;
       if (uid == null) throw Exception("Failed to obtain UID from Firebase Auth");
@@ -128,6 +146,35 @@ class AdminCsController extends ChangeNotifier {
       return false;
     } catch (e) {
       _errorMessage = e.toString();
+      _setLoading(false);
+      return false;
+    }
+  }
+  Future<bool> updateCS(String uid, {required String username, required String phoneNumber}) async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      if (!await _isAdmin()) {
+        throw Exception("Unauthorized: Only Admin can edit Customer Support");
+      }
+
+      await _firestore.collection('users').doc(uid).update({
+        'username': username,
+        'phoneNumber': phoneNumber,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      final index = _csList.indexWhere((cs) => cs['id'] == uid);
+      if (index != -1) {
+        _csList[index]['username'] = username;
+        _csList[index]['phoneNumber'] = phoneNumber;
+      }
+
+      _setLoading(false);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = "Failed to update CS: ${e.toString()}";
       _setLoading(false);
       return false;
     }
