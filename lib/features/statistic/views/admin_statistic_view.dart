@@ -404,41 +404,44 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
                   final productId = item['id'];
                   final imageUrl = item['imageUrl'];
 
-                  return ListTile(
-                    onTap: productId != null ? () async {
-                      final doc = await FirebaseFirestore.instance.collection('products').doc(productId).get();
-                      if (doc.exists && context.mounted) {
-                        final product = ProductModel.fromMap(doc.data()!, doc.id);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProductDetailAdminView(product: product),
-                          ),
-                        );
-                      }
-                    } : null,
-                    leading: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                        image: imageUrl != null ? DecorationImage(
-                          image: NetworkImage(imageUrl),
-                          fit: BoxFit.cover,
-                        ) : null,
+                  return Material(
+                    type: MaterialType.transparency,
+                    child: ListTile(
+                      onTap: productId != null ? () async {
+                        final doc = await FirebaseFirestore.instance.collection('products').doc(productId).get();
+                        if (doc.exists && context.mounted) {
+                          final product = ProductModel.fromMap(doc.data()!, doc.id);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailAdminView(product: product),
+                            ),
+                          );
+                        }
+                      } : null,
+                      leading: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                          image: (imageUrl != null && imageUrl.toString().isNotEmpty) ? DecorationImage(
+                            image: NetworkImage(imageUrl),
+                            fit: BoxFit.cover,
+                          ) : null,
+                        ),
+                        child: (imageUrl == null || imageUrl.toString().isEmpty) ? const Icon(Icons.image_not_supported, color: Colors.grey) : null,
                       ),
-                      child: imageUrl == null ? const Icon(Icons.image_not_supported, color: Colors.grey) : null,
-                    ),
-                    title: Text(item['name'], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    subtitle: Text('${item['sales']} items sold', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(currencyFormat.format(item['revenue']), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF111827))),
-                        const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
-                      ],
+                      title: Text(item['name'], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      subtitle: Text('${item['sales']} items sold', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(currencyFormat.format(item['revenue']), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+                          const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -469,14 +472,17 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
                 separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey[100]),
                 itemBuilder: (context, index) {
                   final item = items[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.grey[50],
-                      child: Text('${index + 1}', style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 14)),
+                  return Material(
+                    type: MaterialType.transparency,
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.grey[50],
+                        child: Text('${index + 1}', style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 14)),
+                      ),
+                      title: Text(item['name'], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      subtitle: Text('Top spender', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                      trailing: Text(valueLabel(item), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF111827))),
                     ),
-                    title: Text(item['name'], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    subtitle: Text('Top spender', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-                    trailing: Text(valueLabel(item), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF111827))),
                   );
                 },
               ),
