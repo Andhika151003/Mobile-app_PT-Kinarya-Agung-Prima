@@ -378,27 +378,48 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
                           color: Color(0xFF2E7D32)),
                     ),
                   )
-                : _appliedProducts.isEmpty
+                : _promotion.applicableTo == 'all'
                     ? Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
+                          color: const Color(0xFFE8F5E9),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: const Color(0xFFE5E7EB)),
+                          border: Border.all(color: const Color(0xFFC8E6C9)),
                         ),
-                        child: const Text(
-                          'No products applied',
-                          style: TextStyle(
-                              fontSize: 13, color: Color(0xFF9CA3AF)),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.all_inclusive, color: Color(0xFF2E7D32), size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'All products applied',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2E7D32)),
+                            ),
+                          ],
                         ),
                       )
-                    : Column(
-                        children: _appliedProducts
-                            .map((p) => _productCard(p))
-                            .toList(),
-                      ),
+                    : _appliedProducts.isEmpty
+                        ? Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: const Color(0xFFE5E7EB)),
+                            ),
+                            child: const Text(
+                              'No products applied',
+                              style: TextStyle(
+                                  fontSize: 13, color: Color(0xFF9CA3AF)),
+                            ),
+                          )
+                        : Column(
+                            children: _appliedProducts
+                                .map((p) => _productCard(p))
+                                .toList(),
+                          ),
 
             const SizedBox(height: 32),
           ],
