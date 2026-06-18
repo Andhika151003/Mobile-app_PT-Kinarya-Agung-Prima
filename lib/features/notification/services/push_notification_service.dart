@@ -8,11 +8,16 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 
 class PushNotificationService {
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseMessaging? _fcmOverride;
+  FlutterLocalNotificationsPlugin? _localNotificationsOverride;
+  FirebaseFirestore? _firestoreOverride;
+  FirebaseAuth? _authOverride;
+
+  FirebaseMessaging get _fcm => _fcmOverride ?? FirebaseMessaging.instance;
+  FlutterLocalNotificationsPlugin get _localNotifications =>
+      _localNotificationsOverride ?? FlutterLocalNotificationsPlugin();
+  FirebaseFirestore get _firestore => _firestoreOverride ?? FirebaseFirestore.instance;
+  FirebaseAuth get _auth => _authOverride ?? FirebaseAuth.instance;
 
   StreamSubscription<QuerySnapshot>? _userNotifSubscription;
   StreamSubscription<QuerySnapshot>? _adminNotifSubscription;
@@ -21,6 +26,19 @@ class PushNotificationService {
       PushNotificationService._internal();
   factory PushNotificationService() => _instance;
   PushNotificationService._internal();
+
+  @visibleForTesting
+  void setupMocks({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+    FirebaseMessaging? fcm,
+    FlutterLocalNotificationsPlugin? localNotifications,
+  }) {
+    _firestoreOverride = firestore;
+    _authOverride = auth;
+    _fcmOverride = fcm;
+    _localNotificationsOverride = localNotifications;
+  }
 
   Future<void> initialize() async {
     NotificationSettings settings = await _fcm.requestPermission(
