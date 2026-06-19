@@ -50,6 +50,8 @@ dev_dependencies:
   mocktail: ^1.0.5
   patrol: ^4.5.0
   test_api: any
+  integration_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true
