@@ -188,6 +188,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
       title: const Text('Product Details', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
       actions: [
         IconButton(
+          key: const Key('detail_product_edit_btn'),
           icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 22),
           onPressed: () async {
             final updatedData = await Navigator.push(
@@ -203,6 +204,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
           },
         ),
         IconButton(
+          key: const Key('detail_product_delete_btn'),
           icon: const Icon(Icons.delete_outline, color: Colors.red, size: 22),
           onPressed: () => _showDeleteDialog(context),
         ),
@@ -429,6 +431,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
               Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
               
               InkWell(
+                key: const Key('dialog_delete_cancel_btn'),
                 onTap: () => Navigator.pop(dialogContext),
                 child: Container(
                   width: double.infinity,
@@ -444,6 +447,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
               Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
               
               InkWell(
+                key: const Key('dialog_delete_confirm_btn'),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(24),
                   bottomRight: Radius.circular(24),
