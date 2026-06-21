@@ -56,7 +56,7 @@ void main() {
 
     group('Dropdown Validator (TC-13)', () {
       test('TC-13: Business Type Dropdown Validation', () {
-        final validateBusinessType = (String? value) => value == null ? 'Please select your business type' : null;
+        String? validateBusinessType(String? value) => value == null ? 'Please select your business type' : null;
         expect(validateBusinessType(null), 'Please select your business type');
         expect(validateBusinessType('Pet Shop'), null);
       });

@@ -30,8 +30,8 @@ void main() async {
 
     debugPrint('Inisialisasi Supabase...');
     await Supabase.initialize(
-      url: dotenv.env['SUPABASE_URL']!,
-      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+      url: dotenv.env['SUPABASE_URL'] ?? '',
+      publishableKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
     );
     debugPrint('Supabase berhasil diinisialisasi.');
 
