@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/firebase_provider.dart';
 import '../models/admin.dart';
 import '../models/cs.dart';
 import '../models/retailer.dart';
@@ -10,8 +11,8 @@ class LoginController extends ChangeNotifier {
   final FirebaseFirestore _firestore;
 
   LoginController({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+      : _auth = auth ?? AppFirebase.auth,
+        _firestore = firestore ?? AppFirebase.firestore;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/firebase_provider.dart';
 import '../../../core/utils/format_util.dart';
 import 'auth_gate.dart';
 import '../controllers/profile_cs_controller.dart';
@@ -161,7 +162,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
 
                           try {
                             await PushNotificationService().clearToken();
-                            await FirebaseAuth.instance.signOut();
+                            await AppFirebase.auth.signOut();
 
                             if (context.mounted) {
                               Navigator.pushAndRemoveUntil(

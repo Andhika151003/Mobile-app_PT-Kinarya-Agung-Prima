@@ -1,6 +1,7 @@
 import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/firebase_provider.dart';
 import '../../../core/utils/format_util.dart';
 import 'auth_gate.dart';
 import 'form_edit_user_view.dart';
@@ -55,7 +56,7 @@ class _ProfileUserViewState extends State<ProfileUserView>
           isActive = data['isActive'] ?? true;
           photoUrl = data['photoUrl'];
           isEmailVerified =
-              FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+              AppFirebase.auth.currentUser?.emailVerified ?? false;
 
           // Stats dari controller
           totalOrders = stats['totalOrders'] ?? 0;
@@ -205,7 +206,7 @@ class _ProfileUserViewState extends State<ProfileUserView>
 
                           try {
                             await PushNotificationService().clearToken();
-                            await FirebaseAuth.instance.signOut();
+                            await AppFirebase.auth.signOut();
 
                             if (context.mounted) {
                               Navigator.pushAndRemoveUntil(

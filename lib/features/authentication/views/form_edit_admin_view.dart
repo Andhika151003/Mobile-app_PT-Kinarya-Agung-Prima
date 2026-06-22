@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/firebase_provider.dart';
 import '../controllers/profile_admin_controller.dart';
 
 class FormProfileAdminView extends StatefulWidget {
@@ -53,9 +54,9 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
 
   Future<void> _fetchCurrentData() async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final user = AppFirebase.auth.currentUser;
       if (user != null) {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        final doc = await AppFirebase.firestore.collection('users').doc(user.uid).get();
         if (doc.exists && mounted) {
           final data = doc.data() as Map<String, dynamic>;
           setState(() {
@@ -130,9 +131,9 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
                     ),
                     const SizedBox(height: 20),
                     
-                    _buildTextField('Business Name', 'Enter Your Name', _nameController),
-                    _buildTextField('Business Type', 'Enter Your Business Type', _typeController),
-                    _buildTextField('Contact', 'Enter Your Number', _contactController, isNumber: true),
+                    _buildTextField('Business Name', 'Enter Your Name', _nameController, key: const Key('businessNameField')),
+                    _buildTextField('Business Type', 'Enter Your Business Type', _typeController, key: const Key('businessTypeField')),
+                    _buildTextField('Contact', 'Enter Your Number', _contactController, key: const Key('contactField'), isNumber: true),
                     
                     const SizedBox(height: 32),
                     _buildActionButtons(context, primaryGreen),
@@ -226,7 +227,7 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
     );
   }
 
-  Widget _buildTextField(String label, String hintText, TextEditingController controller, {bool isNumber = false, int maxLines = 1}) {
+  Widget _buildTextField(String label, String hintText, TextEditingController controller, {Key? key, bool isNumber = false, int maxLines = 1}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -242,6 +243,7 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
           ),
           const SizedBox(height: 8),
           TextFormField(
+            key: key,
             controller: controller,
             keyboardType: isNumber ? TextInputType.number : (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
             maxLines: maxLines,

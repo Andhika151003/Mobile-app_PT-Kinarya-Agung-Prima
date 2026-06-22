@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../../../core/firebase_provider.dart';
 
 class ForgotPasswordController extends ChangeNotifier {
   final FirebaseAuth _auth;
@@ -9,8 +10,8 @@ class ForgotPasswordController extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   ForgotPasswordController({FirebaseAuth? auth, FirebaseFirestore? firestore}) 
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+      : _auth = auth ?? AppFirebase.auth,
+        _firestore = firestore ?? AppFirebase.firestore;
 
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {

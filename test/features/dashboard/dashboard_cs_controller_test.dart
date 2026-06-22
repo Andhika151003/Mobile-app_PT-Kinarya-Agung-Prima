@@ -21,6 +21,8 @@ void main() {
     group('Stats & Streams Mappings (TC-20)', () {
       test('getComplaintStatsStream returns correct counts for pending and resolved today', () async {
         final now = DateTime.now();
+        final subResolved = now.hour > 0 ? const Duration(minutes: 30) : const Duration(seconds: 1);
+        final subCreated = now.hour > 0 ? const Duration(hours: 1) : const Duration(seconds: 2);
 
         // 1. Pending (open) complaint
         await mockFirestore.collection('complaints').doc('comp1').set({
@@ -31,8 +33,8 @@ void main() {
         // 2. Resolved today complaint
         await mockFirestore.collection('complaints').doc('comp2').set({
           'status': 'resolved',
-          'resolvedAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 30))),
-          'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
+          'resolvedAt': Timestamp.fromDate(now.subtract(subResolved)),
+          'createdAt': Timestamp.fromDate(now.subtract(subCreated)),
         });
 
         // 3. Resolved yesterday complaint (should not count as resolved today)

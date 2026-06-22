@@ -8,12 +8,20 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'features/notification/services/push_notification_service.dart';
 
+import 'core/firebase_provider.dart';
+
 final GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
     debugPrint('--- Memulai Inisialisasi Aplikasi ---');
+
+    if (AppFirebase.isMocked) {
+      debugPrint('Bypassing real initializations for testing.');
+      runApp(const MyApp());
+      return;
+    }
 
     debugPrint('Loading .env...');
     await dotenv.load(fileName: ".env");

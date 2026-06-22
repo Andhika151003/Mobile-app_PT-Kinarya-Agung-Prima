@@ -59,6 +59,7 @@ class _AdminMasterViewState extends State<AdminMasterView> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
                   child: TextField(
+                    key: const Key('searchField'),
                     controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Search retailer',

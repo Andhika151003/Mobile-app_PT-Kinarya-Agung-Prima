@@ -3,14 +3,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../authentication/models/cs.dart';
+import '../../../core/firebase_provider.dart';
 
 class AdminCsController extends ChangeNotifier {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
   AdminCsController({FirebaseFirestore? firestore, FirebaseAuth? auth})
-      : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+      : _firestore = firestore ?? AppFirebase.firestore,
+        _auth = auth ?? AppFirebase.auth;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

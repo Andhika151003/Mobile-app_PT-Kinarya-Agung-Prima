@@ -11,6 +11,7 @@ import '../../shared/widgets/shimmer_loading.dart';
 import '../../notification/views/notif_admin_view.dart';
 import '../../notification/controllers/notif_admin_controller.dart';
 import 'package:ecommerce/features/order/controllers/order_admin_controller.dart';
+import '../../../core/firebase_provider.dart';
 
 
 class DashboardAdminView extends StatefulWidget {
@@ -22,7 +23,7 @@ class DashboardAdminView extends StatefulWidget {
 
 class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticKeepAliveClientMixin {
   final DashboardAdminController _controller = DashboardAdminController();
-  final NotificationAdminController _notifController = NotificationAdminController();
+  late final NotificationAdminController? _notifController;
 
   Map<String, dynamic> overviewStats = {};
   List<Map<String, dynamic>> promotions = [];
@@ -36,6 +37,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
   @override
   void initState() {
     super.initState();
+    _notifController = AppFirebase.isMocked ? null : NotificationAdminController();
     _loadDashboardData();
     
     _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
@@ -184,7 +186,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
       children: [
         Image.asset('assets/images/logo.png', height: 35),
         StreamBuilder<int>(
-          stream: _notifController.getUnreadCount(),
+          stream: _notifController != null ? _notifController!.getUnreadCount() : Stream.value(0),
           builder: (context, snapshot) {
             final unreadCount = snapshot.data ?? 0;
             return Stack(

@@ -139,6 +139,7 @@ class _RegisterViewState extends State<RegisterView> {
                     Semantics(
                       label: 'input_register_email',
                       child: TextFormField(
+                        key: const Key('emailField'),
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         maxLength: 255,
@@ -163,6 +164,7 @@ class _RegisterViewState extends State<RegisterView> {
                     Semantics(
                       label: 'input_register_fullname',
                       child: TextFormField(
+                        key: const Key('fullNameField'),
                         controller: _fullNameController,
                         maxLength: 100,
                         inputFormatters: [
@@ -189,6 +191,7 @@ class _RegisterViewState extends State<RegisterView> {
                     Semantics(
                       label: 'input_register_business_type',
                       child: DropdownButtonFormField<String>(
+                        key: const Key('businessTypeDropdown'),
                         initialValue: _selectedBusinessType,
                         items: _businessTypes.map((type) {
                           return DropdownMenuItem(
@@ -225,6 +228,7 @@ class _RegisterViewState extends State<RegisterView> {
                     Semantics(
                       label: 'input_register_phone',
                       child: TextFormField(
+                        key: const Key('phoneField'),
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         maxLength: 15,
@@ -238,9 +242,9 @@ class _RegisterViewState extends State<RegisterView> {
                             child: Text(
                               '+62',
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
                               ),
                             ),
                           ),
@@ -267,6 +271,7 @@ class _RegisterViewState extends State<RegisterView> {
                     Semantics(
                       label: 'input_register_password',
                       child: TextFormField(
+                        key: const Key('passwordField'),
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         maxLength: 64,
@@ -306,6 +311,7 @@ class _RegisterViewState extends State<RegisterView> {
                     Semantics(
                       label: 'input_register_confirm_password',
                       child: TextFormField(
+                        key: const Key('confirmPasswordField'),
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirmPassword,
                         maxLength: 64,
@@ -341,6 +347,7 @@ class _RegisterViewState extends State<RegisterView> {
                       child: Semantics(
                         label: 'btn_register_submit',
                         child: ElevatedButton(
+                          key: const Key('createAccountButton'),
                           onPressed: controller.isLoading
                               ? null
                               : () => _handleRegister(controller),
