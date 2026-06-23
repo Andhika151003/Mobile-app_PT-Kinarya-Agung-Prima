@@ -17,6 +17,7 @@ void main() {
     // TC - 56 : Retailer Hanya menampilkan promosi aktif untuk user
     // TC - 63 : Retailer Validasi promo tidak berlaku jika melewati masa aktif
     test('TC - 56 & TC - 63 : Retailer Hanya menampilkan promosi aktif dan belum kedaluwarsa', () async {
+      // Arrange
       final now = DateTime.now();
 
       // Expired promo (TC - 63 : promo tidak berlaku jika melewati masa aktif)
@@ -73,14 +74,17 @@ void main() {
         'createdBy': 'user1'
       });
 
+      // Act
       final activePromos = await userPromotionController.getActivePromotions();
 
+      // Assert
       expect(activePromos.length, 1);
       expect(activePromos.first.title, 'Promo Aktif');
     });
 
     // TC - 57 : Retailer Promosi diurutkan berdasarkan prioritas
     test('TC - 57 : Retailer Promosi diurutkan berdasarkan prioritas', () {
+      // Arrange
       final p1 = {
         'title': 'Promo Rendah',
         'discountType': 'percentage',
@@ -91,8 +95,9 @@ void main() {
         'discountType': 'fixed',
         'discountValue': 50000.0,
       };
-
       final promos = [p1, p2];
+
+      // Act
       promos.sort((a, b) {
         int typePriority(String type) {
           if (type == 'fixed') return 3;
@@ -102,16 +107,19 @@ void main() {
         return typePriority(b['discountType'] as String).compareTo(typePriority(a['discountType'] as String));
       });
 
+      // Assert
       expect(promos.first['title'], 'Promo Tinggi');
     });
 
     // TC - 60 : Retailer Menampilkan banner promosi di halaman utama
     test('TC - 60 : Retailer Menampilkan banner promosi di halaman utama', () {
+      // Arrange & Act
       final bannerPromos = [
         {'title': 'Promo Merdeka', 'imageUrl': 'banner1.jpg'},
         {'title': 'Promo Ramadhan', 'imageUrl': 'banner2.jpg'},
       ];
 
+      // Assert
       expect(bannerPromos.length, 2);
       expect(bannerPromos.first['imageUrl'], isNotNull);
     });
@@ -119,6 +127,7 @@ void main() {
     // TC - 61 : Retailer Klik banner promosi mengarah ke daftar produk terkait
     // TC - 62 : Retailer Filter produk berdasarkan kategori promosi
     test('TC - 61 & TC - 62 : Retailer Klik banner dan Filter produk berdasarkan kategori promosi', () {
+      // Arrange
       final productIdsInPromo = ['prod1', 'prod2'];
       final allProducts = [
         {'id': 'prod1', 'name': 'Produk A', 'category': 'Beauty'},
@@ -126,12 +135,14 @@ void main() {
         {'id': 'prod3', 'name': 'Produk C', 'category': 'Foods'},
       ];
 
+      // Act
       // TC - 61 : Filter berdasarkan productIds yang terkait dengan banner promo
       final relatedProducts = allProducts.where((p) => productIdsInPromo.contains(p['id'])).toList();
-      expect(relatedProducts.length, 2);
-
       // TC - 62 : Filter produk promosi berdasarkan kategori 'Beauty'
       final beautyPromoProducts = relatedProducts.where((p) => p['category'] == 'Beauty').toList();
+
+      // Assert
+      expect(relatedProducts.length, 2);
       expect(beautyPromoProducts.length, 2);
     });
   });

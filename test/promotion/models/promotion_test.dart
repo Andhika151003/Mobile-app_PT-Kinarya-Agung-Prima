@@ -93,7 +93,7 @@ void main() {
 
     // TC - 58 : Retailer Menampilkan label diskon pada kartu produk
     test('TC - 58 : Retailer Menampilkan label diskon pada kartu produk (discountText)', () {
-      // Arrange — Membuat 2 promo dengan tipe diskon berbeda (percentage & fixed)
+      // Arrange
       final percentage = PromotionModel(
         title: '', description: '', discountType: 'percentage', discountValue: 25,
         productIds: [], applicableTo: 'all', startDate: now, endDate: now, startTime: '', endTime: '', status: 'active', sku: '', createdAt: now, createdBy: ''
@@ -103,18 +103,21 @@ void main() {
         productIds: [], applicableTo: 'all', startDate: now, endDate: now, startTime: '', endTime: '', status: 'active', sku: '', createdAt: now, createdBy: ''
       );
 
-      // Act & Assert — Mengakses getter discountText dan memverifikasi format teks
+      // Act & Assert
       expect(percentage.discountText, '25% OFF');
       expect(fixed.discountText, 'Rp 15.000 OFF');
     });
 
     // TC - 59 : Retailer Menampilkan harga coret (original) dan harga promo
     test('TC - 59 : Retailer Menampilkan harga coret (original) dan harga promo', () {
+      // Arrange
       final originalPrice = 100000;
       final discountValue = 20.0; // 20%
       
+      // Act
       final promoPrice = originalPrice * (1 - (discountValue / 100));
 
+      // Assert
       expect(originalPrice, 100000); // Harga asli (untuk dicoret di UI)
       expect(promoPrice, 80000.0);   // Harga promo yang ditampilkan
     });

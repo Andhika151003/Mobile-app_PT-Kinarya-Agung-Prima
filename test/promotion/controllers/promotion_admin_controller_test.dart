@@ -23,6 +23,7 @@ void main() {
   group('Unit Test PromotionAdminController', () {
     // TC - 42 : Admin Menampilkan daftar promosi
     test('TC - 42 : Admin Menampilkan daftar promosi', () async {
+      // Arrange
       await fakeFirestore.collection('promotions').doc('promo1').set({
         'title': 'Promo A',
         'description': 'Deskripsi A',
@@ -41,20 +42,26 @@ void main() {
         'createdBy': 'admin123'
       });
 
+      // Act
       await adminPromotionController.fetchAllPromotions();
       
+      // Assert
       expect(adminPromotionController.promotions.length, 1);
       expect(adminPromotionController.promotions.first.title, 'Promo A');
     });
 
     // TC - 43 : Admin Tampil pesan kosong jika tidak ada promosi
     test('TC - 43 : Admin Tampil pesan kosong jika tidak ada promosi', () async {
+      // Act
       await adminPromotionController.fetchAllPromotions();
+
+      // Assert
       expect(adminPromotionController.promotions.isEmpty, true);
     });
 
     // TC - 44 : Admin Membuat promosi baru
     test('TC - 44 : Admin Membuat promosi baru', () async {
+      // Arrange & Act
       final result = await adminPromotionController.createPromotion(
         title: 'Promo Baru',
         description: 'Deskripsi Promo Baru',
@@ -69,6 +76,7 @@ void main() {
         sku: 'NEW-PROMO-5000',
       );
 
+      // Assert
       expect(result, isTrue);
       final snapshot = await fakeFirestore.collection('promotions').get();
       expect(snapshot.docs.length, 1);
@@ -77,56 +85,69 @@ void main() {
 
     // TC - 45 : Admin Validasi form promosi kosong — semua field
     test('TC - 45 : Admin Validasi form promosi kosong — semua field', () {
+      // Arrange
       final titleEmpty = ''.trim().isEmpty;
       final discountTypeEmpty = ''.isEmpty;
       final discountValInvalid = double.tryParse('') == null;
 
+      // Act
       final isInvalid = titleEmpty || discountTypeEmpty || discountValInvalid;
+
+      // Assert
       expect(isInvalid, true); // Form validation detects empty values
     });
 
     // TC - 46 : Admin Validasi waktu mulai lebih besar dari waktu akhir di tanggal yang sama
     test('TC - 46 : Admin Validasi waktu mulai lebih besar dari waktu akhir di tanggal yang sama', () {
-      // Sama tanggal
+      // Arrange
       final startDate = DateTime(2026, 6, 23);
       final endDate = DateTime(2026, 6, 23);
-
       final startTime = '14:00';
       final endTime = '10:00';
 
       final startParts = startTime.split(':');
       final endParts = endTime.split(':');
-
       final startHour = int.parse(startParts[0]);
       final startMin = int.parse(startParts[1]);
       final endHour = int.parse(endParts[0]);
       final endMin = int.parse(endParts[1]);
 
+      // Act
       final timeInvalid = (startHour > endHour) || (startHour == endHour && startMin >= endMin);
+
+      // Assert
       expect(startDate == endDate && timeInvalid, true); // Waktu tidak valid
     });
 
     // TC - 47 : Admin Validasi produk wajib dipilih jika scope "products"
     test('TC - 47 : Admin Validasi produk wajib dipilih jika scope "products"', () {
+      // Arrange
       final applicableTo = 'products';
       final selectedProductIds = <String>[];
 
+      // Act
       final productValidationError = applicableTo == 'products' && selectedProductIds.isEmpty;
+
+      // Assert
       expect(productValidationError, true); // Validasi produk kosong jika scope "products"
     });
 
     // TC - 48 : Admin Upload gambar banner promosi
     test('TC - 48 : Admin Upload gambar banner promosi', () {
+      // Arrange & Act
       final promo = {
         'title': 'Promo Banner',
         'imageUrl': 'supabase_banner_url_xyz.jpg'
       };
+
+      // Assert
       expect(promo['imageUrl'], isNotNull);
       expect(promo['imageUrl']!.endsWith('.jpg'), true);
     });
 
     // TC - 49 : Admin Edit promosi yang sudah ada
-    test('TC - 49 : Admin Edit promosi yang sudah ada', () async {
+    test('TC - 49 : Admin Edit promo yang sudah ada', () async {
+      // Arrange
       await fakeFirestore.collection('promotions').doc('promo1').set({
         'title': 'Promo Lama',
         'description': '',
@@ -143,10 +164,9 @@ void main() {
         'createdAt': DateTime.now(),
         'createdBy': 'admin123'
       });
-
-      // Mengambil promo
       await adminPromotionController.fetchAllPromotions();
 
+      // Act
       final updated = await adminPromotionController.updatePromotion(
         promotionId: 'promo1',
         title: 'Promo Diedit',
@@ -163,6 +183,7 @@ void main() {
         sku: 'SKU-A',
       );
 
+      // Assert
       expect(updated, true);
       final doc = await fakeFirestore.collection('promotions').doc('promo1').get();
       expect(doc.data()!['title'], 'Promo Diedit');
@@ -171,7 +192,7 @@ void main() {
 
     // TC - 50 : Admin Deteksi konflik promosi — produk sudah ada di promo lain
     test('TC - 50 : Admin Deteksi konflik promosi — produk sudah ada di promo lain', () async {
-      // Tambah promo awal aktif untuk produk 'p1'
+      // Arrange
       final now = DateTime.now();
       await fakeFirestore.collection('promotions').doc('promo1').set({
         'title': 'Promo A',
@@ -189,10 +210,9 @@ void main() {
         'createdAt': now,
         'createdBy': 'admin123'
       });
-
       await adminPromotionController.fetchAllPromotions();
 
-      // Coba tambah promo baru untuk produk yang sama 'p1' di tanggal yang bentrok
+      // Act
       final isConflictAdded = await adminPromotionController.createPromotion(
         title: 'Promo B Bentrok',
         description: '',
@@ -207,22 +227,27 @@ void main() {
         sku: 'SKU-2',
       );
 
+      // Assert
       expect(isConflictAdded, false); // Harus gagal karena terdeteksi bentrok
       expect(adminPromotionController.errorMessage, contains('Produk sudah terdaftar di promo: "Promo A"'));
     });
 
     // TC - 51 : Admin Produk busy otomatis disembunyikan dari daftar pilihan
     test('TC - 51 : Admin Produk busy otomatis disembunyikan dari daftar pilihan', () {
-      // Logika view _isProductBusy(productId) check
+      // Arrange
       final String busyProductId = 'p1';
       final double discountValue = 20.0;
       
+      // Act
       final bool isBusy = busyProductId == 'p1' && discountValue > 0;
+
+      // Assert
       expect(isBusy, true); // Produk busy disembunyikan dari UI
     });
 
     // TC - 52 : Admin Menampilkan detail promosi lengkap
     test('TC - 52 : Admin Menampilkan detail promosi lengkap', () async {
+      // Arrange
       await fakeFirestore.collection('promotions').doc('promo1').set({
         'title': 'Promo Lengkap',
         'description': 'Deskripsi promo detail lengkap',
@@ -239,10 +264,12 @@ void main() {
         'createdAt': DateTime.now(),
         'createdBy': 'admin123'
       });
-
       await adminPromotionController.fetchAllPromotions();
+
+      // Act
       final promo = adminPromotionController.promotions.first;
 
+      // Assert
       expect(promo.title, 'Promo Lengkap');
       expect(promo.description, 'Deskripsi promo detail lengkap');
       expect(promo.discountType, 'percentage');
@@ -253,18 +280,23 @@ void main() {
 
     // TC - 53 : Admin Menampilkan daftar produk yang berlaku di detail
     test('TC - 53 : Admin Menampilkan daftar produk yang berlaku di detail', () {
+      // Arrange & Act
       final activePromoProductIds = ['prod1', 'prod2'];
       
+      // Assert
       expect(activePromoProductIds.contains('prod1'), true);
       expect(activePromoProductIds.contains('prod2'), true);
     });
 
     // TC - 54 : Admin Hapus promosi — konfirmasi Yes
     test('TC - 54 : Admin Hapus promosi — konfirmasi Yes', () async {
+      // Arrange
       await fakeFirestore.collection('promotions').doc('promo1').set({'title': 'Promo A'});
 
+      // Act
       final result = await adminPromotionController.deletePromotion('promo1');
       
+      // Assert
       expect(result, isTrue);
       final snapshot = await fakeFirestore.collection('promotions').get();
       expect(snapshot.docs.length, 0);
@@ -272,15 +304,17 @@ void main() {
 
     // TC - 55 : Admin Hapus promosi — batal (konfirmasi No)
     test('TC - 55 : Admin Hapus promosi — batal (konfirmasi No)', () async {
+      // Arrange
       await fakeFirestore.collection('promotions').doc('promo1').set({'title': 'Promo A'});
-
-      // Simulasikan konfirmasi delete bernilai false (batal)
       final confirmDelete = false;
+
+      // Act
       bool deleted = false;
       if (confirmDelete) {
         deleted = await adminPromotionController.deletePromotion('promo1');
       }
 
+      // Assert
       expect(deleted, false);
       final doc = await fakeFirestore.collection('promotions').doc('promo1').get();
       expect(doc.exists, true); // Dokumen tetap ada karena dibatalkan
