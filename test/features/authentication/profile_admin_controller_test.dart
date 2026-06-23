@@ -30,7 +30,7 @@ void main() {
           return '* $label is required';
         }
         return null;
-      };
+      }
 
       test('TC-28: updateProfile() dengan nama kosong -> error "* Business Name is required"', () {
         final validationResult = validateField('Business Name', '');

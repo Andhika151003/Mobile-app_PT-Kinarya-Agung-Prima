@@ -1,6 +1,5 @@
 import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/firebase_provider.dart';
 import '../../../core/utils/format_util.dart';
 import 'auth_gate.dart';
