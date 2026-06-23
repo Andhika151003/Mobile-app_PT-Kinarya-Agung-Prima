@@ -2,25 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:ecommerce/main.dart' as app;
+import 'helpers/test_utils.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  // Helper function to login as Retailer
   Future<void> loginAsRetailer(WidgetTester tester) async {
+    await setupTestEnvironment();
     app.main();
     await tester.pumpAndSettle();
 
-    final emailField = find.byType(TextFormField).first;
-    final passwordField = find.byType(TextFormField).last;
-    final loginButton = find.text('LOGIN');
-
-    if (loginButton.evaluate().isNotEmpty) {
-      await tester.enterText(emailField, 'retailer@email.com');
-      await tester.enterText(passwordField, '12345678');
-      await tester.tap(loginButton);
-      await tester.pumpAndSettle();
-    }
+    await tester.pump(const Duration(seconds: 2));
+    await loginAs(tester, 'rt@email.com', '12345678');
+    await tester.pump(const Duration(seconds: 2));
   }
 
   group('Cart and Checkout Flow (Retailer)', () {
@@ -59,9 +53,9 @@ void main() {
       // Find the quantity field, typically a TextField or Text widget in a row.
       // If it's a Text widget instead of TextField, it cannot be input manually.
       // Here we assume it might be a TextField with readOnly = true
-      final qtyField = find.byType(TextField).first;
+      final qtyField = find.byType(TextField);
       if (qtyField.evaluate().isNotEmpty) {
-         final TextField textField = tester.widget(qtyField);
+         final TextField textField = tester.widget(qtyField.first);
          expect(textField.readOnly, isTrue, reason: 'Field kuantitas harusnya tidak bisa diinput manual');
       }
     });
@@ -89,9 +83,9 @@ void main() {
 
     testWidgets('6. Mengurangi jumlah produk dengan tombol (-)', (tester) async {
       await loginAsRetailer(tester);
-      final minusBtn = find.byIcon(Icons.remove).first;
+      final minusBtn = find.byIcon(Icons.remove);
       if (minusBtn.evaluate().isNotEmpty) {
-         await tester.tap(minusBtn);
+         await tester.tap(minusBtn.first);
          await tester.pumpAndSettle();
       }
     });
@@ -104,9 +98,9 @@ void main() {
     testWidgets('8. Menghapus produk dari keranjang secara manual', (tester) async {
       await loginAsRetailer(tester);
       // Navigate to Cart
-      final deleteIcon = find.byIcon(Icons.delete).first;
+      final deleteIcon = find.byIcon(Icons.delete);
       if (deleteIcon.evaluate().isNotEmpty) {
-        await tester.tap(deleteIcon);
+        await tester.tap(deleteIcon.first);
         await tester.pumpAndSettle();
       }
     });

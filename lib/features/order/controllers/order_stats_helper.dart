@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/firebase_provider.dart';
 
 class OrderStatsHelper {
   static Future<void> markOrderAsPaid(String orderId, {String? targetStatus, FirebaseFirestore? firestore}) async {
-    final db = firestore ?? FirebaseFirestore.instance;
+    final db = firestore ?? AppFirebase.firestore;
     final orderRef = db.collection('orders').doc(orderId);
     
     await db.runTransaction((transaction) async {

@@ -37,10 +37,12 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   }
 
   Future<void> _fetchOrder() async {
+    OrderModel? initialOrder;
     try {
       final data = await _adminController.getOrderById(widget.orderId);
       if (data != null && mounted) {
         final order = OrderModel.fromMap(data);
+        initialOrder = order;
 
         if (order.status == 'Ordered') {
           await _adminController.syncAllPendingOrders();
@@ -61,7 +63,13 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          // Gunakan data awal jika sync gagal, agar UI tidak stuck loading
+          if (initialOrder != null) _order = initialOrder;
+          _isLoading = false;
+        });
+      }
     }
   }
 

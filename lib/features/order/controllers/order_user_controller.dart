@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../../core/firebase_provider.dart';
 import 'order_stats_helper.dart';
 import '../../notification/services/push_notification_service.dart';
 
@@ -17,7 +18,7 @@ class OrderUserController {
     http.Client? client,
     String? backendUrl,
     PushNotificationService? pushNotificationService,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+  })  : _firestore = firestore ?? AppFirebase.firestore,
         _client = client ?? http.Client(),
         _duitkuBackendUrl = backendUrl ?? dotenv.get('BACKEND_URL'),
         _pushNotificationService = pushNotificationService ?? PushNotificationService();

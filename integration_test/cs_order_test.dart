@@ -2,25 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:ecommerce/main.dart' as app;
+import 'helpers/test_utils.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  // Helper function to login as Customer Support
   Future<void> loginAsCS(WidgetTester tester) async {
+    await setupTestEnvironment();
     app.main();
     await tester.pumpAndSettle();
 
-    final emailField = find.byType(TextFormField).first;
-    final passwordField = find.byType(TextFormField).last;
-    final loginButton = find.text('LOGIN');
-
-    if (loginButton.evaluate().isNotEmpty) {
-      await tester.enterText(emailField, 'cs@email.com');
-      await tester.enterText(passwordField, '12345678'); 
-      await tester.tap(loginButton);
-      await tester.pumpAndSettle();
-    }
+    await tester.pump(const Duration(seconds: 2));
+    await loginAs(tester, 'cs@email.com', '12345678');
+    await tester.pump(const Duration(seconds: 2));
   }
 
   group('Order Management Flow (Customer Support)', () {
@@ -28,23 +22,24 @@ void main() {
       await loginAsCS(tester);
 
       // Navigate to CS/Complaint/Order menu
-      final keluhanMenu = find.text('Daftar Keluhan'); // Replace with actual CS menu text
+      for(int i=0; i<20; i++) { await tester.pump(const Duration(milliseconds: 500)); if(find.text('Supports').evaluate().isNotEmpty) break; }
+      final keluhanMenu = find.text('Supports'); // Replace with actual CS menu text
       if (keluhanMenu.evaluate().isNotEmpty) {
         await tester.tap(keluhanMenu);
         await tester.pumpAndSettle();
       }
 
       // Or if CS directly views orders
-      final pesananMenu = find.text('Semua Pesanan');
+      final pesananMenu = find.byIcon(Icons.shopping_basket_outlined);
       if (pesananMenu.evaluate().isNotEmpty) {
         await tester.tap(pesananMenu);
         await tester.pumpAndSettle();
       }
       
       // Open detail of an order/complaint
-      final detailBtn = find.text('Detail').first;
+      final detailBtn = find.text('Detail');
       if (detailBtn.evaluate().isNotEmpty) {
-         await tester.tap(detailBtn);
+         await tester.tap(detailBtn.first);
          await tester.pumpAndSettle();
          
          // Verify we are on the order detail page validating complaint

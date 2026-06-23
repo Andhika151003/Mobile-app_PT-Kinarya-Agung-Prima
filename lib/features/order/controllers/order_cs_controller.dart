@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/firebase_provider.dart';
 import '../models/order.dart';
 import 'order_stats_helper.dart';
 import 'order_user_controller.dart';
@@ -8,7 +9,7 @@ class OrderCsController extends ChangeNotifier {
   final FirebaseFirestore _firestore;
 
   OrderCsController({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _firestore = firestore ?? AppFirebase.firestore;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

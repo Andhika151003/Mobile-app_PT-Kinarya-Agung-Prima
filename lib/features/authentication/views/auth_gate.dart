@@ -221,41 +221,10 @@ class _AuthGateState extends State<AuthGate> {
               }
 
               if (role == 'admin') {
-                if (AppFirebase.isMocked) {
-                  return MainNavigationAdmin(
-                    pages: [
-                      DashboardAdminView(),
-                      const SizedBox(), // Products placeholder
-                      const SizedBox(), // Orders placeholder
-                      const SizedBox(), // Analytics placeholder
-                      ProfileAdminView(),
-                    ],
-                  );
-                }
                 return const MainNavigationAdmin();
               } else if (role == 'cs' || role == 'customer_support') {
-                if (AppFirebase.isMocked) {
-                  return MainNavigationCs(
-                    pages: [
-                      DashboardCsView(),
-                      const SizedBox(), // Orders placeholder
-                      const SizedBox(), // Supports placeholder
-                      ProfileCsView(),
-                    ],
-                  );
-                }
                 return const MainNavigationCs();
               } else if (role == 'retailer' || role == 'user') {
-                if (AppFirebase.isMocked) {
-                  return MainNavigationUser(
-                    pages: [
-                      DashboardUserView(),
-                      const SizedBox(), // Products placeholder
-                      const SizedBox(), // Orders placeholder
-                      ProfileUserView(),
-                    ],
-                  );
-                }
                 return const MainNavigationUser();
               } else {
                 return Scaffold(

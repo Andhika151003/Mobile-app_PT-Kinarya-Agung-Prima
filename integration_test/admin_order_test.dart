@@ -2,114 +2,144 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:ecommerce/main.dart' as app;
+import 'package:ecommerce/features/shared/main_navigation_admin.dart';
+import 'helpers/test_utils.dart';
+
+// Helper: navigasi ke halaman Orders (index 2) menggunakan state langsung
+Future<void> goToOrdersPage(WidgetTester tester) async {
+  // Cari state dari MainNavigationAdmin dan langsung set index
+  final navFinder = find.byType(MainNavigationAdmin);
+  for (int i = 0; i < 20; i++) {
+    await tester.pump(const Duration(milliseconds: 500));
+    if (navFinder.evaluate().isNotEmpty) break;
+  }
+
+  if (navFinder.evaluate().isNotEmpty) {
+    final state = tester.state<MainNavigationAdminState>(navFinder);
+    state.setIndex(2); // Index 2 = Orders
+    await tester.pumpAndSettle();
+    // Beri waktu _fetchOrders() selesai
+    for (int i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+      if (find.byType(ListView).evaluate().isNotEmpty ||
+          find.byKey(const Key('card_admin_order_ORD-12345')).evaluate().isNotEmpty) break;
+    }
+  }
+}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  // Helper function to login as Admin
-  Future<void> loginAsAdmin(WidgetTester tester) async {
-    app.main();
-    await tester.pumpAndSettle();
-
-    final emailField = find.byType(TextFormField).first;
-    final passwordField = find.byType(TextFormField).last;
-    final loginButton = find.text('LOGIN');
-
-    if (loginButton.evaluate().isNotEmpty) {
-      await tester.enterText(emailField, 'ad@email.com'); // Admin email from previous test
-      await tester.enterText(passwordField, '12345678'); 
-      await tester.tap(loginButton);
-      await tester.pumpAndSettle();
-    }
-  }
-
   group('Order Management Flow (Admin)', () {
-    testWidgets('18. Admin melihat seluruh daftar pesanan dari berbagai ritel', (tester) async {
-      await loginAsAdmin(tester);
-
-      // Navigate to Admin Order Management
-      final ordersMenu = find.text('Manajemen Pesanan'); // Replace with actual Admin menu text
-      if (ordersMenu.evaluate().isNotEmpty) {
-        await tester.tap(ordersMenu);
+    testWidgets(
+      '18. Admin melihat seluruh daftar pesanan dari berbagai ritel',
+      (tester) async {
+        await setupTestEnvironment();
+        app.main();
         await tester.pumpAndSettle();
-      }
-      
-      // Verify list of orders is present
-      final hasListView = find.byType(ListView).evaluate().isNotEmpty;
-      final hasScrollView = find.byType(SingleChildScrollView).evaluate().isNotEmpty;
-      expect(hasListView || hasScrollView, isTrue);
-    });
 
-    testWidgets('19. Admin memperbarui status pesanan Paid(Dibayar) menjadi Shipped (Dikirim)', (tester) async {
-      await loginAsAdmin(tester);
+        await tester.pump(const Duration(seconds: 2));
+        await loginAs(tester, 'ad@email.com', '12345678');
+        await tester.pump(const Duration(seconds: 2));
 
-      // Go to order management
-      final ordersMenu = find.text('Manajemen Pesanan'); 
-      if (ordersMenu.evaluate().isNotEmpty) {
-        await tester.tap(ordersMenu);
+        // Navigasi ke halaman Orders
+        await goToOrdersPage(tester);
+
+        // Verify list of orders is present
+        final hasListView = find.byType(ListView).evaluate().isNotEmpty;
+        final hasCard = find.byKey(const Key('card_admin_order_ORD-12345')).evaluate().isNotEmpty;
+        expect(hasListView || hasCard, isTrue, reason: 'Daftar pesanan tidak ditemukan setelah navigasi ke Orders');
+
+        await tester.pump(const Duration(seconds: 2));
+      },
+    );
+
+    testWidgets(
+      '19. Admin memperbarui status pesanan Paid(Dibayar) menjadi Shipped (Dikirim)',
+      (tester) async {
+        await setupTestEnvironment();
+        app.main();
         await tester.pumpAndSettle();
-      }
 
-      // Filter by 'Dibayar' or find an order that is 'Dibayar'
-      final paidTab = find.text('Dibayar');
-      if (paidTab.evaluate().isNotEmpty) {
-        await tester.tap(paidTab);
-        await tester.pumpAndSettle();
-      }
+        await tester.pump(const Duration(seconds: 2));
+        await loginAs(tester, 'ad@email.com', '12345678');
+        await tester.pump(const Duration(seconds: 2));
 
-      // Open detail
-      final orderItem = find.text('Detail').first;
-      if (orderItem.evaluate().isNotEmpty) {
-         await tester.tap(orderItem);
-         await tester.pumpAndSettle();
-         
-         // Find action button to update status to shipped
-         final shipBtn = find.text('Kirim Pesanan'); // Replace with actual button text
-         if (shipBtn.evaluate().isNotEmpty) {
-            await tester.tap(shipBtn);
+        // Navigasi ke halaman Orders
+        await goToOrdersPage(tester);
+
+        // Tunggu order card ORD-12345 (status Paid = Dikemas)
+        for (int i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 500));
+          if (find.byKey(const Key('card_admin_order_ORD-12345')).evaluate().isNotEmpty) break;
+        }
+
+        // Open detail pesanan Paid
+        final orderCard = find.byKey(const Key('card_admin_order_ORD-12345'));
+        if (orderCard.evaluate().isNotEmpty) {
+          await tester.tap(orderCard.first);
+          await tester.pumpAndSettle();
+
+          // Find action button to update status
+          final updateBtn = find.text('Update Status');
+          if (updateBtn.evaluate().isNotEmpty) {
+            await tester.tap(updateBtn.first);
             await tester.pumpAndSettle();
-            // Optional: confirm dialog
-            final confirmBtn = find.text('Ya');
+            final confirmBtn = find.text('Konfirmasi');
             if (confirmBtn.evaluate().isNotEmpty) {
-              await tester.tap(confirmBtn);
+              await tester.tap(confirmBtn.first);
               await tester.pumpAndSettle();
             }
-            // Verify success toast or status change
-            // expect(find.text('Pesanan dikirim'), findsWidgets);
-         }
-      }
-    });
+          }
+        } else {
+          debugPrint('Info: Tidak ada pesanan untuk diproses di test 19');
+        }
+
+        await tester.pump(const Duration(seconds: 2));
+      },
+    );
 
     testWidgets('20. Admin membatalkan pesanan secara manual', (tester) async {
-      await loginAsAdmin(tester);
+      await setupTestEnvironment();
+      app.main();
+      await tester.pumpAndSettle();
 
-      // Go to order management
-      final ordersMenu = find.text('Manajemen Pesanan'); 
-      if (ordersMenu.evaluate().isNotEmpty) {
-        await tester.tap(ordersMenu);
-        await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 2));
+      await loginAs(tester, 'ad@email.com', '12345678');
+      await tester.pump(const Duration(seconds: 2));
+
+      // Navigasi ke halaman Orders
+      await goToOrdersPage(tester);
+
+      // Tunggu order card ORD-67890
+      for (int i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 500));
+        if (find.byKey(const Key('card_admin_order_ORD-67890')).evaluate().isNotEmpty) break;
       }
 
       // Open detail
-      final orderItem = find.text('Detail').first;
-      if (orderItem.evaluate().isNotEmpty) {
-         await tester.tap(orderItem);
-         await tester.pumpAndSettle();
-         
-         // Find cancel button
-         final cancelBtn = find.text('Batalkan Pesanan'); 
-         if (cancelBtn.evaluate().isNotEmpty) {
-            await tester.tap(cancelBtn);
+      final orderCard = find.byKey(const Key('card_admin_order_ORD-67890'));
+      if (orderCard.evaluate().isNotEmpty) {
+        await tester.tap(orderCard.first);
+        await tester.pumpAndSettle();
+
+        // Find cancel button
+        final cancelBtn = find.text('Batalkan Pesanan');
+        if (cancelBtn.evaluate().isNotEmpty) {
+          await tester.tap(cancelBtn.first);
+          await tester.pumpAndSettle();
+
+          final confirmBtn = find.text('Ya, Batalkan');
+          if (confirmBtn.evaluate().isNotEmpty) {
+            await tester.tap(confirmBtn.first);
             await tester.pumpAndSettle();
-            
-            // Confirm cancel
-            final confirmBtn = find.text('Ya, Batalkan');
-            if (confirmBtn.evaluate().isNotEmpty) {
-              await tester.tap(confirmBtn);
-              await tester.pumpAndSettle();
-            }
-         }
+          }
+        }
+      } else {
+        debugPrint('Info: Tidak ada pesanan untuk dibatalkan di test 20');
       }
+
+      await tester.pump(const Duration(seconds: 2));
     });
   });
 }

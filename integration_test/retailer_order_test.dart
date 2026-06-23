@@ -2,25 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:ecommerce/main.dart' as app;
+import 'helpers/test_utils.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  // Helper function to login as Retailer
   Future<void> loginAsRetailer(WidgetTester tester) async {
+    await setupTestEnvironment();
     app.main();
     await tester.pumpAndSettle();
 
-    final emailField = find.byType(TextFormField).first;
-    final passwordField = find.byType(TextFormField).last;
-    final loginButton = find.text('LOGIN');
-
-    if (loginButton.evaluate().isNotEmpty) {
-      await tester.enterText(emailField, 'retailer@email.com');
-      await tester.enterText(passwordField, '12345678');
-      await tester.tap(loginButton);
-      await tester.pumpAndSettle();
-    }
+    await tester.pump(const Duration(seconds: 2));
+    await loginAs(tester, 'rt@email.com', '12345678');
+    await tester.pump(const Duration(seconds: 2));
   }
 
   group('Order Management Flow (Retailer)', () {
@@ -28,7 +22,8 @@ void main() {
       await loginAsRetailer(tester);
 
       // Navigate to Orders Tab
-      final ordersTab = find.text('Pesanan');
+      for(int i=0; i<20; i++) { await tester.pump(const Duration(milliseconds: 500)); if(find.byIcon(Icons.shopping_bag_outlined).evaluate().isNotEmpty) break; }
+      final ordersTab = find.byIcon(Icons.shopping_bag_outlined);
       if (ordersTab.evaluate().isNotEmpty) {
         await tester.tap(ordersTab);
         await tester.pumpAndSettle();
@@ -44,16 +39,17 @@ void main() {
       await loginAsRetailer(tester);
 
       // Navigate to Orders Tab
-      final ordersTab = find.text('Pesanan'); 
+      for(int i=0; i<20; i++) { await tester.pump(const Duration(milliseconds: 500)); if(find.byIcon(Icons.shopping_bag_outlined).evaluate().isNotEmpty) break; }
+      final ordersTab = find.byIcon(Icons.shopping_bag_outlined);
       if (ordersTab.evaluate().isNotEmpty) {
         await tester.tap(ordersTab);
         await tester.pumpAndSettle();
       }
 
       // Find an order item and tap it
-      final orderItem = find.text('Detail Pesanan').first; // Usually a button or just tap the card
+      final orderItem = find.text('Detail Pesanan'); // Usually a button or just tap the card
       if (orderItem.evaluate().isNotEmpty) {
-         await tester.tap(orderItem);
+         await tester.tap(orderItem.first);
          await tester.pumpAndSettle();
          
          // Verify we are on detail page
@@ -65,7 +61,8 @@ void main() {
       await loginAsRetailer(tester);
 
       // Navigate to Orders Tab
-      final ordersTab = find.text('Pesanan'); 
+      for(int i=0; i<20; i++) { await tester.pump(const Duration(milliseconds: 500)); if(find.byIcon(Icons.shopping_bag_outlined).evaluate().isNotEmpty) break; }
+      final ordersTab = find.byIcon(Icons.shopping_bag_outlined);
       if (ordersTab.evaluate().isNotEmpty) {
         await tester.tap(ordersTab);
         await tester.pumpAndSettle();
@@ -90,15 +87,16 @@ void main() {
       await loginAsRetailer(tester);
 
       // Go to order detail
-      final ordersTab = find.text('Pesanan'); 
+      for(int i=0; i<20; i++) { await tester.pump(const Duration(milliseconds: 500)); if(find.byIcon(Icons.shopping_bag_outlined).evaluate().isNotEmpty) break; }
+      final ordersTab = find.byIcon(Icons.shopping_bag_outlined);
       if (ordersTab.evaluate().isNotEmpty) {
         await tester.tap(ordersTab);
         await tester.pumpAndSettle();
       }
 
-      final orderItem = find.text('Detail Pesanan').first;
+      final orderItem = find.text('Detail Pesanan');
       if (orderItem.evaluate().isNotEmpty) {
-         await tester.tap(orderItem);
+         await tester.tap(orderItem.first);
          await tester.pumpAndSettle();
          
          // Assuming timeline/stepper is used for order status

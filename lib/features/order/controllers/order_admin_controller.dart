@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../../../core/firebase_provider.dart';
 import '../../notification/services/push_notification_service.dart';
 import 'order_stats_helper.dart';
 import 'order_user_controller.dart';
@@ -15,10 +16,10 @@ class OrderAdminController {
     PushNotificationService? pushNotificationService,
     http.Client? client,
     String? backendUrl,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+  }) : _firestore = firestore ?? AppFirebase.firestore,
        _pushNotificationService = pushNotificationService ?? PushNotificationService(),
        _userController = OrderUserController(
-         firestore: firestore,
+         firestore: firestore ?? AppFirebase.firestore,
          pushNotificationService: pushNotificationService,
          client: client,
          backendUrl: backendUrl,
@@ -40,6 +41,7 @@ class OrderAdminController {
       
       return docs;
     } catch (e) {
+      debugPrint('[OrderAdminCtrl] getAllOrdersAdmin ERROR: $e');
       throw Exception('Gagal mengambil seluruh data pesanan: $e');
     }
   }

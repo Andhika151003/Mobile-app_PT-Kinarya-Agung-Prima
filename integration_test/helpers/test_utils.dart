@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
@@ -199,14 +200,94 @@ Future<void> setupTestEnvironment() async {
     'businessType': 'Skincare',
   });
 
+  // 5. Products
+  await mockFirestore.collection('products').doc('PROD-1').set({
+    'retailerId': adminCred.user!.uid,
+    'name': 'Whiskas',
+    'category': 'Pet Food',
+    'price': 50000,
+    'stock': 10,
+    'description': 'Tuna flavor',
+    'imageUrl': '',
+    'monthlySales': 0,
+    'revenue': 0,
+  });
+
+  await mockFirestore.collection('products').doc('PROD-2').set({
+    'retailerId': adminCred.user!.uid,
+    'name': 'Pedigree',
+    'category': 'Pet Food',
+    'price': 200000,
+    'stock': 5,
+    'description': 'Beef flavor',
+    'imageUrl': '',
+    'monthlySales': 0,
+    'revenue': 0,
+  });
+
+  // Add Dummy Orders for testing
+  await mockFirestore.collection('orders').doc('ORD-12345').set({
+    'orderId': 'ORD-12345',
+    'userId': retailerCred.user!.uid,
+    'fullName': 'Toko Retailer',
+    'shippingAddress': 'Jl. Dummy 123',
+    'phoneNumber': '08234567890',
+    'paymentMethod': 'Transfer Bank',
+    'promoCode': '',
+    'subtotal': 100000,
+    'shippingCost': 10000,
+    'tax': 0,
+    'discountAmount': 0,
+    'total': 110000,
+    'items': [
+      {
+        'productId': 'PROD-1',
+        'title': 'Whiskas',
+        'variant': 'Tuna',
+        'quantity': 2,
+        'price': 50000,
+      }
+    ],
+    'status': 'Paid',
+    'createdAt': Timestamp.now(),
+    'paidAt': Timestamp.now(),
+  });
+
+  await mockFirestore.collection('orders').doc('ORD-67890').set({
+    'orderId': 'ORD-67890',
+    'userId': retailerCred.user!.uid,
+    'fullName': 'Toko Retailer',
+    'shippingAddress': 'Jl. Dummy 123',
+    'phoneNumber': '08234567890',
+    'paymentMethod': 'Transfer Bank',
+    'promoCode': '',
+    'subtotal': 200000,
+    'shippingCost': 15000,
+    'tax': 0,
+    'discountAmount': 0,
+    'total': 215000,
+    'items': [
+      {
+        'productId': 'PROD-2',
+        'title': 'Pedigree',
+        'variant': 'Beef',
+        'quantity': 1,
+        'price': 200000,
+      }
+    ],
+    'status': 'Paid',
+    'createdAt': Timestamp.now(),
+    'paidAt': Timestamp.now(),
+  });
+
   // Reset the auth current user state to signed out
   await mockAuth.signOut();
 }
 
 Future<void> loginAs(WidgetTester tester, String email, String password) async {
-  final emailFinder = find.byKey(const Key('emailField'));
-  final passwordFinder = find.byKey(const Key('passwordField'));
-  final loginButtonFinder = find.byKey(const Key('loginButton'));
+  final emailFinder = find.byKey(const Key('login_email_field'));
+  final passwordFinder = find.byKey(const Key('login_password_field'));
+  final loginButtonFinder = find.byKey(const Key('login_submit_btn'));
 
   expect(emailFinder, findsOneWidget);
   expect(passwordFinder, findsOneWidget);

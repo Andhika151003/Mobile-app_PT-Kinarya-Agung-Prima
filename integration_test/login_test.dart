@@ -72,8 +72,8 @@ void main() {
       expect(find.text('Incorrect password'), findsWidgets);
 
       // Reset fields
-      await tester.enterText(find.byKey(const Key('emailField')), '');
-      await tester.enterText(find.byKey(const Key('passwordField')), '');
+      await tester.enterText(find.byKey(const Key('login_email_field')), '');
+      await tester.enterText(find.byKey(const Key('login_password_field')), '');
       await tester.pumpAndSettle();
 
       // Wrong email
