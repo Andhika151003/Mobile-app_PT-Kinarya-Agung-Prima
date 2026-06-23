@@ -5,6 +5,7 @@ import '../controllers/order_user_controller.dart';
 import '../../payment & checkout/views/payment_status_view.dart';
 import '../../payment & checkout/views/payment_webview.dart';
 import '../../shared/services/pdf_service.dart';
+import '../../../core/utils/status_helper.dart';
 
 class OrderDetailUserView extends StatefulWidget {
   final String orderId;
@@ -33,8 +34,22 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
     try {
       final data = await _userController.getOrderById(widget.orderId);
       if (data != null && mounted) {
+        final order = OrderModel.fromMap(data);
+        
+        if (order.status == 'Ordered') {
+          await _userController.syncDuitkuPayment(widget.orderId);
+          final updatedData = await _userController.getOrderById(widget.orderId);
+          if (updatedData != null && mounted) {
+            setState(() {
+              _order = OrderModel.fromMap(updatedData);
+              _isLoading = false;
+            });
+            return;
+          }
+        }
+
         setState(() {
-          _order = OrderModel.fromMap(data);
+          _order = order;
           _isLoading = false;
         });
       }
@@ -78,18 +93,24 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
           style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
         ),
         actions: [
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300)),
-              child: const Icon(Icons.print_outlined, size: 16, color: Colors.black87),
-            ),
-            onPressed: () {
-              if (_order != null) {
+          if (_order != null &&
+              (_order!.status == 'Delivered' ||
+                  _order!.status == 'Cancelled' ||
+                  _order!.status == 'Paid'))
+            IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey.shade300)),
+                child: const Icon(Icons.print_outlined,
+                    size: 16, color: Colors.black87),
+              ),
+              onPressed: () {
                 PdfService.generateAndOpenInvoice(_order!);
-              }
-            },
-          ),
+              },
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -212,6 +233,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
+                  key: const Key('btn_confirm_received'),
                   onPressed: () async {
                     setState(() => _isLoading = true);
                     final success = await _userController.receiveOrder(order.orderId);
@@ -312,7 +334,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                       children: [
                         Container(width: 8, height: 8, decoration: BoxDecoration(color: isCancelledOrExpired ? Colors.red : (isPaid ? _primaryColor : Colors.orange), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Flexible(child: Text(status == 'Cancelled' ? 'Canceled' : (status == 'Expired' ? 'Expired' : (isPaid ? 'Paid' : 'Unpaid')), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isCancelledOrExpired ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
+                        Flexible(child: Text(status == 'Cancelled' ? 'Dibatalkan' : (status == 'Expired' ? 'Kedaluwarsa' : (isPaid ? 'Lunas' : 'Belum bayar')), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isCancelledOrExpired ? Colors.red : Colors.black), overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                   ],
@@ -377,7 +399,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               ),
               const SizedBox(height: 8),
               Text(
-                steps[index],
+                steps[index].displayStatus,
                 style: TextStyle(fontSize: 12, fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal, color: isCompleted ? Colors.black : Colors.grey.shade500),
                 textAlign: TextAlign.center,
               ),
@@ -395,46 +417,176 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
   }
 
   Widget _buildUserActionButtons(String status, BuildContext context) {
-    if (status == 'Ordered') {
-      return Padding(
-        padding: const EdgeInsets.only(top: 16),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              final paymentUrl = _order?.paymentUrl; 
+    List<Widget> actions = [];
 
-              if (paymentUrl != null && paymentUrl.isNotEmpty) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PaymentWebView( 
-                      paymentUrl: paymentUrl, 
-                      orderId: widget.orderId,
-                    ),
-                  ),
-                ).then((_) => _fetchOrder());
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Link pembayaran tidak ditemukan.'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryColor,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              elevation: 0,
+    if (_order?.cancellationStatus == 'Requested') {
+      actions.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.orange.shade200),
             ),
-            child: const Text('Lanjutkan Pembayaran', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Pengajuan Pembatalan Diproses', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text('Alasan: ${_order?.cancellationReason ?? "-"}', style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else if (_order?.cancellationStatus == 'Rejected') {
+      actions.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: const Text('Pengajuan pembatalan Anda sebelumnya ditolak oleh Admin.', style: TextStyle(color: Colors.red, fontSize: 12)),
           ),
         ),
       );
     }
-    return const SizedBox.shrink();
+
+    if (status == 'Ordered') {
+      actions.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              key: const Key('btn_pay_now'),
+              onPressed: () {
+                final paymentUrl = _order?.paymentUrl; 
+
+                if (paymentUrl != null && paymentUrl.isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PaymentWebView( 
+                        paymentUrl: paymentUrl, 
+                        orderId: widget.orderId,
+                      ),
+                    ),
+                  ).then((_) => _fetchOrder());
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Link pembayaran tidak ditemukan.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primaryColor,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 0,
+              ),
+              child: const Text('Lanjutkan Pembayaran', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if ((status == 'Ordered' || status == 'Paid') && _order?.cancellationStatus != 'Requested') {
+      actions.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              key: const Key('btn_cancel_order'),
+              onPressed: () => _showCancelDialog(),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Batalkan Pesanan', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (actions.isEmpty) return const SizedBox.shrink();
+    return Column(children: actions);
+  }
+
+  Future<void> _showCancelDialog() async {
+    final reasonController = TextEditingController();
+
+    final bool? submit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text('Batalkan Pesanan'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Silakan masukkan alasan pembatalan:'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonController,
+              decoration: const InputDecoration(
+                hintText: 'Alasan...',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false), 
+            child: const Text('Tutup', style: TextStyle(color: Colors.grey))
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, elevation: 0),
+            onPressed: () {
+              if (reasonController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Alasan tidak boleh kosong')));
+                return;
+              }
+              Navigator.pop(ctx, true);
+            },
+            child: const Text('Kirim Pengajuan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (submit == true) {
+      setState(() => _isLoading = true);
+      final success = await _userController.requestCancellation(_order!.orderId, reasonController.text.trim());
+      
+      if (!mounted) return;
+      
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pengajuan pembatalan berhasil dikirim'), backgroundColor: Colors.green));
+        await _fetchOrder();
+      } else {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal mengirim pengajuan'), backgroundColor: Colors.red));
+      }
+    }
   }
 
   Widget _buildItemRow(OrderItemModel item, NumberFormat currency) {
@@ -554,48 +706,53 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                if (_order != null) {
+          if (_order != null &&
+              (_order!.status == 'Delivered' ||
+                  _order!.status == 'Cancelled' ||
+                  _order!.status == 'Paid')) ...[
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
                   PdfService.generateAndOpenInvoice(_order!);
-                }
-              },
-              icon: const Icon(Icons.download_outlined, size: 18),
-              label: const Text('Download Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey.shade100,
-                foregroundColor: Colors.black87,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                },
+                icon: const Icon(Icons.download_outlined, size: 18),
+                label: const Text('Download Invoice',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey.shade100,
+                  foregroundColor: Colors.black87,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 
   Widget _buildStatusBadge(String status) {
-    Color bg; Color fg; IconData icon; String label;
+    Color bg; Color fg; IconData icon; String label = status.displayStatus;
 
     if (status == 'Delivered') {
-      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline;
     } else if (status == 'Cancelled') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined;
     } else if (status == 'Expired') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined;
     } else if (status == 'Ordered') {
-      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time;
     } else if (status == 'Shipped') {
-      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined;
     } else if (status == 'Paid') {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment;
     } else {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline;
     }
 
     return Container(

@@ -40,6 +40,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
     return Scaffold(
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
+        key: const Key('add_product_fab'),
         backgroundColor: primaryGreen,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
@@ -181,6 +182,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
         children: [
           Expanded(
             child: TextField(
+              key: const Key('search_product_field'),
               controller: _searchController,
               onChanged: (value) => setState(() {}),
               decoration: const InputDecoration(
@@ -220,6 +222,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           GestureDetector(
+            key: const Key('filter_reset'),
             onTap: () {
               setState(() {
                 _selectedCategory = 'All';
@@ -240,6 +243,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
           ),
 
           GestureDetector(
+            key: const Key('filter_in_stock'),
             onTap: () => setState(() => _filterInStock = !_filterInStock),
             child: Text(
               'In Stock',
@@ -255,6 +259,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
 
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
+              key: const Key('sort_dropdown'),
               value: _sortBy,
               icon: const Icon(Icons.arrow_drop_down, size: 20),
               isDense: true,
@@ -350,17 +355,15 @@ class _ProductAdminViewState extends State<ProductAdminView>
       symbol: 'Rp ',
       decimalDigits: 0,
     );
-    int alertLevel =
-        (product.lowStockAlert != null && product.lowStockAlert! > 0)
-        ? product.lowStockAlert!
-        : 5;
-    bool isInStock = product.stock > alertLevel;
+    bool isLowStock = product.isLowStock;
+    bool isOutOfStock = product.stock <= 0;
 
     String displaySku = (product.sku != null && product.sku!.isNotEmpty)
         ? product.sku!
         : 'No SKU';
 
     return GestureDetector(
+      key: Key('product_card_${product.id}'),
       onTap: () {
         Navigator.push(
           context,
@@ -440,22 +443,24 @@ class _ProductAdminViewState extends State<ProductAdminView>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: isInStock
-                          ? Colors.green.shade50
-                          : Colors.red.shade50,
+                      color: isOutOfStock
+                          ? Colors.red.shade50
+                          : (isLowStock ? Colors.orange.shade50 : Colors.green.shade50),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isInStock
-                            ? Colors.green.shade200
-                            : Colors.red.shade200,
+                        color: isOutOfStock
+                            ? Colors.red.shade200
+                            : (isLowStock ? Colors.orange.shade200 : Colors.green.shade200),
                       ),
                     ),
                     child: Text(
-                      isInStock ? 'In Stock' : 'Low Stock Alert',
+                      isOutOfStock
+                          ? 'Out of Stock'
+                          : (isLowStock ? 'Low Stock Alert' : 'In Stock'),
                       style: TextStyle(
-                        color: isInStock
-                            ? primaryGreen
-                            : Colors.red.shade700,
+                        color: isOutOfStock
+                            ? Colors.red.shade700
+                            : (isLowStock ? Colors.orange.shade800 : primaryGreen),
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
@@ -492,6 +497,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                 ),
                 const SizedBox(height: 25),
                 GestureDetector(
+                  key: Key('add_stock_button_${product.id}'),
                   onTap: () {
                     showDialog(
                       context: context,
@@ -540,62 +546,70 @@ class _ProductAdminViewState extends State<ProductAdminView>
       {'icon': Icons.fastfood_outlined, 'label': 'Foods'},
     ];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: categories.map((cat) {
-        bool isSelected = _selectedCategory == cat['label'];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: categories.asMap().entries.map((entry) {
+          int index = entry.key;
+          var cat = entry.value;
+          bool isSelected = _selectedCategory == cat['label'];
 
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedCategory = isSelected ? 'All' : cat['label'] as String;
-            });
-          },
-          child: Container(
-            width: 75,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected ? primaryGreen : Colors.grey.shade200,
+          return Padding(
+            padding: EdgeInsets.only(right: index == categories.length - 1 ? 0 : 12.0),
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedCategory = isSelected ? 'All' : cat['label'] as String;
+                });
+              },
+              child: Container(
+                width: 75,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: isSelected ? primaryGreen : Colors.grey.shade200,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  color: isSelected
+                      ? primaryGreen.withValues(alpha: 0.05)
+                      : Colors.white,
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? primaryGreen.withValues(alpha: 0.2)
+                            : Colors.grey.shade200,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        cat['icon'] as IconData,
+                        color: isSelected ? primaryGreen : Colors.grey.shade600,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      cat['label'] as String,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isSelected ? primaryGreen : Colors.grey.shade600,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              borderRadius: BorderRadius.circular(12),
-              color: isSelected
-                  ? primaryGreen.withValues(alpha: 0.05)
-                  : Colors.white,
             ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? primaryGreen.withValues(alpha: 0.2)
-                        : Colors.grey.shade200,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    cat['icon'] as IconData,
-                    color: isSelected ? primaryGreen : Colors.grey.shade600,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  cat['label'] as String,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isSelected ? primaryGreen : Colors.grey.shade600,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }
@@ -778,6 +792,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   InkWell(
+                    key: const Key('add_stock_decrement'),
                     onTap: _decrement,
                     child: Container(
                       width: 36,
@@ -791,6 +806,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
                     color: Colors.grey.shade300,
                   ),
                   Container(
+                    key: const Key('add_stock_quantity_text'),
                     width: 50,
                     alignment: Alignment.center,
                     child: Text(
@@ -804,6 +820,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
                     color: Colors.grey.shade300,
                   ),
                   InkWell(
+                    key: const Key('add_stock_increment'),
                     onTap: _increment,
                     child: Container(
                       width: 36,
@@ -820,6 +837,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 OutlinedButton(
+                  key: const Key('add_stock_cancel'),
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
@@ -841,6 +859,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
+                  key: const Key('add_stock_save'),
                   onPressed: _isLoading ? null : _saveStock,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryGreen,

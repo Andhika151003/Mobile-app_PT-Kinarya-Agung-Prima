@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'login_view.dart';
+import 'auth_gate.dart';
 import 'form_edit_admin_view.dart';
 import '../controllers/profile_admin_controller.dart';
 import '../../promotion/views/promotion_admin_view.dart';
@@ -44,7 +44,6 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
           distributorId = '#DS${data['uid'].substring(0, 6).toUpperCase()}';
           photoUrl = data['photoUrl'];
 
-          // Stats dari controller (Data tidak lagi ditampilkan di profile)
           isLoading = false;
         });
       } else {
@@ -163,7 +162,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
                             if (context.mounted) {
                               Navigator.pushAndRemoveUntil(
                                 context,
-                                MaterialPageRoute(builder: (context) => const LoginView()),
+                                MaterialPageRoute(builder: (context) => const AuthGate()),
                                 (route) => false,
                               );
                             }

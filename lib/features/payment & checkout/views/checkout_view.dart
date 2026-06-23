@@ -888,12 +888,15 @@ class _CheckoutViewState extends State<CheckoutView> {
                       color: Colors.grey.shade600,
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      'Batas waktu pembayaran adalah 1 menit setelah pesanan dibuat.',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                        fontStyle: FontStyle.italic,
+                    Flexible(
+                      child: Text(
+                        'Batas waktu pembayaran adalah 1 menit setelah pesanan dibuat.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
                   ],

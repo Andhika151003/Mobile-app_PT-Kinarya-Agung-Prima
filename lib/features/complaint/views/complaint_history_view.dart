@@ -50,6 +50,22 @@ class _ComplaintHistoryViewState extends State<ComplaintHistoryView> {
               ),
         backgroundColor: Colors.white,
         elevation: 0,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 14,
+              color: Colors.black87,
+            ),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(

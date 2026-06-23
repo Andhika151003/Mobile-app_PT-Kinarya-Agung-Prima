@@ -96,6 +96,10 @@ class CheckoutController {
         'items': items,
         'status': 'Ordered',
         'createdAt': FieldValue.serverTimestamp(),
+        // Default Duitku expiry (24 jam)
+        'paymentExpiredAt': Timestamp.fromDate(
+          DateTime.now().add(const Duration(hours: 24)),
+        ),
       });
 
       await _pushNotificationService.sendNotificationToAdmin(

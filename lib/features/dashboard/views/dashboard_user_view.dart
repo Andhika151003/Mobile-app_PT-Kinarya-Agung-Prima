@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'package:ecommerce/core/theme/app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../../core/utils/status_helper.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/format_util.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,6 +17,7 @@ import '../../complaint/views/complaint_history_view.dart';
 import '../../authentication/controllers/profile_user_controller.dart';
 import '../../notification/views/notif_user_view.dart';
 import '../../notification/controllers/notif_user_controller.dart';
+import 'package:ecommerce/features/order/controllers/order_user_controller.dart';
 
 class DashboardUserView extends StatefulWidget {
   const DashboardUserView({super.key});
@@ -39,6 +43,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
 
   late Stream<List<Map<String, dynamic>>> _recentOrdersStream;
   late Stream<List<ProductModel>> _recommendedProductsStream;
+  Timer? _syncTimer;
 
   @override
   bool get wantKeepAlive => true;
@@ -50,6 +55,20 @@ class _DashboardUserViewState extends State<DashboardUserView>
     _loadPromotions();
     _recentOrdersStream = _controller.getRecentOrders();
     _recommendedProductsStream = _controller.getRecommendedProducts();
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncOrders();
+    });
+    _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      _syncOrders();
+    });
+  }
+
+  void _syncOrders() {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null && userId.isNotEmpty) {
+      OrderUserController().syncAllPendingOrders(userId);
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -62,6 +81,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
 
   @override
   void dispose() {
+    _syncTimer?.cancel();
     _bannerPageController.dispose();
     super.dispose();
   }
@@ -284,8 +304,6 @@ class _DashboardUserViewState extends State<DashboardUserView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
-    // Removed initial shimmer check to render dashboard structure immediately
 
     return SafeArea(
       child: Container(
@@ -829,38 +847,32 @@ class _DashboardUserViewState extends State<DashboardUserView>
     Color bg;
     Color fg;
     IconData icon;
-    String label;
+    String label = status.displayStatus;
 
     if (status == 'Delivered') {
       bg = const Color(0xFFE6F4EA);
       fg = const Color(0xFF1E8E3E);
       icon = Icons.check_circle_outline;
-      label = 'Delivered';
     } else if (status == 'Expired' || status == 'Cancelled') {
       bg = const Color(0xFFFCE8E6);
       fg = const Color(0xFFD93025);
       icon = Icons.cancel_outlined;
-      label = 'Cancelled';
     } else if (status == 'Ordered') {
       bg = const Color(0xFFFEF7E0);
       fg = const Color(0xFFF9AB00);
       icon = Icons.access_time;
-      label = 'Ordered';
     } else if (status == 'Shipped') {
       bg = const Color(0xFFE3F2FD);
       fg = const Color(0xFF1976D2);
       icon = Icons.local_shipping_outlined;
-      label = 'Shipped';
     } else if (status == 'Paid') {
       bg = const Color(0xFFE8EAF6);
       fg = const Color(0xFF3949AB);
       icon = Icons.payment;
-      label = 'Paid';
     } else {
       bg = const Color(0xFFE8EAF6);
       fg = const Color(0xFF3949AB);
       icon = Icons.info_outline;
-      label = status;
     }
 
     return Container(

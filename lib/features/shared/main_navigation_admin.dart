@@ -8,7 +8,8 @@ import '../authentication/views/profile_admin_view.dart';
 import 'package:provider/provider.dart';
 
 class MainNavigationAdmin extends StatefulWidget {
-  const MainNavigationAdmin({super.key});
+  final List<Widget>? pages;
+  const MainNavigationAdmin({super.key, this.pages});
 
   @override
   State<MainNavigationAdmin> createState() => MainNavigationAdminState();
@@ -46,10 +47,10 @@ class MainNavigationAdminState extends State<MainNavigationAdmin> {
     );
   }
 
-  final List<Widget> _pages = [
+  late final List<Widget> _pages = widget.pages ?? [
     const DashboardAdminView(),
-    const OrderAdminView(),
     const ProductAdminView(),
+    const OrderAdminView(),
     const AdminStatisticView(),
     const ProfileAdminView(),
   ];
@@ -88,12 +89,12 @@ class MainNavigationAdminState extends State<MainNavigationAdmin> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: _buildNavIcon(Icons.shopping_basket_outlined, 1),
-              label: 'Orders',
+              icon: _buildNavIcon(Icons.storefront_outlined, 1),
+              label: 'Products',
             ),
             BottomNavigationBarItem(
-              icon: _buildNavIcon(Icons.storefront_outlined, 2),
-              label: 'Products',
+              icon: _buildNavIcon(Icons.shopping_basket_outlined, 2),
+              label: 'Orders',
             ),
             BottomNavigationBarItem(
               icon: _buildNavIcon(Icons.bar_chart_outlined, 3),

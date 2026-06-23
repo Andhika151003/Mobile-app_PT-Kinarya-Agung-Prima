@@ -10,12 +10,16 @@ import '../../notification/services/push_notification_service.dart';
 class PromotionAdminController extends ChangeNotifier {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
-  final PushNotificationService? _pushNotificationService;
+  final PushNotificationService _pushNotificationService;
 
-  PromotionAdminController({FirebaseFirestore? firestore, FirebaseAuth? auth, PushNotificationService? pushNotificationService})
+  PromotionAdminController({
+    FirebaseFirestore? firestore, 
+    FirebaseAuth? auth,
+    PushNotificationService? pushNotificationService,
+  })
       : _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance,
-        _pushNotificationService = pushNotificationService;
+        _pushNotificationService = pushNotificationService ?? PushNotificationService();
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -171,7 +175,7 @@ class PromotionAdminController extends ChangeNotifier {
 
       final docRef = await _firestore.collection('promotions').add(newPromo.toMap());
 
-      await _pushNotificationService?.broadcastNotification(
+      await _pushNotificationService.broadcastNotification(
         title: 'Promo Spesial Hari Ini!',
         message: 'Jangan lewatkan: $title. Cek sekarang sebelum kehabisan!',
         type: 'promo',

@@ -105,6 +105,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: ElevatedButton(
+            key: const Key('btn_add_to_cart_detail'),
             onPressed: isOutOfStock
                 ? null
                 : () {
@@ -199,6 +200,42 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
               'SKU: $displaySku',
               style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
             ),
+            if (currentStock <= 0 || widget.product.isLowStock) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: currentStock <= 0 ? Colors.red.shade50 : Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: currentStock <= 0 ? Colors.red.shade200 : Colors.orange.shade200,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      currentStock <= 0 ? Icons.error_outline : Icons.warning_amber_outlined,
+                      color: currentStock <= 0 ? Colors.red.shade700 : Colors.orange.shade800,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        currentStock <= 0
+                            ? 'Produk ini sedang tidak tersedia (Stok Habis).'
+                            : 'Stok Terbatas! Segera lakukan pemesanan sebelum kehabisan.',
+                        style: TextStyle(
+                          color: currentStock <= 0 ? Colors.red.shade700 : Colors.orange.shade800,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
 
             // 3. HARGA & COUNTER
@@ -275,63 +312,14 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             Row(
               children: [
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.grey.shade200),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Stock',
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              '$currentStock pcs',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            if (currentStock <= 0)
-                              const Text(
-                                '(Out of Stock)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            else if (currentStock <= (widget.product.lowStockAlert ?? 0))
-                              Text(
-                                '(Low Stock)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.orange.shade800,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            else
-                              const Text(
-                                '(In Stock)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF458833),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  child: _buildInfoCard(
+                    'Stock',
+                    currentStock <= 0
+                        ? 'Stok Habis'
+                        : (widget.product.isLowStock ? '$currentStock pcs (Stok Menipis)' : '$currentStock pcs'),
+                    valueColor: currentStock <= 0
+                        ? Colors.red
+                        : (widget.product.isLowStock ? Colors.orange.shade800 : Colors.black87),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -388,6 +376,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
               alignment: Alignment.center,
               children: [
                 IconButton(
+                  key: const Key('btn_cart_appbar'),
                   icon: const Icon(
                     Icons.shopping_cart_outlined,
                     color: Colors.black87,
@@ -438,6 +427,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                 shape: BoxShape.circle,
               ),
               child: IconButton(
+                key: const Key('btn_close_detail'),
                 icon: const Icon(Icons.close, size: 20, color: Colors.black54),
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 padding: EdgeInsets.zero,
@@ -559,6 +549,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           InkWell(
+            key: const Key('btn_decrement_qty_detail'),
             onTap: _decrement,
             child: Container(
               width: 32,
@@ -580,6 +571,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
           ),
           VerticalDivider(width: 1, thickness: 1, color: Colors.grey.shade400),
           InkWell(
+            key: const Key('btn_increment_qty_detail'),
             onTap: _increment,
             child: Container(
               width: 32,
@@ -606,7 +598,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
     );
   }
 
-  Widget _buildInfoCard(String label, String value) {
+  Widget _buildInfoCard(String label, String value, {Color? valueColor}) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -624,10 +616,10 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
+              color: valueColor ?? Colors.black87,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],

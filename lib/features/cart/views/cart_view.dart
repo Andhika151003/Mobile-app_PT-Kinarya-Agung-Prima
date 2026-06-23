@@ -105,6 +105,7 @@ class _CartViewState extends State<CartView> {
                           itemBuilder: (context, index) {
                             final item = _cartController.items[index];
                             return _buildCartItem(
+                              id: item.id,
                               title: item.title,
                               variant: item.variant,
                               price: item.price,
@@ -189,6 +190,7 @@ class _CartViewState extends State<CartView> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
+                        key: const Key('btn_checkout'),
                         onPressed: isEmpty
                             ? null
                             : () {
@@ -230,6 +232,7 @@ class _CartViewState extends State<CartView> {
   }
 
   Widget _buildCartItem({
+    required String id,
     required String title,
     required String variant,
     required double price,
@@ -296,6 +299,7 @@ class _CartViewState extends State<CartView> {
                     ),
                     const SizedBox(width: 8),
                     InkWell(
+                      key: Key('btn_delete_cart_item_$id'),
                       onTap: onDelete,
                       child: const Icon(
                         Icons.delete_outline,
@@ -333,12 +337,12 @@ class _CartViewState extends State<CartView> {
                       style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w800, fontSize: 14)),
                     Row(
                       children: [
-                        _buildQtyButton(Icons.remove, isAtMin ? null : onRemove, isDisabled: isAtMin),
+                        _buildQtyButton(Icons.remove, isAtMin ? null : onRemove, key: Key('btn_min_qty_$id'), isDisabled: isAtMin),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text('$qty', style: const TextStyle(fontWeight: FontWeight.bold)),
                         ),
-                        _buildQtyButton(Icons.add, isAtMax ? null : onAdd, isDisabled: isAtMax),
+                        _buildQtyButton(Icons.add, isAtMax ? null : onAdd, key: Key('btn_add_qty_$id'), isDisabled: isAtMax),
                       ],
                     ),
                   ],
@@ -351,8 +355,9 @@ class _CartViewState extends State<CartView> {
     );
   }
 
-  Widget _buildQtyButton(IconData icon, VoidCallback? onPressed, {bool isDisabled = false}) {
+  Widget _buildQtyButton(IconData icon, VoidCallback? onPressed, {Key? key, bool isDisabled = false}) {
     return InkWell(
+      key: key,
       onTap: onPressed,
       borderRadius: BorderRadius.circular(20),
       child: Container(

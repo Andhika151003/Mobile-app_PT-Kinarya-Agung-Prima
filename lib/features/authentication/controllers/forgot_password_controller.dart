@@ -37,6 +37,7 @@ class ForgotPasswordController extends ChangeNotifier {
     }
   }
 
+
   Future<void> sendPasswordReset(String email) async {
     _isLoading = true;
     notifyListeners();

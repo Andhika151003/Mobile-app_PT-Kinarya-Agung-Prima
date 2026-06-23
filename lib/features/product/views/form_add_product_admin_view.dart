@@ -189,11 +189,13 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               const SizedBox(height: 16),
               _buildTextFieldLabel('Product Name'),
               _buildTextField(
+                keyField: const Key('add_product_name_field'),
                 controller: _nameController,
                 hint: 'e.g. Vaseline Hand Body Lotion Healthy White 400ml',
               ),
               _buildTextFieldLabel('SKU'),
               _buildTextField(
+                keyField: const Key('add_product_sku_field'),
                 controller: _skuController,
                 hint: 'e.g. PRD-1003',
                 isRequired: true,
@@ -204,6 +206,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               _buildCategoryDropdown(),
               _buildTextFieldLabel('Brand'),
               _buildTextField(
+                keyField: const Key('add_product_brand_field'),
                 controller: _brandController,
                 hint: 'e.g. Vaseline',
                 isRequired: false,
@@ -215,6 +218,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               const SizedBox(height: 16),
               _buildTextFieldLabel('Regular Price'),
               _buildTextField(
+                keyField: const Key('add_product_price_field'),
                 controller: _regularPriceController,
                 prefixText: 'Rp ',
                 isNumber: true,
@@ -225,12 +229,23 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
 
               _buildTextFieldLabel('Minimum Order Quantity'),
               _buildTextField(
+                keyField: const Key('add_product_moq_field'),
                 controller: _moqController,
                 isNumber: true,
                 isDecimal: false,
                 maxLength: 6,
                 hint: '10',
-                isRequired: false,
+                isRequired: true,
+                customValidator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '* Wajib diisi';
+                  }
+                  final intValue = int.tryParse(value);
+                  if (intValue == null || intValue < 1) {
+                    return 'Min. Order minimal 1';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 24),
 
@@ -239,6 +254,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               const SizedBox(height: 16),
               _buildTextFieldLabel('Stock Quantity'),
               _buildTextField(
+                keyField: const Key('add_product_stock_field'),
                 controller: _stockController,
                 isNumber: true,
                 isDecimal: false,
@@ -247,6 +263,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               ),
               _buildTextFieldLabel('Low Stock Alert'),
               _buildTextField(
+                keyField: const Key('add_product_low_stock_field'),
                 controller: _lowStockController,
                 isNumber: true,
                 isDecimal: false,
@@ -261,6 +278,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               const SizedBox(height: 16),
               _buildTextFieldLabel('Description'),
               _buildTextField(
+                keyField: const Key('add_product_desc_field'),
                 controller: _descriptionController,
                 maxLines: 4,
                 maxLength: 2000,
@@ -273,6 +291,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               const SizedBox(height: 16),
               _buildTextFieldLabel('Weight (kg)'),
               _buildTextField(
+                keyField: const Key('add_product_weight_field'),
                 controller: _weightController,
                 isNumber: true,
                 isDecimal: true,
@@ -327,6 +346,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
         Padding(
           padding: const EdgeInsets.only(right: 16.0, top: 12, bottom: 12),
           child: ElevatedButton(
+            key: const Key('add_product_save_btn'),
             onPressed: _saveProduct,
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryGreen,
@@ -376,6 +396,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
 
   Widget _buildTextField({
     required TextEditingController controller,
+    Key? keyField,
     String? hint,
     String? prefixText,
     String? suffixText,
@@ -385,10 +406,12 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
     bool isRequired = true,
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? customValidator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
     child: TextFormField(
+      key: keyField,
       controller: controller,
       maxLength: maxLength,
       keyboardType: isNumber
@@ -400,9 +423,9 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               : [FilteringTextInputFormatter.digitsOnly]) 
           : null),
       maxLines: maxLines,
-        validator: (value) {
+        validator: customValidator ?? (value) {
           if (isRequired && (value == null || value.trim().isEmpty)) {
-            return '* Required';
+            return '* Wajib diisi';
           }
           return null;
         },
@@ -443,6 +466,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: DropdownButtonFormField<String>(
+        key: const Key('add_product_category_dropdown'),
         initialValue: _selectedCategory,
         icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
         decoration: InputDecoration(
@@ -481,7 +505,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
             _selectedCategory = newValue;
           });
         },
-        validator: (value) => value == null ? '* Category is required' : null,
+        validator: (value) => value == null ? '* Kategori wajib diisi' : null,
       ),
     );
   }
@@ -491,6 +515,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
       children: [
         Expanded(
           child: _buildTextField(
+            keyField: const Key('add_product_length_field'),
             controller: _lengthController,
             isNumber: true,
             hint: '100',
@@ -501,6 +526,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
         const SizedBox(width: 12),
         Expanded(
           child: _buildTextField(
+            keyField: const Key('add_product_width_field'),
             controller: _widthController,
             isNumber: true,
             hint: '92',
@@ -511,6 +537,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
         const SizedBox(width: 12),
         Expanded(
           child: _buildTextField(
+            keyField: const Key('add_product_height_field'),
             controller: _heightController,
             isNumber: true,
             hint: '85',

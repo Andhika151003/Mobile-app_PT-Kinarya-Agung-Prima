@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/order.dart';
 import 'order_stats_helper.dart';
+import 'order_user_controller.dart';
 
 class OrderCsController extends ChangeNotifier {
   final FirebaseFirestore _firestore;
@@ -242,5 +243,28 @@ class OrderCsController extends ChangeNotifier {
   void _clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  Future<void> syncAllPendingOrders() async {
+    try {
+      final snapshot = await _firestore
+          .collection('orders')
+          .where('status', whereIn: ['Ordered', 'Pending Payment'])
+          .get();
+
+      if (snapshot.docs.isEmpty) return;
+
+      debugPrint("CS: Checking ${snapshot.docs.length} pending orders for sync...");
+
+      final userCtrl = OrderUserController(firestore: _firestore);
+      for (var doc in snapshot.docs) {
+        final orderId = doc.id;
+        await userCtrl.syncDuitkuPayment(orderId);
+      }
+      
+      await fetchAllOrders();
+    } catch (e) {
+      debugPrint("CS Error syncAllPendingOrders: $e");
+    }
   }
 }

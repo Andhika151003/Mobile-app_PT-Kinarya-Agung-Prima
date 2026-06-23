@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'login_view.dart';
+
 
 class VerifyEmailView extends StatefulWidget {
   const VerifyEmailView({super.key});
@@ -39,12 +39,22 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
   }
 
   Future checkEmailVerified() async {
-    await FirebaseAuth.instance.currentUser?.reload();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await user.reload();
+    } catch (e) {
+      debugPrint('Error reloading user: $e');
+    }
 
     if (mounted) {
-      setState(() {
-        isEmailVerified = FirebaseAuth.instance.currentUser!.emailVerified;
-      });
+      final updatedUser = FirebaseAuth.instance.currentUser;
+      if (updatedUser != null) {
+        setState(() {
+          isEmailVerified = updatedUser.emailVerified;
+        });
+      }
     }
 
     if (isEmailVerified) timer?.cancel();
@@ -76,17 +86,28 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
   @override
   Widget build(BuildContext context) {
     if (isEmailVerified) {
-      return const LoginView();
+      // Jika email diverifikasi, kembalikan ke AuthGate dengan mem-pop route ini
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      });
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF458833))),
+      );
     }
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
               // Beautiful Icon Section
               Container(
                 padding: const EdgeInsets.all(24),
@@ -205,10 +226,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
                   if (context.mounted) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const LoginView()),
-                      (route) => false,
-                    );
+                    Navigator.of(context).popUntil((route) => route.isFirst);
                   }
                 },
                 style: TextButton.styleFrom(
@@ -223,7 +241,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
             ],
           ),
         ),
-      ),
+      ))),
     );
   }
 }

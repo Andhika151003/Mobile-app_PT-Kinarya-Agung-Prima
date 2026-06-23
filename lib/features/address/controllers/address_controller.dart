@@ -3,8 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/address_model.dart';
 
 class AddressController {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+
+  AddressController({FirebaseFirestore? firestore, FirebaseAuth? auth})
+      : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
   String get _uid => _auth.currentUser?.uid ?? '';
 

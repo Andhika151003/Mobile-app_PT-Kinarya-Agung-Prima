@@ -80,13 +80,25 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
               data['orderId'] = doc.id;
               return OrderModel.fromMap(data);
             })
-            .where((order) => order.status == 'Delivered')
+            .where((order) {
+               if (order.status != 'Delivered') return false;
+               final date = order.deliveredAt ?? order.createdAt ?? DateTime.now();
+               final daysDifference = DateTime.now().difference(date).inDays;
+               return daysDifference <= 3;
+            })
             .toList();
 
         orders.sort((a, b) {
           final dateA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
           final dateB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
           return dateB.compareTo(dateA);
+        });
+
+        _purchasedProducts.add({
+          'key': 'bantuan_umum',
+          'orderId': 'Bantuan Umum',
+          'productName': 'Lainnya / Pertanyaan Umum',
+          'orderDate': '-',
         });
 
         for (var order in orders) {
@@ -127,10 +139,10 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
       return;
     }
 
-    if (_attachedImages.isEmpty) {
+    if (_currentOrderId != null && _attachedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Harap lampirkan setidaknya satu gambar bukti.'),
+          content: Text('Harap lampirkan setidaknya satu gambar bukti untuk komplain pesanan.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -383,7 +395,7 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                     ),
   
                     _buildFormCard(
-                      title: 'Tambahkan Lampiran',
+                      title: _currentOrderId == null ? 'Tambahkan Lampiran (Opsional)' : 'Tambahkan Lampiran Bukti (Wajib)',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -457,14 +469,13 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                       child: Column(
                         children: [
                           DropdownButtonFormField<String>(
-                            initialValue:
-                                _purchasedProducts.any(
-                                  (p) =>
-                                      p['key'] ==
-                                      '${_currentOrderId}_$_currentProductName',
-                                )
-                                ? '${_currentOrderId}_$_currentProductName'
-                                : null,
+                            initialValue: _currentOrderId == null 
+                                ? 'bantuan_umum'
+                                : _purchasedProducts.any(
+                                    (p) => p['key'] == '${_currentOrderId}_$_currentProductName',
+                                  )
+                                    ? '${_currentOrderId}_$_currentProductName'
+                                    : 'bantuan_umum',
                             isExpanded: true,
                             validator: (value) => value == null ? 'Pilih produk bermasalah' : null,
                             decoration: InputDecoration(
@@ -499,7 +510,9 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                               return DropdownMenuItem(
                                 value: product['key'] as String,
                                 child: Text(
-                                  '${product['productName']} (Order: ${product['orderId']})',
+                                  product['key'] == 'bantuan_umum'
+                                      ? product['productName']
+                                      : '${product['productName']} (Order: ${product['orderId']})',
                                   style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
@@ -509,15 +522,21 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                             }).toList(),
                             onChanged: (val) {
                               if (val != null) {
-                                final selectedProduct = _purchasedProducts
-                                    .firstWhere((p) => p['key'] == val);
-                                setState(() {
-                                  _currentOrderId = selectedProduct['orderId'];
-                                  _currentProductName =
-                                      selectedProduct['productName'];
-                                  _currentOrderDate =
-                                      selectedProduct['orderDate'];
-                                });
+                                if (val == 'bantuan_umum') {
+                                  setState(() {
+                                    _currentOrderId = null;
+                                    _currentProductName = null;
+                                    _currentOrderDate = null;
+                                  });
+                                } else {
+                                  final selectedProduct = _purchasedProducts
+                                      .firstWhere((p) => p['key'] == val);
+                                  setState(() {
+                                    _currentOrderId = selectedProduct['orderId'];
+                                    _currentProductName = selectedProduct['productName'];
+                                    _currentOrderDate = selectedProduct['orderDate'];
+                                  });
+                                }
                               }
                             },
                           ),
@@ -531,7 +550,7 @@ class _ComplaintFormViewState extends State<ComplaintFormView> {
                             Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: Text(
-                                'Hanya pesanan yang sudah diterima (Delivered) yang dapat diajukan komplain.',
+                                'Hanya pesanan yang sudah diterima (Delivered) dalam 3 hari terakhir yang dapat diajukan komplain. Silakan pilih "Bantuan Umum" untuk pertanyaan bebas.',
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: Colors.orange.shade800,

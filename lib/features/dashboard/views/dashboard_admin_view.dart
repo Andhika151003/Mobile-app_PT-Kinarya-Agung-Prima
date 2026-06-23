@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/utils/format_util.dart';
 import '../controllers/dashboard_admin_controller.dart';
@@ -9,6 +10,7 @@ import '../../shared/main_navigation_admin.dart';
 import '../../shared/widgets/shimmer_loading.dart';
 import '../../notification/views/notif_admin_view.dart';
 import '../../notification/controllers/notif_admin_controller.dart';
+import 'package:ecommerce/features/order/controllers/order_admin_controller.dart';
 
 
 class DashboardAdminView extends StatefulWidget {
@@ -26,6 +28,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
   List<Map<String, dynamic>> promotions = [];
   List<Map<String, dynamic>> retailers = [];
   bool isLoading = true;
+  Timer? _syncTimer;
 
   @override
   bool get wantKeepAlive => true;
@@ -34,15 +37,41 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
   void initState() {
     super.initState();
     _loadDashboardData();
+    
+    _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      _loadDashboardData();
+    });
   }
 
   Future<void> _loadDashboardData() async {
     try {
-      final stats = await _controller.getOverviewStats();
-      final proms = await _controller.getPromotions();
-      final retails = await _controller.getRetailers();
+      final OrderAdminController adminOrderCtrl = OrderAdminController();
+      await adminOrderCtrl.syncAllPendingOrders();
+
+      Map<String, dynamic> stats = {};
+      List<Map<String, dynamic>> proms = [];
+      List<Map<String, dynamic>> retails = [];
+
+      try {
+        stats = await _controller.getOverviewStats();
+      } catch (e) {
+        debugPrint('Error loading stats: $e');
+      }
+
+      try {
+        proms = await _controller.getPromotions();
+      } catch (e) {
+        debugPrint('Error loading promotions: $e');
+      }
+
+      try {
+        retails = await _controller.getRetailers();
+      } catch (e) {
+        debugPrint('Error loading retailers: $e');
+      }
 
       if (mounted) {
+        debugPrint('DashboardAdminView: Fetched ${stats.length} stats, ${proms.length} promos, ${retails.length} retailers');
         setState(() {
           overviewStats = stats;
           promotions = proms;
@@ -50,10 +79,16 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
           isLoading = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading admin dashboard data: $e');
+    } catch (e, stackTrace) {
+      debugPrint('Error loading admin dashboard data overall: $e\n$stackTrace');
       if (mounted) setState(() => isLoading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _syncTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -503,7 +538,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
       );
     }
 
-    final displayRetailers = retailers.take(2).toList();
+    final displayRetailers = retailers.take(5).toList();
 
     return Column(
       children: [

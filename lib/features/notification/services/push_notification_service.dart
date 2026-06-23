@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 
 class PushNotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -12,6 +13,9 @@ class PushNotificationService {
       FlutterLocalNotificationsPlugin();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  StreamSubscription<QuerySnapshot>? _userNotifSubscription;
+  StreamSubscription<QuerySnapshot>? _adminNotifSubscription;
 
   static final PushNotificationService _instance =
       PushNotificationService._internal();
@@ -70,8 +74,17 @@ class PushNotificationService {
       if (user != null) {
         listenToUserNotifications();
         saveTokenToFirestore();
+      } else {
+        _cancelSubscriptions();
       }
     });
+  }
+
+  void _cancelSubscriptions() {
+    _userNotifSubscription?.cancel();
+    _adminNotifSubscription?.cancel();
+    _userNotifSubscription = null;
+    _adminNotifSubscription = null;
   }
 
   Future<void> saveTokenToFirestore() async {
@@ -208,39 +221,49 @@ class PushNotificationService {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    final userDoc = await _firestore.collection('users').doc(user.uid).get();
-    final role = (userDoc.data()?['role'] ?? 'retailer').toString().toLowerCase();
+    try {
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final role = (userDoc.data()?['role'] ?? 'retailer').toString().toLowerCase();
 
-    _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('notifications')
-        .where('timestamp', isGreaterThan: Timestamp.now())
-        .snapshots()
-        .listen((snapshot) {
-      for (var change in snapshot.docChanges) {
-        if (change.type == DocumentChangeType.added) {
-          final data = change.doc.data() as Map<String, dynamic>;
-          debugPrint('NEW User Notification detected: ${data['title']}');
-          _showLocalNotificationFromData(data);
-        }
-      }
-    });
-
-    if (role == 'admin' || role == 'cs' || role == 'customer_support') {
-      _firestore
-          .collection('admin_notifications')
+      _cancelSubscriptions(); // Batalkan yang lama sebelum membuat baru
+      
+      _userNotifSubscription = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('notifications')
           .where('timestamp', isGreaterThan: Timestamp.now())
           .snapshots()
           .listen((snapshot) {
         for (var change in snapshot.docChanges) {
           if (change.type == DocumentChangeType.added) {
             final data = change.doc.data() as Map<String, dynamic>;
-            debugPrint('NEW Admin Notification detected: ${data['title']}');
+            debugPrint('NEW User Notification detected: ${data['title']}');
             _showLocalNotificationFromData(data);
           }
         }
+      }, onError: (e) {
+        debugPrint('Error listening to user notifications (handled): $e');
       });
+
+      if (role == 'admin' || role == 'cs' || role == 'customer_support') {
+        _adminNotifSubscription = _firestore
+            .collection('admin_notifications')
+            .where('timestamp', isGreaterThan: Timestamp.now())
+            .snapshots()
+            .listen((snapshot) {
+          for (var change in snapshot.docChanges) {
+            if (change.type == DocumentChangeType.added) {
+              final data = change.doc.data() as Map<String, dynamic>;
+              debugPrint('NEW Admin Notification detected: ${data['title']}');
+              _showLocalNotificationFromData(data);
+            }
+          }
+        }, onError: (e) {
+          debugPrint('Error listening to admin notifications (handled): $e');
+        });
+      }
+    } catch (e) {
+      debugPrint('Error in listenToUserNotifications: $e');
     }
   }
 

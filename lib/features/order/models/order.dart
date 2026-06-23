@@ -67,6 +67,9 @@ class OrderModel {
   final DateTime? shippedAt;
   final DateTime? deliveredAt;
 
+  final String? cancellationReason;
+  final String? cancellationStatus;
+
   OrderModel({
     required this.orderId,
     required this.userId,
@@ -89,6 +92,8 @@ class OrderModel {
     this.paidAt,
     this.shippedAt,
     this.deliveredAt,
+    this.cancellationReason,
+    this.cancellationStatus,
   });
 
   factory OrderModel.fromMap(Map<String, dynamic> map) {
@@ -125,6 +130,8 @@ class OrderModel {
       paidAt: parseDate(map['paidAt']),
       shippedAt: parseDate(map['shippedAt']),
       deliveredAt: parseDate(map['deliveredAt']),
+      cancellationReason: map['cancellationReason']?.toString(),
+      cancellationStatus: map['cancellationStatus']?.toString(),
     );
   }
 
@@ -151,6 +158,8 @@ class OrderModel {
       'paidAt': paidAt != null ? Timestamp.fromDate(paidAt!) : null,
       'shippedAt': shippedAt != null ? Timestamp.fromDate(shippedAt!) : null,
       'deliveredAt': deliveredAt != null ? Timestamp.fromDate(deliveredAt!) : null,
+      if (cancellationReason != null) 'cancellationReason': cancellationReason,
+      if (cancellationStatus != null) 'cancellationStatus': cancellationStatus,
     };
   }
 
@@ -159,6 +168,8 @@ class OrderModel {
     DateTime? paidAt,
     DateTime? shippedAt,
     DateTime? deliveredAt,
+    String? cancellationReason,
+    String? cancellationStatus,
   }) {
     return OrderModel(
       orderId: orderId,
@@ -181,6 +192,8 @@ class OrderModel {
       paidAt: paidAt ?? this.paidAt,
       shippedAt: shippedAt ?? this.shippedAt,
       deliveredAt: deliveredAt ?? this.deliveredAt,
+      cancellationReason: cancellationReason ?? this.cancellationReason,
+      cancellationStatus: cancellationStatus ?? this.cancellationStatus,
     );
   }
 }

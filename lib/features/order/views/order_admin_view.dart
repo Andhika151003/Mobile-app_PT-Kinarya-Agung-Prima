@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/status_helper.dart';
 import 'package:intl/intl.dart';
 import '../models/order.dart';
 import '../controllers/order_admin_controller.dart'; 
@@ -47,6 +48,12 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
   void initState() {
     super.initState();
     _fetchOrders();
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _adminController.syncAllPendingOrders().then((_) {
+        if (mounted) _fetchOrders(); 
+      });
+    });
   }
 
   @override
@@ -62,8 +69,19 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
       if (mounted) {
         setState(() {
           _allOrders = docs.map((e) => OrderModel.fromMap(e)).toList();
-          _filteredOrders = List.from(_allOrders);
+          final mapList = _allOrders.map((e) => e.toMap()).toList();
+          final filteredMaps = _adminController.filterAndSearchOrders(
+            mapList, 
+            _selectedFilter == 'All' ? 'All Transactions' : _selectedFilter, 
+            _searchQuery
+          );
+          _filteredOrders = filteredMaps.map((e) => OrderModel.fromMap(e)).toList();
           _applySortInternal();
+          
+          final totalP = (_filteredOrders.length / _pageSize).ceil().clamp(1, 999);
+          if (_currentPage > totalP) {
+            _currentPage = totalP;
+          }
           _isLoading = false;
         });
       }
@@ -109,8 +127,9 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
   int get _totalPages => (_filteredOrders.length / _pageSize).ceil().clamp(1, 999);
 
   List<OrderModel> get _currentPageOrders {
-    final start = (_currentPage - 1) * _pageSize;
+    final start = ((_currentPage - 1) * _pageSize).clamp(0, _filteredOrders.isEmpty ? 0 : _filteredOrders.length - 1);
     final end = (start + _pageSize).clamp(0, _filteredOrders.length);
+    if (start > end) return [];
     return _filteredOrders.sublist(start, end);
   }
 
@@ -195,6 +214,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                       height: 46,
                       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
                       child: TextField(
+                        key: const Key('input_search_order'),
                         controller: _searchController,
                         onChanged: (v) => setState(() => _applySearch(v.trim())),
                         style: const TextStyle(fontSize: 14),
@@ -209,6 +229,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                   ),
                   const SizedBox(width: 10),
                    GestureDetector(
+                    key: const Key('btn_search_order'),
                     onTap: () => setState(() => _applySearch(_searchController.text.trim())),
                     child: Container(
                       width: 46, height: 46,
@@ -234,10 +255,10 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                         });
                       },
                       itemBuilder: (BuildContext context) => [
-                        const PopupMenuItem(value: 'Newest', child: Text('Newest')),
-                        const PopupMenuItem(value: 'Oldest', child: Text('Oldest')),
-                        const PopupMenuItem(value: 'Price (High-Low)', child: Text('Price: High to Low')),
-                        const PopupMenuItem(value: 'Price (Low-High)', child: Text('Price: Low to High')),
+                        const PopupMenuItem(value: 'Newest', child: Text('Terbaru')),
+                        const PopupMenuItem(value: 'Oldest', child: Text('Terlama')),
+                        const PopupMenuItem(value: 'Price (High-Low)', child: Text('Harga (Tertinggi)')),
+                        const PopupMenuItem(value: 'Price (Low-High)', child: Text('Harga (Terendah)')),
                       ],
                     ),
                   ),
@@ -254,6 +275,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: InkWell(
+                      key: Key('tab_${filter.toLowerCase().replaceAll(' ', '_')}'),
                       onTap: () {
                         setState(() {
                           _selectedFilter = filter;
@@ -271,7 +293,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                           ),
                         ),
                         child: Text(
-                          filter,
+                          filter == 'All' ? 'Semua' : filter.displayStatus,
                           style: TextStyle(
                             color: isSelected ? Colors.white : Colors.black87,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -330,6 +352,7 @@ class _OrderCard extends StatelessWidget {
     final paymentLabel = order.status == 'Ordered' ? 'Unpaid' : 'Paid';
 
     return GestureDetector(
+      key: Key('card_admin_order_${order.orderId}'),
       onTap: () async {
         await Navigator.push(
           context,
@@ -420,22 +443,22 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color bg, fg; IconData icon; String label;
+    Color bg, fg; IconData icon; String label = status.displayStatus;
 
     if (status == 'Delivered') {
-      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline; label = 'Delivered';
+      bg = const Color(0xFFE6F4EA); fg = const Color(0xFF1E8E3E); icon = Icons.check_circle_outline;
     } else if (status == 'Cancelled') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined; label = 'Cancelled';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.cancel_outlined;
     } else if (status == 'Expired') {
-      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined; label = 'Expired';
+      bg = const Color(0xFFFCE8E6); fg = const Color(0xFFD93025); icon = Icons.timer_off_outlined;
     } else if (status == 'Ordered') {
-      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time; label = 'Ordered';
+      bg = const Color(0xFFFEF7E0); fg = const Color(0xFFF9AB00); icon = Icons.access_time;
     } else if (status == 'Shipped') {
-      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined; label = 'Shipped';
+      bg = const Color(0xFFE3F2FD); fg = const Color(0xFF1976D2); icon = Icons.local_shipping_outlined;
     } else if (status == 'Paid') {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment; label = 'Paid';
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.payment;
     } else {
-      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline; label = status; 
+      bg = const Color(0xFFE8EAF6); fg = const Color(0xFF3949AB); icon = Icons.info_outline;
     }
 
     return Container(

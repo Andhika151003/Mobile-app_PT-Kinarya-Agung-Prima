@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller/admin_cs_controller.dart';
 import 'form_add_cs_view.dart';
+import 'form_edit_cs_view.dart';
 
 class AdminCsView extends StatefulWidget {
   const AdminCsView({super.key});
@@ -24,40 +25,41 @@ class _AdminCsViewState extends State<AdminCsView> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => AdminCsController()..fetchAllCS(),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          title: const Text(
-            'Customer Support Management',
-            style: TextStyle(
-              color: Color(0xFF1F2937),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Inter',
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              title: const Text(
+                'Customer Support Management',
+                style: TextStyle(
+                  color: Color(0xFF1F2937),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Inter',
+                ),
+              ),
+              centerTitle: true,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline, color: Color(0xFF2E7D32)),
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const FormAddCsView()),
+                    );
+                    if (result == true && context.mounted) {
+                      context.read<AdminCsController>().fetchAllCS();
+                    }
+                  },
+                ),
+              ],
             ),
-          ),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline, color: Color(0xFF2E7D32)),
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const FormAddCsView()),
-                );
-                if (result == true && context.mounted) {
-                  // AdminCsController will refresh the list inside addCS if called from there,
-                  // or we can refresh here if needed.
-                }
-              },
-            ),
-          ],
-        ),
-        body: Consumer<AdminCsController>(
-          builder: (context, controller, child) {
-            if (controller.isLoading && controller.csList.isEmpty) {
+            body: Consumer<AdminCsController>(
+              builder: (context, controller, child) {
+                if (controller.isLoading && controller.csList.isEmpty) {
               return const Center(
                 child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
               );
@@ -137,7 +139,8 @@ class _AdminCsViewState extends State<AdminCsView> {
             );
           },
         ),
-      ),
+      );
+      }),
     );
   }
 
@@ -239,6 +242,21 @@ class _AdminCsViewState extends State<AdminCsView> {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: Color(0xFF2E7D32), size: 20),
+            tooltip: 'Edit CS',
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FormEditCsView(csData: cs),
+                ),
+              );
+              if (result == true && context.mounted) {
+                controller.fetchAllCS();
+              }
+            },
           ),
           Switch(
             value: isActive,
