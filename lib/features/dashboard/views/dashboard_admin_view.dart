@@ -186,7 +186,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
       children: [
         Image.asset('assets/images/logo.png', height: 35),
         StreamBuilder<int>(
-          stream: _notifController != null ? _notifController!.getUnreadCount() : Stream.value(0),
+          stream: _notifController != null ? _notifController.getUnreadCount() : Stream.value(0),
           builder: (context, snapshot) {
             final unreadCount = snapshot.data ?? 0;
             return Stack(

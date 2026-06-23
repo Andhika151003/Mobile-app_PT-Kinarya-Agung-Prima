@@ -363,7 +363,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                 },
               ),
               StreamBuilder<int>(
-                stream: _notifController != null ? _notifController!.getUnreadCount() : Stream.value(0),
+                stream: _notifController != null ? _notifController.getUnreadCount() : Stream.value(0),
                 builder: (context, snapshot) {
                   final unreadCount = snapshot.data ?? 0;
                   return Stack(

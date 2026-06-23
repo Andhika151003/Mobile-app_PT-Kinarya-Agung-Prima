@@ -25,7 +25,7 @@ void main() {
       //   }
       //   return null;
       // }
-      final validateField = (String label, String? value) {
+      String? validateField(String label, String? value) {
         if (value == null || value.trim().isEmpty) {
           return '* $label is required';
         }
