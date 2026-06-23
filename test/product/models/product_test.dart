@@ -4,6 +4,7 @@ import 'package:ecommerce/features/product/models/product.dart';
 
 void main() {
   group('Unit Test ProductModel', () {
+    // Model Serialization/Deserialization mapping checks for Admin & Retailer flows
     test('toMap harus mengonversi ProductModel menjadi Map dengan benar', () {
       // Arrange — Membuat instance ProductModel dengan data lengkap
       final product = ProductModel(

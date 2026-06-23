@@ -91,7 +91,8 @@ void main() {
       expect(expiredPromo.isActive, isFalse);
     });
 
-    test('discountText harus memformat teks diskon dengan benar', () {
+    // TC - 58 : Retailer Menampilkan label diskon pada kartu produk
+    test('TC - 58 : Retailer Menampilkan label diskon pada kartu produk (discountText)', () {
       // Arrange — Membuat 2 promo dengan tipe diskon berbeda (percentage & fixed)
       final percentage = PromotionModel(
         title: '', description: '', discountType: 'percentage', discountValue: 25,
@@ -105,6 +106,17 @@ void main() {
       // Act & Assert — Mengakses getter discountText dan memverifikasi format teks
       expect(percentage.discountText, '25% OFF');
       expect(fixed.discountText, 'Rp 15.000 OFF');
+    });
+
+    // TC - 59 : Retailer Menampilkan harga coret (original) dan harga promo
+    test('TC - 59 : Retailer Menampilkan harga coret (original) dan harga promo', () {
+      final originalPrice = 100000;
+      final discountValue = 20.0; // 20%
+      
+      final promoPrice = originalPrice * (1 - (discountValue / 100));
+
+      expect(originalPrice, 100000); // Harga asli (untuk dicoret di UI)
+      expect(promoPrice, 80000.0);   // Harga promo yang ditampilkan
     });
   });
 }

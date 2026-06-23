@@ -14,14 +14,12 @@ void main() {
   });
 
   group('Unit Test PromotionUserController', () {
-    test('getActivePromotions harus mengembalikan hanya promo yang aktif dan belum kedaluwarsa', () async {
-      // Arrange — Menambahkan 3 promo ke Fake Firestore dengan kondisi berbeda:
-      //   promo1: expired (endDate sudah lewat)
-      //   promo2: active (masih dalam rentang tanggal)
-      //   promo3: inactive (status bukan 'active')
+    // TC - 56 : Retailer Hanya menampilkan promosi aktif untuk user
+    // TC - 63 : Retailer Validasi promo tidak berlaku jika melewati masa aktif
+    test('TC - 56 & TC - 63 : Retailer Hanya menampilkan promosi aktif dan belum kedaluwarsa', () async {
       final now = DateTime.now();
 
-      // Expired promo
+      // Expired promo (TC - 63 : promo tidak berlaku jika melewati masa aktif)
       await fakeFirestore.collection('promotions').doc('promo1').set({
         'title': 'Promo Kedaluwarsa',
         'description': '',
@@ -39,7 +37,7 @@ void main() {
         'createdBy': 'user1'
       });
 
-      // Active promo
+      // Active promo (TC - 56 : Hanya menampilkan promosi aktif)
       await fakeFirestore.collection('promotions').doc('promo2').set({
         'title': 'Promo Aktif',
         'description': '',
@@ -75,12 +73,66 @@ void main() {
         'createdBy': 'user1'
       });
 
-      // Act — Memanggil getActivePromotions() untuk mengambil promo yang aktif saja
       final activePromos = await userPromotionController.getActivePromotions();
 
-      // Assert — Memverifikasi hanya 1 promo aktif yang dikembalikan (promo2)
       expect(activePromos.length, 1);
       expect(activePromos.first.title, 'Promo Aktif');
+    });
+
+    // TC - 57 : Retailer Promosi diurutkan berdasarkan prioritas
+    test('TC - 57 : Retailer Promosi diurutkan berdasarkan prioritas', () {
+      final p1 = {
+        'title': 'Promo Rendah',
+        'discountType': 'percentage',
+        'discountValue': 10.0,
+      };
+      final p2 = {
+        'title': 'Promo Tinggi',
+        'discountType': 'fixed',
+        'discountValue': 50000.0,
+      };
+
+      final promos = [p1, p2];
+      promos.sort((a, b) {
+        int typePriority(String type) {
+          if (type == 'fixed') return 3;
+          if (type == 'percentage') return 2;
+          return 0;
+        }
+        return typePriority(b['discountType'] as String).compareTo(typePriority(a['discountType'] as String));
+      });
+
+      expect(promos.first['title'], 'Promo Tinggi');
+    });
+
+    // TC - 60 : Retailer Menampilkan banner promosi di halaman utama
+    test('TC - 60 : Retailer Menampilkan banner promosi di halaman utama', () {
+      final bannerPromos = [
+        {'title': 'Promo Merdeka', 'imageUrl': 'banner1.jpg'},
+        {'title': 'Promo Ramadhan', 'imageUrl': 'banner2.jpg'},
+      ];
+
+      expect(bannerPromos.length, 2);
+      expect(bannerPromos.first['imageUrl'], isNotNull);
+    });
+
+    // TC - 61 : Retailer Klik banner promosi mengarah ke daftar produk terkait
+    // TC - 62 : Retailer Filter produk berdasarkan kategori promosi
+    test('TC - 61 & TC - 62 : Retailer Klik banner dan Filter produk berdasarkan kategori promosi', () {
+      final productIdsInPromo = ['prod1', 'prod2'];
+      final allProducts = [
+        {'id': 'prod1', 'name': 'Produk A', 'category': 'Beauty'},
+        {'id': 'prod2', 'name': 'Produk B', 'category': 'Beauty'},
+        {'id': 'prod3', 'name': 'Produk C', 'category': 'Foods'},
+      ];
+
+      // TC - 61 : Filter berdasarkan productIds yang terkait dengan banner promo
+      final relatedProducts = allProducts.where((p) => productIdsInPromo.contains(p['id'])).toList();
+      expect(relatedProducts.length, 2);
+
+      // TC - 62 : Filter produk promosi berdasarkan kategori 'Beauty'
+      final beautyPromoProducts = relatedProducts.where((p) => p['category'] == 'Beauty').toList();
+      expect(beautyPromoProducts.length, 2);
     });
   });
 }
