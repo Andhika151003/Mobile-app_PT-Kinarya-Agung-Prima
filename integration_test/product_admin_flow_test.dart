@@ -7,6 +7,13 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Product Admin UI Automation (Black Box)', () {
+    // =========================================================================
+    // INTEGRATION TEST FLOWS COVERED IN THIS FILE:
+    // - TC - 64 : Admin Menampilkan daftar produk
+    // - TC - 65 : Admin Tambah produk baru — data valid
+    // - TC - 70 : Admin Update stok produk secara manual
+    // =========================================================================
+
     testWidgets('Complete Flow: Login, Add Product, and Update Stock', (
       WidgetTester tester,
     ) async {
@@ -54,6 +61,7 @@ void main() {
       }
 
       // 3. Navigate to Products Tab
+      // [TC - 64 : Admin Menampilkan daftar produk]
       // Tap the 'Products' item in BottomNavigationBar
       final productsTabFinder = find.text('Products');
       expect(productsTabFinder, findsOneWidget);
@@ -65,6 +73,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // 4. Flow 1: Add a New Product
+      // [TC - 65 : Admin Tambah produk baru — data valid]
       final fabFinder = find.byKey(const Key('add_product_fab'));
       expect(fabFinder, findsOneWidget);
       await tester.tap(fabFinder);
@@ -168,6 +177,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // 5. Flow 2: Add Stock to an Existing Product
+      // [TC - 70 : Admin Update stok produk secara manual]
       // Find the first "Add Stock" button visible in the list
       final addStockButtonFinder = find
           .byWidgetPredicate(
