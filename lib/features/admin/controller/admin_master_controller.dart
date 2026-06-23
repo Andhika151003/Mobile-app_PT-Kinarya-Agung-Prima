@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../../../core/firebase_provider.dart';
 
 class AdminMasterController extends ChangeNotifier {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
   AdminMasterController({FirebaseFirestore? firestore, FirebaseAuth? auth})
-      : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+      : _firestore = firestore ?? AppFirebase.firestore,
+        _auth = auth ?? AppFirebase.auth;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

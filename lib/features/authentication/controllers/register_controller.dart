@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/firebase_provider.dart';
 
 class RegisterController extends ChangeNotifier {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
   RegisterController({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+      : _auth = auth ?? AppFirebase.auth,
+        _firestore = firestore ?? AppFirebase.firestore;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:ecommerce/core/theme/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../../core/firebase_provider.dart';
 import '../../../core/utils/status_helper.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/format_util.dart';
@@ -30,8 +31,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
     with AutomaticKeepAliveClientMixin {
   final DashboardUserController _controller = DashboardUserController();
   final PromotionUserController _promoController = PromotionUserController();
-  final NotificationUserController _notifController =
-      NotificationUserController();
+  late final NotificationUserController? _notifController;
   final RetailProfileController _profileController = RetailProfileController();
 
   String userName = 'Retailer';
@@ -51,6 +51,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
   @override
   void initState() {
     super.initState();
+    _notifController = AppFirebase.isMocked ? null : NotificationUserController();
     _loadUserData();
     _loadPromotions();
     _recentOrdersStream = _controller.getRecentOrders();
@@ -65,7 +66,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
   }
 
   void _syncOrders() {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
+    final userId = AppFirebase.auth.currentUser?.uid;
     if (userId != null && userId.isNotEmpty) {
       OrderUserController().syncAllPendingOrders(userId);
     }
@@ -362,7 +363,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                 },
               ),
               StreamBuilder<int>(
-                stream: _notifController.getUnreadCount(),
+                stream: _notifController != null ? _notifController!.getUnreadCount() : Stream.value(0),
                 builder: (context, snapshot) {
                   final unreadCount = snapshot.data ?? 0;
                   return Stack(

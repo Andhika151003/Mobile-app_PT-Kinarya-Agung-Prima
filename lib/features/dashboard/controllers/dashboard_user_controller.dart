@@ -1,14 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../product/models/product.dart';
+import '../../../core/firebase_provider.dart';
 
 class DashboardUserController {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
   DashboardUserController({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+      : _auth = auth ?? AppFirebase.auth,
+        _firestore = firestore ?? AppFirebase.firestore;
 
   Future<Map<String, dynamic>?> getUserData() async {
     try {

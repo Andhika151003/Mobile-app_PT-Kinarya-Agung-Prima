@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/firebase_provider.dart';
 
 
 class VerifyEmailView extends StatefulWidget {
@@ -20,7 +21,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
   void initState() {
     super.initState();
 
-    isEmailVerified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+    isEmailVerified = AppFirebase.auth.currentUser?.emailVerified ?? false;
 
     if (!isEmailVerified) {
       sendVerificationEmail();
@@ -39,7 +40,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
   }
 
   Future checkEmailVerified() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = AppFirebase.auth.currentUser;
     if (user == null) return;
 
     try {
@@ -49,7 +50,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
     }
 
     if (mounted) {
-      final updatedUser = FirebaseAuth.instance.currentUser;
+      final updatedUser = AppFirebase.auth.currentUser;
       if (updatedUser != null) {
         setState(() {
           isEmailVerified = updatedUser.emailVerified;
@@ -62,7 +63,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
 
   Future sendVerificationEmail() async {
     try {
-      final user = FirebaseAuth.instance.currentUser!;
+      final user = AppFirebase.auth.currentUser!;
       await user.sendEmailVerification();
 
       if (mounted) {
@@ -199,7 +200,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                 ],
               ),
               const SizedBox(height: 40),
-
+ 
               // Action Buttons
               SizedBox(
                 width: double.infinity,
@@ -224,7 +225,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
               
               TextButton(
                 onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
+                  await AppFirebase.auth.signOut();
                   if (context.mounted) {
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   }

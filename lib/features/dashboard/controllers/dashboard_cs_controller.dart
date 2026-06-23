@@ -3,14 +3,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import '../../complaint/models/complaint.dart';
+import '../../../core/firebase_provider.dart';
 
 class DashboardCsController {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
   DashboardCsController({FirebaseAuth? auth, FirebaseFirestore? firestore})
-    : _auth = auth ?? FirebaseAuth.instance,
-      _firestore = firestore ?? FirebaseFirestore.instance;
+    : _auth = auth ?? AppFirebase.auth,
+      _firestore = firestore ?? AppFirebase.firestore;
 
   Stream<Map<String, int>> getComplaintStatsStream() {
     return _firestore.collection('complaints').snapshots().map((snapshot) {

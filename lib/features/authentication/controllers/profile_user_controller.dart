@@ -2,14 +2,15 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../supabase_storage_service.dart';
+import '../../../core/firebase_provider.dart';
 
 class RetailProfileController {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
   RetailProfileController({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+      : _auth = auth ?? AppFirebase.auth,
+        _firestore = firestore ?? AppFirebase.firestore;
 
   Future<Map<String, dynamic>?> getRetailProfile() async {
     try {

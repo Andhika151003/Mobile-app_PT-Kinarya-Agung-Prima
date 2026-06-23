@@ -126,6 +126,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     Semantics(
                       label: 'input_forgot_password_email',
                       child: TextFormField(
+                        key: const Key('forgotPasswordEmailField'),
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         validator: controller.validateEmail,
@@ -154,6 +155,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                       child: Semantics(
                         label: 'btn_forgot_password_submit',
                         child: ElevatedButton(
+                          key: const Key('sendResetLinkButton'),
                           onPressed: controller.isLoading ? null : () => _handleResetPassword(controller),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryGreen,

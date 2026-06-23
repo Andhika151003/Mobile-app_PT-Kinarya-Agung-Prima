@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/firebase_provider.dart';
 import '../controllers/profile_user_controller.dart';
 
 class FormProfileUserView extends StatefulWidget {
@@ -65,9 +66,9 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
 
   Future<void> _fetchCurrentData() async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final user = AppFirebase.auth.currentUser;
       if (user != null) {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        final doc = await AppFirebase.firestore.collection('users').doc(user.uid).get();
         if (doc.exists && mounted) {
           final data = doc.data() as Map<String, dynamic>;
           setState(() {
@@ -125,7 +126,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
   Future<void> _sendVerificationEmail() async {
     setState(() => _isSendingVerification = true);
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final user = AppFirebase.auth.currentUser;
       if (user != null) {
         await user.sendEmailVerification();
         if (mounted) {
@@ -180,7 +181,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                     
                     _buildEmailDisplay(),
                     const SizedBox(height: 16),
-                    _buildTextField('Business Name', 'Enter Your Name', _nameController, semanticLabel: 'input_edit_profile_name'),
+                    _buildTextField('Business Name', 'Enter Your Name', _nameController, key: const Key('businessNameField'), semanticLabel: 'input_edit_profile_name'),
                     
                     // Business Type Dropdown
                     const Padding(
@@ -213,7 +214,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                       ),
                     ),
 
-                    _buildTextField('Contact', 'Enter Your Number', _contactController, isNumber: true, semanticLabel: 'input_edit_profile_contact'),
+                    _buildTextField('Contact', 'Enter Your Number', _contactController, key: const Key('contactField'), isNumber: true, semanticLabel: 'input_edit_profile_contact'),
                     
                     const SizedBox(height: 32),
                     _buildActionButtons(context, primaryGreen),
@@ -307,7 +308,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
     );
   }
 
-  Widget _buildTextField(String label, String hintText, TextEditingController controller, {bool isNumber = false, int maxLines = 1, String? semanticLabel}) {
+  Widget _buildTextField(String label, String hintText, TextEditingController controller, {Key? key, bool isNumber = false, int maxLines = 1, String? semanticLabel}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -325,6 +326,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
           Semantics(
             label: semanticLabel,
             child: TextFormField(
+              key: key,
               controller: controller,
               keyboardType: isNumber ? TextInputType.number : (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
               maxLines: maxLines,
