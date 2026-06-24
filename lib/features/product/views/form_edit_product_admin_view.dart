@@ -201,11 +201,13 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
               const SizedBox(height: 16),
               _buildTextFieldLabel('Product Name'),
               _buildTextField(
+                keyField: const Key('edit_product_name_field'),
                 controller: _nameController,
                 hint: 'e.g. Vaseline Hand Body Lotion Healthy White 400ml',
               ),
               _buildTextFieldLabel('SKU'),
               _buildTextField(
+                keyField: const Key('edit_product_sku_field'),
                 controller: _skuController,
                 hint: 'e.g. PRD-1003',
                 isRequired: false,
@@ -214,6 +216,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
               _buildCategoryDropdown(),
               _buildTextFieldLabel('Brand'),
               _buildTextField(
+                keyField: const Key('edit_product_brand_field'),
                 controller: _brandController,
                 hint: 'e.g. Vaseline',
                 isRequired: false,
@@ -225,6 +228,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
               const SizedBox(height: 16),
               _buildTextFieldLabel('Regular Price'),
               _buildTextField(
+                keyField: const Key('edit_product_price_field'),
                 controller: _regularPriceController,
                 prefixText: 'Rp ',
                 isNumber: true,
@@ -232,6 +236,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
               ),
               _buildTextFieldLabel('Minimum Order Quantity'),
               _buildTextField(
+                keyField: const Key('edit_product_moq_field'),
                 controller: _moqController,
                 isNumber: true,
                 hint: '10',
@@ -254,12 +259,14 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
               const SizedBox(height: 16),
               _buildTextFieldLabel('Stock Quantity'),
               _buildTextField(
+                keyField: const Key('edit_product_stock_field'),
                 controller: _stockController,
                 isNumber: true,
                 hint: '1000',
               ),
               _buildTextFieldLabel('Low Stock Alert'),
               _buildTextField(
+                keyField: const Key('edit_product_low_stock_field'),
                 controller: _lowStockController,
                 isNumber: true,
                 hint: '100',
@@ -272,6 +279,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
               const SizedBox(height: 16),
               _buildTextFieldLabel('Description'),
               _buildTextField(
+                keyField: const Key('edit_product_desc_field'),
                 controller: _descriptionController,
                 maxLines: 4,
                 hint: 'Enter product description...',
@@ -283,6 +291,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
               const SizedBox(height: 16),
               _buildTextFieldLabel('Weight (kg)'),
               _buildTextField(
+                keyField: const Key('edit_product_weight_field'),
                 controller: _weightController,
                 isNumber: true,
                 hint: '4.00',
@@ -335,6 +344,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
         Padding(
           padding: const EdgeInsets.only(right: 16.0, top: 12, bottom: 12),
           child: ElevatedButton(
+            key: const Key('edit_product_update_btn'),
             onPressed: _updateProduct,
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryGreen,
@@ -384,6 +394,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
 
   Widget _buildTextField({
     required TextEditingController controller,
+    Key? keyField,
     String? hint,
     String? prefixText,
     String? suffixText,
@@ -395,6 +406,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextFormField(
+        key: keyField,
         controller: controller,
         keyboardType: isNumber
             ? const TextInputType.numberWithOptions(decimal: true)
@@ -443,6 +455,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: DropdownButtonFormField<String>(
+        key: const Key('edit_product_category_dropdown'),
         initialValue: _selectedCategory,
         icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
         decoration: InputDecoration(
@@ -491,6 +504,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
       children: [
         Expanded(
           child: _buildTextField(
+            keyField: const Key('edit_product_length_field'),
             controller: _lengthController,
             isNumber: true,
             hint: '100',
@@ -501,6 +515,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
         const SizedBox(width: 12),
         Expanded(
           child: _buildTextField(
+            keyField: const Key('edit_product_width_field'),
             controller: _widthController,
             isNumber: true,
             hint: '92',
@@ -511,6 +526,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
         const SizedBox(width: 12),
         Expanded(
           child: _buildTextField(
+            keyField: const Key('edit_product_height_field'),
             controller: _heightController,
             isNumber: true,
             hint: '85',

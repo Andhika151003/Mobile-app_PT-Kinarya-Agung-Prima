@@ -40,6 +40,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
     return Scaffold(
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
+        key: const Key('add_product_fab'),
         backgroundColor: primaryGreen,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
@@ -181,6 +182,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
         children: [
           Expanded(
             child: TextField(
+              key: const Key('search_product_field'),
               controller: _searchController,
               onChanged: (value) => setState(() {}),
               decoration: const InputDecoration(
@@ -220,6 +222,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           GestureDetector(
+            key: const Key('filter_reset'),
             onTap: () {
               setState(() {
                 _selectedCategory = 'All';
@@ -240,6 +243,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
           ),
 
           GestureDetector(
+            key: const Key('filter_in_stock'),
             onTap: () => setState(() => _filterInStock = !_filterInStock),
             child: Text(
               'In Stock',
@@ -255,6 +259,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
 
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
+              key: const Key('sort_dropdown'),
               value: _sortBy,
               icon: const Icon(Icons.arrow_drop_down, size: 20),
               isDense: true,
@@ -358,6 +363,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
         : 'No SKU';
 
     return GestureDetector(
+      key: Key('product_card_${product.id}'),
       onTap: () {
         Navigator.push(
           context,
@@ -491,6 +497,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                 ),
                 const SizedBox(height: 25),
                 GestureDetector(
+                  key: Key('add_stock_button_${product.id}'),
                   onTap: () {
                     showDialog(
                       context: context,
@@ -785,6 +792,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   InkWell(
+                    key: const Key('add_stock_decrement'),
                     onTap: _decrement,
                     child: Container(
                       width: 36,
@@ -798,6 +806,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
                     color: Colors.grey.shade300,
                   ),
                   Container(
+                    key: const Key('add_stock_quantity_text'),
                     width: 50,
                     alignment: Alignment.center,
                     child: Text(
@@ -811,6 +820,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
                     color: Colors.grey.shade300,
                   ),
                   InkWell(
+                    key: const Key('add_stock_increment'),
                     onTap: _increment,
                     child: Container(
                       width: 36,
@@ -827,6 +837,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 OutlinedButton(
+                  key: const Key('add_stock_cancel'),
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
@@ -848,6 +859,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
+                  key: const Key('add_stock_save'),
                   onPressed: _isLoading ? null : _saveStock,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryGreen,
