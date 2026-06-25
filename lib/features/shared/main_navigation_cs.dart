@@ -40,10 +40,10 @@ class _MainNavigationCsState extends State<MainNavigationCs> {
             });
           },
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.shopping_basket_outlined), label: 'Orders'),
-            BottomNavigationBarItem(icon: Icon(Icons.support_agent), label: 'Supports'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Beranda'),
+            BottomNavigationBarItem(icon: Icon(Icons.shopping_basket_outlined), label: 'Pesanan'),
+            BottomNavigationBarItem(icon: Icon(Icons.support_agent), label: 'Dukungan'),
+            BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
           ],
         ),
       ),

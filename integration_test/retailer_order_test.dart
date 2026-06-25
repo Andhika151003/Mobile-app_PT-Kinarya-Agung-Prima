@@ -47,7 +47,7 @@ void main() {
       }
 
       // Find an order item and tap it
-      final orderItem = find.text('Detail Pesanan'); // Usually a button or just tap the card
+      final orderItem = find.textContaining('ORD-'); // Usually a button or just tap the card
       if (orderItem.evaluate().isNotEmpty) {
          await tester.tap(orderItem.first);
          await tester.pumpAndSettle();
@@ -79,7 +79,7 @@ void main() {
          await tester.pumpAndSettle();
 
          // Expect empty state text/image
-         expect(find.textContaining('tidak ditemukan'), findsWidgets);
+         expect(find.textContaining('Tidak ada hasil'), findsWidgets);
       }
     });
 
@@ -94,7 +94,7 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      final orderItem = find.text('Detail Pesanan');
+      final orderItem = find.textContaining('ORD-');
       if (orderItem.evaluate().isNotEmpty) {
          await tester.tap(orderItem.first);
          await tester.pumpAndSettle();

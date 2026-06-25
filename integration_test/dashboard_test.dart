@@ -17,19 +17,19 @@ void main() {
       await loginAs(tester, 'ad@email.com', '12345678');
       await tester.pump(const Duration(seconds: 2));
 
-      expect(find.text('Total Sales'), findsOneWidget);
-      expect(find.text('Orders').first, findsOneWidget);
-      expect(find.text('Customers'), findsOneWidget);
-      expect(find.text('Active Promotions'), findsOneWidget);
-      expect(find.text('My Retailers'), findsOneWidget);
+      expect(find.text('Total Penjualan'), findsOneWidget);
+      expect(find.text('Pesanan').first, findsOneWidget);
+      expect(find.text('Pelanggan'), findsOneWidget);
+      expect(find.text('Promosi Aktif'), findsOneWidget);
+      expect(find.text('Retailer Saya'), findsOneWidget);
 
       // Test navigation to Manage Retail (Retailer Management)
-      final viewAllFinder = find.text('View All');
+      final viewAllFinder = find.text('Lihat Semua');
       expect(viewAllFinder, findsOneWidget);
       await tester.tap(viewAllFinder);
       await tester.pumpAndSettle();
 
-      expect(find.text('Total Retailers'), findsOneWidget);
+      expect(find.text('Total Retailer'), findsOneWidget);
 
       // Navigate back to Dashboard
       final backButton = find.byTooltip('Back');
@@ -55,9 +55,9 @@ void main() {
       await loginAs(tester, 'cs@email.com', '12345678');
       await tester.pump(const Duration(seconds: 2));
 
-      expect(find.text('Open Complaints'), findsOneWidget);
-      expect(find.text('Resolved Today'), findsOneWidget);
-      expect(find.text('Recent Complaints'), findsOneWidget);
+      expect(find.text('Komplain Terbuka'), findsOneWidget);
+      expect(find.text('Diselesaikan Hari Ini'), findsOneWidget);
+      expect(find.text('Komplain Terbaru'), findsOneWidget);
       
       // Tunggu stream data load
       await tester.pump(const Duration(seconds: 2));
@@ -86,8 +86,8 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
 
       expect(find.textContaining('Selamat Datang'), findsOneWidget);
-      expect(find.text('Recent Orders'), findsOneWidget);
-      expect(find.text('Recommended for You'), findsOneWidget);
+      expect(find.text('Pesanan Terbaru'), findsOneWidget);
+      expect(find.text('Rekomendasi untuk Anda'), findsOneWidget);
 
       await tester.pump(const Duration(seconds: 2));
     });

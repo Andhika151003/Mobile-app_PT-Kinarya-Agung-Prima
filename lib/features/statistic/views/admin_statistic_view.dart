@@ -34,7 +34,7 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
             elevation: 0,
             automaticallyImplyLeading: false,
             title: const Text(
-              'Admin Statistics',
+              'Statistik Admin',
               style: TextStyle(
                 color: Color(0xFF1F2937),
                 fontSize: 18,
@@ -102,14 +102,14 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
                       children: [
                         Expanded(
                             child: _buildSummaryCard(
-                                'Total Revenue',
+                                'Total Pendapatan',
                                 currencyFormat.format(controller.totalRevenue),
                                 Icons.payments_outlined,
                                 Colors.green)),
                         const SizedBox(width: 12),
                         Expanded(
                             child: _buildSummaryCard(
-                                'Total Orders',
+                                'Total Pesanan',
                                 '${controller.totalOrders}',
                                 Icons.shopping_cart_outlined,
                                 Colors.blue)),
@@ -120,14 +120,14 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
                       children: [
                         Expanded(
                             child: _buildSummaryCard(
-                                'Total Cancel',
+                                'Total Dibatalkan',
                                 '${controller.cancelledOrders}',
                                 Icons.cancel_outlined,
                                 Colors.red)),
                         const SizedBox(width: 12),
                         Expanded(
                             child: _buildSummaryCard(
-                                'Total Complaint',
+                                'Total Komplain',
                                 '${controller.totalComplaints}',
                                 Icons.assignment_late_outlined,
                                 Colors.orange)),
@@ -136,7 +136,7 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
                     const SizedBox(height: 24),
 
                     // --- SALES TREND CHART ---
-                    const Text('Sales Trend',
+                    const Text('Tren Penjualan',
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -152,14 +152,14 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
 
                     // --- TOP RETAILERS ---
                     _buildRankingSection(
-                        'Top Retailers',
+                        'Retailer Teratas',
                         controller.topRetailers,
                         (item) => currencyFormat.format(item['spent']),
                         Icons.storefront_outlined),
                     const SizedBox(height: 24),
 
                     // --- CATEGORY POPULARITY PIE CHART ---
-                    const Text('Category Popularity',
+                    const Text('Popularitas Kategori',
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -214,9 +214,9 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
 
   String _filterLabel(StatFilter filter) {
     switch (filter) {
-      case StatFilter.today: return 'Today';
-      case StatFilter.week: return 'Last 7 Days';
-      case StatFilter.month: return 'Last 30 Days';
+      case StatFilter.today: return 'Hari Ini';
+      case StatFilter.week: return '7 Hari Terakhir';
+      case StatFilter.month: return '30 Hari Terakhir';
     }
   }
 
@@ -248,7 +248,7 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
 
   Widget _buildLineChart(List<Map<String, dynamic>> trend) {
     if (trend.isEmpty) {
-      return _emptyContainer('No trend data available');
+      return _emptyContainer('Data tren tidak tersedia');
     }
 
     List<FlSpot> spots = [];
@@ -379,7 +379,7 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Top Products',
+        const Text('Produk Terlaris',
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -392,7 +392,7 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
             border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
           child: top5Products.isEmpty
-              ? _emptyContainer('No product data available', height: 100)
+              ? _emptyContainer('Data produk tidak tersedia', height: 100)
               : ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -433,7 +433,7 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
                         child: (imageUrl == null || imageUrl.toString().isEmpty) ? const Icon(Icons.image_not_supported, color: Colors.grey) : null,
                       ),
                       title: Text(item['name'], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      subtitle: Text('${item['sales']} items sold', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                      subtitle: Text('${item['sales']} produk terjual', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
                       trailing: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -464,7 +464,7 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
             border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
           child: items.isEmpty 
-            ? _emptyContainer('No data available', height: 100)
+            ? _emptyContainer('Data tidak tersedia', height: 100)
             : ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -480,7 +480,7 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
                         child: Text('${index + 1}', style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 14)),
                       ),
                       title: Text(item['name'], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      subtitle: Text('Top spender', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                      subtitle: Text('Pengeluar teratas', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
                       trailing: Text(valueLabel(item), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF111827))),
                     ),
                   );
@@ -492,8 +492,8 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
   }
 
   Widget _buildCategoryPieChart(Map<String, int> categories) {
-    if (categories.isEmpty) return _emptyContainer('No category data available');
-
+    if (categories.isEmpty) return _emptyContainer('Data kategori tidak tersedia');
+ 
     final List<Color> colors = [
       const Color(0xFF2E7D32),
       const Color(0xFF1976D2),
@@ -502,7 +502,7 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
       const Color(0xFF7B1FA2),
       const Color(0xFF0097A7),
     ];
-
+ 
     List<PieChartSectionData> sections = [];
     int i = 0;
     categories.forEach((name, value) {
@@ -516,6 +516,13 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
       i++;
     });
 
+    final Map<String, String> categoryMap = const {
+      'Beauty Care': 'Kecantikan',
+      'Pet Care': 'Hewan Peliharaan',
+      'Health': 'Kesehatan',
+      'Foods': 'Makanan',
+    };
+ 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -545,7 +552,7 @@ class _AdminStatisticViewState extends State<AdminStatisticView> with AutomaticK
                 children: [
                   Container(width: 12, height: 12, decoration: BoxDecoration(color: colors[entry.key % colors.length], shape: BoxShape.circle)),
                   const SizedBox(width: 8),
-                  Text(entry.value, style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563))),
+                  Text(categoryMap[entry.value] ?? entry.value, style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563))),
                 ],
               );
             }).toList(),

@@ -86,23 +86,23 @@ class MainNavigationAdminState extends State<MainNavigationAdmin> {
           items: [
             BottomNavigationBarItem(
               icon: _buildNavIcon(Icons.home, 0),
-              label: 'Home',
+              label: 'Beranda',
             ),
             BottomNavigationBarItem(
               icon: _buildNavIcon(Icons.storefront_outlined, 1),
-              label: 'Products',
+              label: 'Produk',
             ),
             BottomNavigationBarItem(
               icon: _buildNavIcon(Icons.shopping_basket_outlined, 2),
-              label: 'Orders',
+              label: 'Pesanan',
             ),
             BottomNavigationBarItem(
               icon: _buildNavIcon(Icons.bar_chart_outlined, 3),
-              label: 'Analytics',
+              label: 'Analitik',
             ),
             BottomNavigationBarItem(
               icon: _buildNavIcon(Icons.person_outline, 4),
-              label: 'Profile',
+              label: 'Profil',
             ),
           ],
         ),

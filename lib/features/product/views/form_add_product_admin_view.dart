@@ -93,7 +93,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select a category!'),
+          content: Text('Harap pilih kategori!'),
           backgroundColor: Colors.red,
         ),
       );
@@ -141,7 +141,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${_nameController.text} added successfully!'),
+            content: Text('${_nameController.text} berhasil ditambahkan!'),
             backgroundColor: primaryGreen,
           ),
         );
@@ -151,7 +151,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to add product: $e'),
+            content: Text('Gagal menambahkan produk: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -172,12 +172,12 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. PRODUCT IMAGE SECTION
-              _buildSectionTitle('Product Image'),
+              _buildSectionTitle('Gambar Produk'),
               const SizedBox(height: 12),
               _buildImageUploadSection(),
               const SizedBox(height: 8),
               Text(
-                'Add up to 8 photos. First photo will be the cover image.',
+                'Tambahkan hingga 8 foto. Foto pertama akan menjadi gambar sampul.',
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
               ),
               const SizedBox(height: 24),
@@ -185,9 +185,9 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               const SizedBox(height: 24),
 
               // 2. BASIC INFORMATION
-              _buildSectionTitle('Basic Information'),
+              _buildSectionTitle('Informasi Dasar'),
               const SizedBox(height: 16),
-              _buildTextFieldLabel('Product Name'),
+              _buildTextFieldLabel('Nama Produk'),
               _buildTextField(
                 keyField: const Key('add_product_name_field'),
                 controller: _nameController,
@@ -202,21 +202,21 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
                 maxLength: 50,
                 inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\-]'))],
               ),
-              _buildTextFieldLabel('Category'),
+              _buildTextFieldLabel('Kategori'),
               _buildCategoryDropdown(),
-              _buildTextFieldLabel('Brand'),
+              _buildTextFieldLabel('Merek'),
               _buildTextField(
                 keyField: const Key('add_product_brand_field'),
                 controller: _brandController,
-                hint: 'e.g. Vaseline',
+                hint: 'misal. Vaseline',
                 isRequired: false,
               ),
               const SizedBox(height: 24),
 
               // 3. PRICING
-              _buildSectionTitle('Pricing'),
+              _buildSectionTitle('Harga'),
               const SizedBox(height: 16),
-              _buildTextFieldLabel('Regular Price'),
+              _buildTextFieldLabel('Harga Reguler'),
               _buildTextField(
                 keyField: const Key('add_product_price_field'),
                 controller: _regularPriceController,
@@ -227,7 +227,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
                 hint: '85000',
               ),
 
-              _buildTextFieldLabel('Minimum Order Quantity'),
+              _buildTextFieldLabel('Jumlah Pesanan Minimum'),
               _buildTextField(
                 keyField: const Key('add_product_moq_field'),
                 controller: _moqController,
@@ -242,7 +242,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
                   }
                   final intValue = int.tryParse(value);
                   if (intValue == null || intValue < 1) {
-                    return 'Min. Order minimal 1';
+                    return 'Min. Pesanan minimal 1';
                   }
                   return null;
                 },
@@ -250,9 +250,9 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               const SizedBox(height: 24),
 
               // 4. INVENTORY
-              _buildSectionTitle('Inventory'),
+              _buildSectionTitle('Inventaris'),
               const SizedBox(height: 16),
-              _buildTextFieldLabel('Stock Quantity'),
+              _buildTextFieldLabel('Jumlah Stok'),
               _buildTextField(
                 keyField: const Key('add_product_stock_field'),
                 controller: _stockController,
@@ -261,7 +261,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
                 maxLength: 6,
                 hint: '1000',
               ),
-              _buildTextFieldLabel('Low Stock Alert'),
+              _buildTextFieldLabel('Peringatan Stok Menipis'),
               _buildTextField(
                 keyField: const Key('add_product_low_stock_field'),
                 controller: _lowStockController,
@@ -274,22 +274,22 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               const SizedBox(height: 24),
 
               // 5. SPECIFICATIONS
-              _buildSectionTitle('Specifications'),
+              _buildSectionTitle('Spesifikasi'),
               const SizedBox(height: 16),
-              _buildTextFieldLabel('Description'),
+              _buildTextFieldLabel('Deskripsi'),
               _buildTextField(
                 keyField: const Key('add_product_desc_field'),
                 controller: _descriptionController,
                 maxLines: 4,
                 maxLength: 2000,
-                hint: 'Enter product description...',
+                hint: 'Masukkan deskripsi produk...',
               ),
               const SizedBox(height: 24),
 
               // 6. SHIPPING
-              _buildSectionTitle('Shipping'),
+              _buildSectionTitle('Pengiriman'),
               const SizedBox(height: 16),
-              _buildTextFieldLabel('Weight (kg)'),
+              _buildTextFieldLabel('Berat (kg)'),
               _buildTextField(
                 keyField: const Key('add_product_weight_field'),
                 controller: _weightController,
@@ -299,7 +299,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
                 hint: '4.00',
                 isRequired: false,
               ),
-              _buildTextFieldLabel('Dimensions (cm)'),
+              _buildTextFieldLabel('Dimensi (cm)'),
               _buildDimensionsRow(),
 
               const SizedBox(height: 40),
@@ -335,7 +335,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
         ),
       ),
       title: const Text(
-        'Add New Product',
+        'Tambah Produk Baru',
         style: TextStyle(
           color: Colors.black,
           fontSize: 18,
@@ -357,7 +357,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
             child: const Text(
-              'Save',
+              'Simpan',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -488,7 +488,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
           ),
         ),
         hint: Text(
-          'Select Category',
+          'Pilih Kategori',
           style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
         ),
         items: _categories.map((String category) {
@@ -570,7 +570,7 @@ class _FormAddProductAdminViewState extends State<FormAddProductAdminView> {
                 children: [
                   Icon(Icons.add, color: Colors.grey.shade400, size: 28),
                   const SizedBox(height: 4),
-                  Text('Add Photo', style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
+                  Text('Tambah Foto', style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
                 ],
               ),
             ),

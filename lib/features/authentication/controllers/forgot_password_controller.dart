@@ -15,11 +15,11 @@ class ForgotPasswordController extends ChangeNotifier {
 
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return 'Email wajib diisi';
     }
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
-      return 'Enter a valid email address';
+      return 'Harap masukkan alamat email yang valid';
     }
     return null;
   }

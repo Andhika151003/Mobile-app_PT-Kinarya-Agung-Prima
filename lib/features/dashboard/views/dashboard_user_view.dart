@@ -237,7 +237,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
 
                       // Valid until
                       Text(
-                        'Valid until ${_formatDate(promo.endDate)}',
+                        'Berlaku hingga ${_formatDate(promo.endDate)}',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 11,
@@ -260,7 +260,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                             elevation: 0,
                           ),
                           child: Text(
-                            promo.isActive ? 'Claim Offer Now' : 'Wait for it!',
+                            promo.isActive ? 'Klaim Penawaran Sekarang' : 'Tunggu sebentar!',
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 15,
@@ -445,7 +445,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
         ),
         child: const Center(
           child: Text(
-            'No active promotions',
+            'Tidak ada promo aktif',
             style: TextStyle(color: Colors.grey),
           ),
         ),
@@ -561,7 +561,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
-                          '⏰ Ending Soon!',
+                          '⏰ Segera Berakhir!',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 10,
@@ -583,7 +583,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
-                          '🚀 Upcoming!',
+                          '🚀 Akan Datang!',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 10,
@@ -644,7 +644,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: const Text(
-                        'Claim Now',
+                        'Klaim Sekarang',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
@@ -700,7 +700,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
               ),
               const SizedBox(height: 8),
               const Text(
-                'Support',
+                'Bantuan',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
               ),
             ],
@@ -717,7 +717,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Recent Orders',
+              'Pesanan Terbaru',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
@@ -746,7 +746,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
                 ),
                 child: const Center(
                   child: Text(
-                    'No recent orders found',
+                    'Tidak ada pesanan terbaru',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
@@ -906,7 +906,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Recommended for You',
+              'Rekomendasi untuk Anda',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
@@ -932,7 +932,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(20.0),
-                  child: Text('No recommended products found.'),
+                  child: Text('Produk rekomendasi tidak ditemukan.'),
                 ),
               );
             }
@@ -1066,7 +1066,7 @@ class _DashboardUserViewState extends State<DashboardUserView>
             ),
             const SizedBox(height: 4),
             Text(
-              'Min. Order: ${product.moq ?? 1} pcs',
+              'Min. Pesanan: ${product.moq ?? 1} pcs',
               style: TextStyle(color: Colors.grey[500], fontSize: 10),
             ),
             const SizedBox(height: 8),
@@ -1087,14 +1087,14 @@ class _DashboardUserViewState extends State<DashboardUserView>
       'Feb',
       'Mar',
       'Apr',
-      'May',
+      'Mei',
       'Jun',
       'Jul',
-      'Aug',
+      'Agu',
       'Sep',
-      'Oct',
+      'Okt',
       'Nov',
-      'Dec',
+      'Des',
     ];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }

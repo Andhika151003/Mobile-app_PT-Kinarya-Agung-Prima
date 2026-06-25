@@ -59,7 +59,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('Verify Your Email'), findsOneWidget);
+      expect(find.text('Verifikasi Email Anda'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -85,7 +85,7 @@ void main() {
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Email is required'), findsOneWidget);
+      expect(find.text('Email wajib diisi'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -111,7 +111,7 @@ void main() {
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Please enter a valid email address'), findsOneWidget);
+      expect(find.text('Harap masukkan alamat email yang valid'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -137,7 +137,7 @@ void main() {
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Email already registered'), findsOneWidget);
+      expect(find.text('Email sudah terdaftar'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -163,7 +163,7 @@ void main() {
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Full Name is required'), findsOneWidget);
+      expect(find.text('Nama Lengkap wajib diisi'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -189,7 +189,7 @@ void main() {
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Please select your business type'), findsOneWidget);
+      expect(find.text('Harap pilih jenis usaha Anda'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -215,7 +215,7 @@ void main() {
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Phone Number is required'), findsOneWidget);
+      expect(find.text('Nomor Telepon wajib diisi'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -242,7 +242,7 @@ void main() {
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Please enter valid phone number'), findsOneWidget);
+      expect(find.text('Harap masukkan nomor telepon yang valid'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -268,7 +268,7 @@ void main() {
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Password is required'), findsOneWidget);
+      expect(find.text('Password wajib diisi'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -294,7 +294,7 @@ void main() {
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Please confirm your password'), findsOneWidget);
+      expect(find.text('Harap konfirmasi password Anda'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -320,7 +320,7 @@ void main() {
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Passwords do not match'), findsOneWidget);
+      expect(find.text('Password tidak cocok'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
   });

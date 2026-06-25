@@ -18,7 +18,7 @@ void main() {
 
       await loginAs(tester, 'ad@email.com', '12345678');
       
-      expect(find.text('Overview'), findsOneWidget);
+      expect(find.text('Ringkasan'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -29,7 +29,7 @@ void main() {
 
       await loginAs(tester, 'rt@email.com', '12345678');
 
-      expect(find.text('Recent Orders'), findsOneWidget);
+      expect(find.text('Pesanan Terbaru'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -40,7 +40,7 @@ void main() {
 
       await loginAs(tester, 'cs@email.com', '12345678');
 
-      expect(find.text('Recent Complaints'), findsOneWidget);
+      expect(find.text('Komplain Terbaru'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -77,7 +77,7 @@ void main() {
 
       // Wrong password
       await loginAs(tester, 'ad@email.com', 'wrong_pass');
-      expect(find.text('Incorrect password'), findsWidgets);
+      expect(find.text('Kata sandi salah'), findsWidgets);
 
       // Reset fields
       await tester.enterText(find.byKey(const Key('login_email_field')), '');
@@ -86,7 +86,7 @@ void main() {
 
       // Wrong email
       await loginAs(tester, 'nonexistent@email.com', '12345678');
-      expect(find.text('Email not found'), findsWidgets);
+      expect(find.text('Email tidak ditemukan'), findsWidgets);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -96,7 +96,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await loginAs(tester, '', '12345678');
-      expect(find.text('Email is required'), findsWidgets);
+      expect(find.text('Email wajib diisi'), findsWidgets);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -106,7 +106,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await loginAs(tester, 'ad@email.com', '');
-      expect(find.text('Password is required'), findsWidgets);
+      expect(find.text('Password wajib diisi'), findsWidgets);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -116,7 +116,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap Forgot Password link
-      await tester.tap(find.text('Forgot Password?'));
+      await tester.tap(find.text('Lupa Password?'));
       await tester.pumpAndSettle();
 
       // Enter email
@@ -124,11 +124,11 @@ void main() {
       await tester.tap(find.byKey(const Key('sendResetLinkButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Email Sent'), findsOneWidget);
+      expect(find.text('Email Terkirim'), findsOneWidget);
 
       // Back to Login
       await tester.pump(const Duration(seconds: 1));
-      await tester.tap(find.text('Back to Login'));
+      await tester.tap(find.text('Kembali ke Login'));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 2));
     });
@@ -138,14 +138,14 @@ void main() {
       app.main();
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Forgot Password?'));
+      await tester.tap(find.text('Lupa Password?'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('forgotPasswordEmailField')), 'notregistered@email.com');
       await tester.tap(find.byKey(const Key('sendResetLinkButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('No user found with this email.'), findsWidgets);
+      expect(find.text('Tidak ada pengguna dengan email ini.'), findsWidgets);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -154,14 +154,14 @@ void main() {
       app.main();
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Forgot Password?'));
+      await tester.tap(find.text('Lupa Password?'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('forgotPasswordEmailField')), 'invalid-email');
       await tester.tap(find.byKey(const Key('sendResetLinkButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Enter a valid email address'), findsWidgets);
+      expect(find.text('Harap masukkan alamat email yang valid'), findsWidgets);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -170,14 +170,14 @@ void main() {
       app.main();
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Forgot Password?'));
+      await tester.tap(find.text('Lupa Password?'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('forgotPasswordEmailField')), '');
       await tester.tap(find.byKey(const Key('sendResetLinkButton')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Email is required'), findsWidgets);
+      expect(find.text('Email wajib diisi'), findsWidgets);
       await tester.pump(const Duration(seconds: 2));
     });
   });

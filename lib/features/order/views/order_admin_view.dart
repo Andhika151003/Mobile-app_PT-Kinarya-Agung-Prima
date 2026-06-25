@@ -203,7 +203,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
             ),
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 0, 20, 14),
-              child: Text('Orders', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
+              child: Text('Pesanan', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
@@ -219,7 +219,7 @@ class _OrderAdminViewState extends State<OrderAdminView> with AutomaticKeepAlive
                         onChanged: (v) => setState(() => _applySearch(v.trim())),
                         style: const TextStyle(fontSize: 14),
                         decoration: InputDecoration(
-                          hintText: 'Search Order ID or Name',
+                          hintText: 'Cari ID Pesanan atau Nama',
                           hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade400),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -349,7 +349,7 @@ class _OrderCard extends StatelessWidget {
     final currencyFmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
 
-    final paymentLabel = order.status == 'Ordered' ? 'Unpaid' : 'Paid';
+    final paymentLabel = order.status == 'Ordered' ? 'Belum Bayar' : 'Lunas';
 
     return GestureDetector(
       key: Key('card_admin_order_${order.orderId}'),
@@ -425,7 +425,7 @@ class _OrderCard extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                Text('Items: ${order.items.length}   Payment: $paymentLabel', style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w500)),
+                Text('Produk: ${order.items.length}   Pembayaran: $paymentLabel', style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w500)),
                 const Spacer(),
                 Icon(Icons.remove_red_eye_outlined, size: 20, color: Colors.grey.shade500),
               ],

@@ -33,6 +33,20 @@ class _ProductUserViewState extends State<ProductUserView> {
   final TextEditingController _searchController = TextEditingController();
   int _refreshKey = 0;
 
+  final Map<String, String> _categoryMap = const {
+    'All Products': 'Semua Produk',
+    'Beauty Care': 'Kecantikan',
+    'Pet Care': 'Hewan Peliharaan',
+    'Health': 'Kesehatan',
+    'Foods': 'Makanan',
+  };
+
+  final Map<String, String> _sortMap = const {
+    'Name A-Z': 'Nama A-Z',
+    'Price Low-High': 'Harga Terendah-Tertinggi',
+    'Price High-Low': 'Harga Tertinggi-Terendah',
+  };
+
   final List<String> _categories = [
     'All Products',
     'Beauty Care',
@@ -72,7 +86,7 @@ class _ProductUserViewState extends State<ProductUserView> {
                 const SizedBox(height: 20),
                 
                 const Text(
-                  'Product Catalog',
+                  'Katalog Produk',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
                 ),
                 const SizedBox(height: 16),
@@ -173,7 +187,7 @@ class _ProductUserViewState extends State<ProductUserView> {
                 setState(() {});
               },
               decoration: const InputDecoration(
-                hintText: 'Search Catalog',
+                hintText: 'Cari Katalog',
                 hintStyle: TextStyle(color: Colors.grey),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 16),
@@ -224,7 +238,7 @@ class _ProductUserViewState extends State<ProductUserView> {
                 ),
               ),
               child: Text(
-                category,
+                _categoryMap[category] ?? category,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
@@ -270,7 +284,7 @@ class _ProductUserViewState extends State<ProductUserView> {
                 child: Padding(
                   padding: const EdgeInsets.all(40.0),
                   child: Text(
-                    'Catalog is currently empty.',
+                    'Katalog saat ini kosong.',
                     style: TextStyle(color: Colors.grey.shade500),
                   ),
                 ),
@@ -289,7 +303,7 @@ class _ProductUserViewState extends State<ProductUserView> {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(40.0),
-                  child: Text('No products match your search/filter.',
+                  child: Text('Tidak ada produk yang cocok dengan pencarian/filter.',
                       style: TextStyle(color: Colors.grey.shade500)),
                 ),
               );
@@ -412,7 +426,7 @@ class _ProductUserViewState extends State<ProductUserView> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Min. Order: ${product.moq ?? 1} pcs',
+                          'Min. Pesanan: ${product.moq ?? 1} pcs',
                           style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
                         ),
                         const SizedBox(height: 2),
@@ -527,7 +541,7 @@ class _ProductUserViewState extends State<ProductUserView> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('Sort by:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+        const Text('Sortir berdasarkan:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
@@ -545,7 +559,7 @@ class _ProductUserViewState extends State<ProductUserView> {
                   .map((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
-                  child: Text(value),
+                  child: Text(_sortMap[value] ?? value),
                 );
               }).toList(),
               onChanged: (newValue) {

@@ -34,7 +34,7 @@ class _CheckoutViewState extends State<CheckoutView> {
 
   String paymentMethod = 'Pilih Metode Pembayaran';
   String _paymentMethodCode = 'VA';
-  String promoCode = 'Apply promo code';
+  String promoCode = 'Gunakan kode promo';
   PromotionModel? _appliedPromo;
 
   static const List<Map<String, String>> _paymentMethods = [
@@ -475,12 +475,12 @@ class _CheckoutViewState extends State<CheckoutView> {
                     onPressed: () {
                       setState(() {
                         _appliedPromo = null;
-                        promoCode = 'Apply promo code';
+                        promoCode = 'Gunakan kode promo';
                       });
                       Navigator.pop(context);
                     },
                     child: const Text(
-                      'Remove Promo',
+                      'Hapus Promo',
                       style: TextStyle(
                         color: Colors.red,
                         fontWeight: FontWeight.bold,
@@ -630,21 +630,21 @@ class _CheckoutViewState extends State<CheckoutView> {
                     child: Column(
                       children: [
                         _buildActionRow(
-                          'SHIPPING',
+                          'PENGIRIMAN',
                           shippingAddress,
                           true,
                           onTap: _selectAddress,
                         ),
                         const Divider(height: 1, color: Colors.black12),
                         _buildActionRow(
-                          'PAYMENT',
+                          'PEMBAYARAN',
                           paymentMethod,
                           true,
                           onTap: _showPaymentMethodSheet,
                         ),
                         const Divider(height: 1, color: Colors.black12),
                         _buildActionRow(
-                          'PROMOS',
+                          'PROMO',
                           promoCode,
                           true,
                           onTap: _showPromoSelectionSheet,
@@ -669,7 +669,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                               const SizedBox(
                                 width: 80,
                                 child: Text(
-                                  'ITEMS',
+                                  'PRODUK',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -678,7 +678,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                               ),
                               const Expanded(
                                 child: Text(
-                                  'DESCRIPTION',
+                                  'DESKRIPSI',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -686,7 +686,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                                 ),
                               ),
                               Text(
-                                'PRICE',
+                                'HARGA',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -766,7 +766,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'Quantity: ${item.quantity} pcs',
+                                          'Jumlah: ${item.quantity} pcs',
                                           style: const TextStyle(fontSize: 12),
                                         ),
                                       ],
@@ -805,7 +805,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
-                                'Promotion Discount',
+                                'Diskon Promosi',
                                 style: TextStyle(
                                   color: Colors.green,
                                   fontSize: 14,
@@ -825,16 +825,16 @@ class _CheckoutViewState extends State<CheckoutView> {
                         ],
                         const SizedBox(height: 12),
                         _buildSummaryRow(
-                          'Shipping total',
+                          'Total pengiriman',
                           _cartController.shippingCost == 0
-                              ? 'Free'
+                              ? 'Gratis'
                               : currencyFormatter.format(
                                   _cartController.shippingCost,
                                 ),
                         ),
                         const SizedBox(height: 12),
                         _buildSummaryRow(
-                          'Taxes (11%)',
+                          'Pajak (11%)',
                           currencyFormatter.format(tax),
                         ),
                         const Padding(
@@ -1029,7 +1029,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                           ),
                         )
                       : const Text(
-                          'Place order',
+                          'Buat Pesanan',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white,

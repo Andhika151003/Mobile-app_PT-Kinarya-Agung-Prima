@@ -58,7 +58,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
 
   String _stepTimeLabel(String status) {
     final t = _getStepTime(status);
-    if (t == null) return 'Pending';
+    if (t == null) return 'Menunggu';
     return '${_monthAbbr(t.month)} ${t.day}\n${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
   }
 
@@ -104,7 +104,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: const Text(
-          'Order Details',
+          'Detail Pesanan',
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.w700,
@@ -201,7 +201,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Total Amount',
+                    const Text('Total Pembayaran',
                         style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF6B7280),
@@ -222,7 +222,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Payment Status',
+                    const Text('Status Pembayaran',
                         style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF6B7280),
@@ -272,7 +272,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Order Status',
+            'Status Pesanan',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -376,7 +376,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Shipping Information',
+            'Informasi Pengiriman',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -385,7 +385,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Shipping Address',
+            'Alamat Pengiriman',
             style: TextStyle(
                 fontSize: 12, color: Color(0xFF6B7280), fontFamily: 'Inter'),
           ),
@@ -434,7 +434,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Order Items',
+            'Produk Pesanan',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -518,7 +518,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
           if (_order.discountAmount > 0) ...[
             const SizedBox(height: 4),
             _summaryRow(
-              'Discount', 
+              'Diskon', 
               '-${currencyFormatter.format(_order.discountAmount)}',
               valueColor: Colors.red.shade600,
             ),
@@ -527,7 +527,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
           _summaryRow(
               'Pajak (11%)', currencyFormatter.format(_order.tax)),
           const SizedBox(height: 4),
-          _summaryRow('Shipping', currencyFormatter.format(_order.shippingCost)),
+          _summaryRow('Pengiriman', currencyFormatter.format(_order.shippingCost)),
           const Divider(color: Color(0xFFE5E7EB), height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -614,7 +614,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Payment Information',
+            'Informasi Pembayaran',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -628,7 +628,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Payment Method',
+                    const Text('Metode Pembayaran',
                         style: TextStyle(
                             fontSize: 11,
                             color: Color(0xFF6B7280),
@@ -655,7 +655,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Transaction ID',
+                    const Text('ID Transaksi',
                         style: TextStyle(
                             fontSize: 11,
                             color: Color(0xFF6B7280),
@@ -681,7 +681,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Payment Date',
+                    const Text('Tanggal Pembayaran',
                         style: TextStyle(
                             fontSize: 11,
                             color: Color(0xFF6B7280),
@@ -703,7 +703,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Invoice ID',
+                    const Text('ID Invoice',
                         style: TextStyle(
                             fontSize: 11,
                             color: Color(0xFF6B7280),
@@ -738,7 +738,7 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
         icon: const Icon(Icons.download_outlined,
             color: Color(0xFF374151), size: 18),
         label: const Text(
-          'Download Invoice',
+          'Unduh Invoice',
           style: TextStyle(
             fontFamily: 'Inter',
             fontWeight: FontWeight.w500,
@@ -760,18 +760,18 @@ class _OrderDetailCsViewState extends State<OrderDetailCsView> {
   // ─── Helpers ──────────────────────────────────────────────────────
   String _formatFullDateTime(DateTime date) {
     final months = [
-      '', 'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
     final h = date.hour.toString().padLeft(2, '0');
     final m = date.minute.toString().padLeft(2, '0');
-    return '${months[date.month]} ${date.day}, ${date.year} • $h:$m AM';
+    return '${months[date.month]} ${date.day}, ${date.year} • $h:$m WIB';
   }
 
   String _formatDate(DateTime date) {
     final months = [
-      '', 'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
     return '${months[date.month]} ${date.day}, ${date.year}';
   }

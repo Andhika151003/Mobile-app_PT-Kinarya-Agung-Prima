@@ -23,7 +23,7 @@ void main() {
   // untuk menutup dialog promo di Dashboard
   Future<void> dismissPromoDialog(WidgetTester tester) async {
     await tester.pumpAndSettle();
-    final claimBtn = find.text('Claim Offer Now');
+    final claimBtn = find.text('Klaim Penawaran Sekarang');
     if (claimBtn.evaluate().isNotEmpty) {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.tap(claimBtn);
@@ -286,7 +286,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Checkout'), findsWidgets);
-      expect(find.text('Place order'), findsOneWidget);
+      expect(find.text('Buat Pesanan'), findsOneWidget);
     });
 
     testWidgets('11. Menambahkan produk ke dalam keranjang kemudian user keluar dari aplikasi (force close/logout)', (tester) async {
@@ -301,7 +301,7 @@ void main() {
       await goToProfile(tester);
 
       // Tap Log Out button
-      final logoutBtn = find.text('Log Out');
+      final logoutBtn = find.text('Keluar');
       expect(logoutBtn, findsOneWidget);
       await tester.tap(logoutBtn);
       await tester.pumpAndSettle();
@@ -309,7 +309,7 @@ void main() {
       // Konfirmasi Log Out di dialog
       final confirmLogoutBtn = find.descendant(
         of: find.byType(Dialog),
-        matching: find.text('Log Out'),
+        matching: find.text('Keluar'),
       );
       expect(confirmLogoutBtn, findsOneWidget);
       await tester.tap(confirmLogoutBtn);

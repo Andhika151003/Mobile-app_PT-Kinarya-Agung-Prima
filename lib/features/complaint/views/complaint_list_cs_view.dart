@@ -55,7 +55,7 @@ class _ComplaintListCsViewState extends State<ComplaintListCsView> {
                 autofocus: true,
                 style: const TextStyle(color: Colors.black, fontSize: 18),
                 decoration: const InputDecoration(
-                  hintText: 'Search order ID, issue...',
+                  hintText: 'Cari ID pesanan, kendala...',
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: Colors.grey),
                 ),
@@ -66,7 +66,7 @@ class _ComplaintListCsViewState extends State<ComplaintListCsView> {
                 },
               )
             : const Text(
-                'Support',
+                'Dukungan',
                 style: TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
@@ -125,7 +125,7 @@ class _ComplaintListCsViewState extends State<ComplaintListCsView> {
                 }).toList();
 
                 if (filteredComplaints.isEmpty) {
-                  return const Center(child: Text('No complaints found'));
+                  return const Center(child: Text('Tidak ada komplain ditemukan'));
                 }
 
                 return ListView.builder(
@@ -184,7 +184,7 @@ class _ComplaintListCsViewState extends State<ComplaintListCsView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      complaint.productName ?? 'General Support',
+                      complaint.productName ?? 'Bantuan Umum',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -193,7 +193,7 @@ class _ComplaintListCsViewState extends State<ComplaintListCsView> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Order #${complaint.orderId}',
+                      'Pesanan #${complaint.orderId}',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade500,
@@ -255,7 +255,7 @@ class _ComplaintListCsViewState extends State<ComplaintListCsView> {
                   ),
                 ),
                 child: const Text(
-                  'Respond',
+                  'Tanggapi',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
@@ -271,13 +271,13 @@ class _ComplaintListCsViewState extends State<ComplaintListCsView> {
     if (difference.inDays >= 7) {
       return DateFormat('dd MMM').format(dateTime);
     } else if (difference.inDays >= 1) {
-      return '${difference.inDays}d ago';
+      return '${difference.inDays} hari lalu';
     } else if (difference.inHours >= 1) {
-      return '${difference.inHours}h ago';
+      return '${difference.inHours} jam lalu';
     } else if (difference.inMinutes >= 1) {
-      return '${difference.inMinutes}m ago';
+      return '${difference.inMinutes} menit lalu';
     } else {
-      return 'Just now';
+      return 'Baru saja';
     }
   }
 }

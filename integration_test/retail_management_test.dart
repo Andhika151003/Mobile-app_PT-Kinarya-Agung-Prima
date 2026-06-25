@@ -19,7 +19,7 @@ void main() {
 
       expect(find.text('Customer Support'), findsOneWidget);
       expect(find.text('cs@email.com'), findsOneWidget);
-      expect(find.text('ACTIVE'), findsOneWidget);
+      expect(find.text('AKTIF'), findsOneWidget);
     });
 
     testWidgets('TC-32: Admin ubah status CS', (tester) async {
@@ -32,18 +32,18 @@ void main() {
       await goToStaffManagement(tester);
 
       // Verify currently active
-      expect(find.text('ACTIVE'), findsOneWidget);
+      expect(find.text('AKTIF'), findsOneWidget);
 
       // Toggle switch
       await tester.tap(find.byType(Switch));
       await tester.pumpAndSettle();
 
       // Tap confirmation
-      await tester.tap(find.text('Deactivate'));
+      await tester.tap(find.text('Nonaktifkan'));
       await tester.pumpAndSettle();
 
       // Verify status changed to INACTIVE
-      expect(find.text('INACTIVE'), findsOneWidget);
+      expect(find.text('NONAKTIF'), findsOneWidget);
     });
 
     testWidgets('TC-33: Admin tambah CS baru', (tester) async {
@@ -60,14 +60,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // Fill Form
-      await tester.enterText(find.widgetWithText(TextFormField, 'Enter full name'), 'New CS Member');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Enter email address'), 'newcs@email.com');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Enter password'), '12345678');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Enter phone number'), '08988888888');
+      await tester.enterText(find.widgetWithText(TextFormField, 'Masukkan nama lengkap'), 'New CS Member');
+      await tester.enterText(find.widgetWithText(TextFormField, 'Masukkan alamat email'), 'newcs@email.com');
+      await tester.enterText(find.widgetWithText(TextFormField, 'Masukkan password'), '12345678');
+      await tester.enterText(find.widgetWithText(TextFormField, 'Masukkan nomor telepon'), '08988888888');
       await tester.pumpAndSettle();
 
       // Tap Submit
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Add Customer Support'));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Tambah Customer Support'));
       await tester.pumpAndSettle();
 
       // Verify added CS is in the list
@@ -83,9 +83,9 @@ void main() {
       await goToRetailerManagement(tester);
 
       expect(find.byKey(const Key('searchField')), findsOneWidget);
-      expect(find.text('Total Retailers'), findsOneWidget);
-      expect(find.text('Active'), findsOneWidget);
-      expect(find.text('Inactive'), findsOneWidget);
+      expect(find.text('Total Retailer'), findsOneWidget);
+      expect(find.text('Aktif'), findsOneWidget);
+      expect(find.text('Nonaktif'), findsOneWidget);
     });
 
     testWidgets('TC-35: Admin search retailer', (tester) async {
@@ -124,7 +124,7 @@ void main() {
       expect(find.text('Toko Inactive'), findsNothing);
 
       // Tap Inactive filter button
-      await tester.tap(find.text('Inactive'));
+      await tester.tap(find.text('Nonaktif'));
       await tester.pumpAndSettle();
 
       expect(find.text('Toko Retailer'), findsNothing);
@@ -143,15 +143,15 @@ void main() {
       expect(find.text('Toko Retailer'), findsOneWidget);
 
       // Open Select dropdown
-      await tester.tap(find.text('Select').first);
+      await tester.tap(find.text('Pilih').first);
       await tester.pumpAndSettle();
 
       // Tap Inactive
-      await tester.tap(find.text('Inactive').last);
+      await tester.tap(find.text('Nonaktif').last);
       await tester.pumpAndSettle();
 
       // Tap Yes on dialog
-      await tester.tap(find.text('Yes'));
+      await tester.tap(find.text('Ya'));
       await tester.pumpAndSettle();
 
       // Since they are now inactive, and the default filter is Active, they should disappear from the active list

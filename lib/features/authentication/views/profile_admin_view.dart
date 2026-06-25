@@ -20,8 +20,8 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
   bool get wantKeepAlive => true;
 
   final AdminProfileController _adminController = AdminProfileController();
-  String adminName = 'Loading...';
-  String contact = 'Loading...';
+  String adminName = 'Memuat...';
+  String contact = 'Memuat...';
   String distributorId = '-';
   String? photoUrl;
 
@@ -112,7 +112,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Sure you want to log out?',
+                  'Apakah Anda yakin ingin keluar?',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
@@ -134,7 +134,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
                           ),
                         ),
                         child: const Text(
-                          'Cancel',
+                          'Batal',
                           style: TextStyle(
                             color: primaryGreen,
                             fontWeight: FontWeight.bold,
@@ -170,7 +170,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
                             if (context.mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Logout failed: $e')),
+                                SnackBar(content: Text('Gagal logout: $e')),
                               );
                             }
                           }
@@ -185,7 +185,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
                           ),
                         ),
                         child: const Text(
-                          'Log Out',
+                          'Keluar',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -208,7 +208,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
       automaticallyImplyLeading: false,
       centerTitle: true,
       title: const Text(
-        'My Profile',
+        'Profil Saya',
         style: TextStyle(
           color: Colors.black,
           fontSize: 16,
@@ -283,7 +283,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
             padding: const EdgeInsets.symmetric(horizontal: 16),
           ),
           child: const Text(
-            'Edit',
+            'Ubah',
             style: TextStyle(color: Colors.white, fontSize: 13),
           ),
         ),
@@ -396,7 +396,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Manage Promotions',
+                    'Kelola Promosi',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -405,7 +405,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
                   ),
                   SizedBox(height: 2),
                   Text(
-                    'Create and manage your discount codes',
+                    'Buat dan kelola kode diskon Anda',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey,
@@ -463,7 +463,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Staff Management',
+                    'Manajemen Staf',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -472,7 +472,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
                   ),
                   SizedBox(height: 2),
                   Text(
-                    'Manage your customer service team',
+                    'Kelola tim layanan pelanggan Anda',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey,
@@ -493,7 +493,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Business Details',
+          'Detail Usaha',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
@@ -501,9 +501,9 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
           ),
         ),
         const SizedBox(height: 16),
-        _buildDetailRow('Distributor ID', distributorId),
+        _buildDetailRow('ID Distributor', distributorId),
         const SizedBox(height: 16),
-        _buildDetailRow('Contact', contact),
+        _buildDetailRow('Kontak', contact),
       ],
     );
   }
@@ -546,7 +546,7 @@ class _ProfileAdminViewState extends State<ProfileAdminView> with AutomaticKeepA
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
         child: const Text(
-          'Log Out',
+          'Keluar',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),

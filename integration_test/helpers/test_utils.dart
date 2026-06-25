@@ -358,7 +358,7 @@ Future<void> loginAs(WidgetTester tester, String email, String password) async {
 }
 
 Future<void> goToRegister(WidgetTester tester) async {
-  final signUpTextFinder = find.text('Sign Up');
+  final signUpTextFinder = find.text('Daftar');
   expect(signUpTextFinder, findsOneWidget);
   
   await tester.pump(const Duration(milliseconds: 500));
@@ -384,7 +384,7 @@ Future<void> goToProfile(WidgetTester tester) async {
 
 Future<void> goToStaffManagement(WidgetTester tester) async {
   // Assuming already on profile admin view
-  final staffManagementFinder = find.text('Staff Management');
+  final staffManagementFinder = find.text('Manajemen Staf');
   expect(staffManagementFinder, findsOneWidget);
   await tester.tap(staffManagementFinder);
   await tester.pumpAndSettle();
@@ -392,7 +392,7 @@ Future<void> goToStaffManagement(WidgetTester tester) async {
 
 Future<void> goToRetailerManagement(WidgetTester tester) async {
   // Assuming already on dashboard admin view
-  final viewAllFinder = find.text('View All');
+  final viewAllFinder = find.text('Lihat Semua');
   expect(viewAllFinder, findsOneWidget);
   await tester.tap(viewAllFinder);
   await tester.pumpAndSettle();

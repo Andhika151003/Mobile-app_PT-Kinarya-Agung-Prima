@@ -28,6 +28,20 @@ class _ProductAdminViewState extends State<ProductAdminView>
   bool _filterInStock = false;
   final TextEditingController _searchController = TextEditingController();
 
+  final Map<String, String> _categoryMap = const {
+    'All': 'Semua',
+    'Beauty Care': 'Kecantikan',
+    'Pet Care': 'Hewan Peliharaan',
+    'Health': 'Kesehatan',
+    'Foods': 'Makanan',
+  };
+
+  final Map<String, String> _sortMap = const {
+    'Best Selling': 'Paling Laris',
+    'Name A-Z': 'Nama A-Z',
+    'Stock Low-High': 'Stok Terendah-Tertinggi',
+  };
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -75,7 +89,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                 const SizedBox(height: 25),
 
                 const Text(
-                  'Products',
+                  'Produk',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -88,7 +102,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                 const SizedBox(height: 16),
 
                 const Text(
-                  'Quick Filters',
+                  'Filter Cepat',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -115,7 +129,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Most Popular',
+                        'Paling Populer',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -125,7 +139,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                       Row(
                         children: const [
                           Text(
-                            'See All',
+                            'Lihat Semua',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -186,7 +200,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
               controller: _searchController,
               onChanged: (value) => setState(() {}),
               decoration: const InputDecoration(
-                hintText: 'Search Products',
+                hintText: 'Cari Produk',
                 hintStyle: TextStyle(color: Colors.grey),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 16),
@@ -246,7 +260,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
             key: const Key('filter_in_stock'),
             onTap: () => setState(() => _filterInStock = !_filterInStock),
             child: Text(
-              'In Stock',
+              'Stok Tersedia',
               style: TextStyle(
                 fontSize: 13,
                 color: _filterInStock ? primaryGreen : Colors.black87,
@@ -273,7 +287,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
               ) {
                 return DropdownMenuItem<String>(
                   value: value,
-                  child: Text(value),
+                  child: Text(_sortMap[value] ?? value),
                 );
               }).toList(),
               onChanged: (newValue) {
@@ -305,7 +319,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Text(
-                'No products available.\nTap + to add.',
+                'Tidak ada produk tersedia.\nKetuk + untuk menambahkan.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade500),
               ),
@@ -330,7 +344,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 40.0),
               child: Text(
-                'No products match your filters.',
+                'Tidak ada produk yang cocok dengan filter Anda.',
                 style: TextStyle(color: Colors.grey.shade500),
               ),
             ),
@@ -431,7 +445,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Stock: ${FormatUtil.formatCompact(product.stock)}',
+                    'Stok: ${FormatUtil.formatCompact(product.stock)}',
                     style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                   ),
                   const SizedBox(height: 12),
@@ -455,8 +469,8 @@ class _ProductAdminViewState extends State<ProductAdminView>
                     ),
                     child: Text(
                       isOutOfStock
-                          ? 'Out of Stock'
-                          : (isLowStock ? 'Low Stock Alert' : 'In Stock'),
+                          ? 'Stok Habis'
+                          : (isLowStock ? 'Peringatan Stok Menipis' : 'Stok Tersedia'),
                       style: TextStyle(
                         color: isOutOfStock
                             ? Colors.red.shade700
@@ -518,7 +532,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                         Icon(Icons.add, color: Colors.white, size: 14),
                         SizedBox(width: 4),
                         Text(
-                          'Add',
+                          'Stok',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -593,7 +607,7 @@ class _ProductAdminViewState extends State<ProductAdminView>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      cat['label'] as String,
+                      _categoryMap[cat['label']] ?? cat['label'] as String,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 11,
@@ -688,7 +702,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Add Stock',
+                  'Tambah Stok',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -850,7 +864,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
                     side: BorderSide(color: Colors.grey.shade400),
                   ),
                   child: const Text(
-                    'Cancel',
+                    'Batal',
                     style: TextStyle(
                       color: Colors.black87,
                       fontWeight: FontWeight.bold,
@@ -882,7 +896,7 @@ class _AddStockDialogState extends State<AddStockDialog> {
                           ),
                         )
                       : const Text(
-                          'Save',
+                          'Simpan',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

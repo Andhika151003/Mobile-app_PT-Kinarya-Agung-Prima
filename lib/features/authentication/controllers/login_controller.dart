@@ -27,18 +27,18 @@ class LoginController extends ChangeNotifier {
   
   String? validateEmailInput(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return 'Email wajib diisi';
     }
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
-      return 'Please enter a valid email address';
+      return 'Harap masukkan alamat email yang valid';
     }
     return null;
   }
 
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password is required';
+      return 'Password wajib diisi';
     }
     return null;
   }
@@ -87,7 +87,7 @@ class LoginController extends ChangeNotifier {
         }
 
         await _auth.signOut();
-        _setError('Account Deactivated');
+        _setError('Akun Dinonaktifkan');
         _setLoading(false);
         return null;
       }
@@ -110,25 +110,25 @@ class LoginController extends ChangeNotifier {
       String message;
       switch (e.code) {
         case 'user-not-found':
-          message = 'Email not found';
+          message = 'Email tidak ditemukan';
           break;
         case 'wrong-password':
-          message = 'Incorrect password';
+          message = 'Kata sandi salah';
           break;
         case 'invalid-email':
-          message = 'Please enter a valid email address';
+          message = 'Harap masukkan alamat email yang valid';
           break;
         case 'user-disabled':
-          message = 'This account has been disabled';
+          message = 'Akun ini telah dinonaktifkan';
           break;
         default:
-          message = 'Login failed: ${e.message}';
+          message = 'Login gagal: ${e.message}';
       }
       _setError(message);
       _setLoading(false);
       return null;
     } catch (e) {
-      _setError('Login failed: ${e.toString()}');
+      _setError('Login gagal: ${e.toString()}');
       _setLoading(false);
       return null;
     }

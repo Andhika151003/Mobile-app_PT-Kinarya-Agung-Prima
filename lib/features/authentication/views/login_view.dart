@@ -78,7 +78,7 @@ class _LoginViewState extends State<LoginView> {
                     // Title
                     const Center(
                       child: Text(
-                        'Welcome Back',
+                        'Selamat Datang Kembali',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 28,
@@ -93,7 +93,7 @@ class _LoginViewState extends State<LoginView> {
                     // Subtitle
                     Center(
                       child: Text(
-                        'Sign in to continue to your account',
+                        'Masuk untuk melanjutkan ke akun Anda',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
@@ -122,7 +122,7 @@ class _LoginViewState extends State<LoginView> {
                         key: const Key('login_email_field'),
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: _inputDecoration('Enter your email'),
+                        decoration: _inputDecoration('Masukkan email Anda'),
                         validator: controller.validateEmailInput,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
@@ -165,7 +165,7 @@ class _LoginViewState extends State<LoginView> {
                         key: const Key('login_password_field'),
                         controller: _passwordController,
                         obscureText: _obscurePassword,
-                        decoration: _inputDecoration('Enter your password').copyWith(
+                        decoration: _inputDecoration('Masukkan password Anda').copyWith(
                           suffixIcon: IconButton(
                           icon: Semantics(
                             label: 'btn_login_password_visibility',
@@ -224,7 +224,7 @@ class _LoginViewState extends State<LoginView> {
                           foregroundColor: AppColors.primary,
                           ),
                           child: const Text(
-                            'Forgot Password?',
+                            'Lupa Password?',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -265,7 +265,7 @@ class _LoginViewState extends State<LoginView> {
                                   ),
                                 )
                               : const Text(
-                                  'Log In',
+                                  'Masuk',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -282,7 +282,7 @@ class _LoginViewState extends State<LoginView> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Don't have an account?",
+                          "Belum punya akun?",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
@@ -309,7 +309,7 @@ class _LoginViewState extends State<LoginView> {
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             child: const Text(
-                              'Sign Up',
+                              'Daftar',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,

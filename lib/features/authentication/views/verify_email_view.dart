@@ -125,7 +125,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
               
               // Title
               const Text(
-                'Verify Your Email',
+                'Verifikasi Email Anda',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -138,7 +138,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
               
               // Main Message
               Text(
-                'A verification link has been sent to your email. Please check your inbox and follow the instructions.',
+                'Link verifikasi telah dikirim ke email Anda. Silakan periksa kotak masuk Anda dan ikuti petunjuknya.',
                 style: TextStyle(
                   fontSize: 15,
                   color: Colors.grey.shade600,
@@ -189,7 +189,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Automatically checking status...',
+                    'Memeriksa status secara otomatis...',
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey.shade500,
@@ -215,7 +215,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                     ),
                   ),
                   child: Text(
-                    canResendEmail ? 'Resend Verification Email' : 'Please wait...',
+                    canResendEmail ? 'Kirim Ulang Email Verifikasi' : 'Harap tunggu...',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
@@ -234,7 +234,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 child: const Text(
-                  'Back to Login',
+                  'Kembali ke Login',
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),

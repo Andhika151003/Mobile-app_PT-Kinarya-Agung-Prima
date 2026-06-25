@@ -62,7 +62,7 @@ class _AdminMasterViewState extends State<AdminMasterView> {
                     key: const Key('searchField'),
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: 'Search retailer',
+                      hintText: 'Cari retailer',
                       hintStyle: TextStyle(
                         fontSize: 14,
                         fontFamily: 'Inter',
@@ -82,7 +82,7 @@ class _AdminMasterViewState extends State<AdminMasterView> {
                     onChanged: controller.searchRetailers,
                   ),
                 ),
-
+ 
                 // ── Total Retailers + Toggle Active/Inactive ────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -100,111 +100,111 @@ class _AdminMasterViewState extends State<AdminMasterView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Total Retailers',
+                              'Total Retailer',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w400,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              FormatUtil.formatCompact(controller.retailers.length),
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Inter',
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      // Tombol Active & Inactive (horizontal)
-                      Row(
-                        children: [
-                          _filterButton('Active', 'active'),
-                          const SizedBox(width: 8),
-                          _filterButton('Inactive', 'inactive'),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // ── List Retailer ───────────────────────────────────────
-                Expanded(
-                  child: filteredRetailers.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.store_outlined,
-                                  size: 64, color: Colors.grey[400]),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Tidak ada data retailer',
-                                style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 12,
                                   fontFamily: 'Inter',
-                                  color: Colors.grey[500],
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                FormatUtil.formatCompact(controller.retailers.length),
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Inter',
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ],
                           ),
-                        )
-                      : ListView.builder(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 20),
-                          itemCount: filteredRetailers.length,
-                          itemBuilder: (context, index) {
-                            final retailer = filteredRetailers[index];
-                            final isActive = retailer['isActive'] == true;
-                            return _retailerCard(
-                                context, retailer, isActive, controller);
-                          },
                         ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  // ── Widget: Tombol Filter Active / Inactive ───────────────────────────
-  Widget _filterButton(String label, String filter) {
-    final isSelected = _selectedFilter == filter;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedFilter = filter),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.accent
-              : const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'Inter',
-            color: isSelected ? Colors.white : const Color(0xFF6B7280),
+  
+                        const Spacer(),
+  
+                        // Tombol Active & Inactive (horizontal)
+                        Row(
+                          children: [
+                            _filterButton('Aktif', 'active'),
+                            const SizedBox(width: 8),
+                            _filterButton('Nonaktif', 'inactive'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+  
+                  const SizedBox(height: 20),
+  
+                  // ── List Retailer ───────────────────────────────────────
+                  Expanded(
+                    child: filteredRetailers.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.store_outlined,
+                                    size: 64, color: Colors.grey[400]),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Tidak ada data retailer',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontFamily: 'Inter',
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: filteredRetailers.length,
+                            itemBuilder: (context, index) {
+                              final retailer = filteredRetailers[index];
+                              final isActive = retailer['isActive'] == true;
+                              return _retailerCard(
+                                  context, retailer, isActive, controller);
+                            },
+                          ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
-      ),
-    );
+      );
+    }
+  
+    // ── Widget: Tombol Filter Active / Inactive ───────────────────────────
+    Widget _filterButton(String label, String filter) {
+      final isSelected = _selectedFilter == filter;
+      return GestureDetector(
+        onTap: () => setState(() => _selectedFilter = filter),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.accent
+                : const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Inter',
+              color: isSelected ? Colors.white : const Color(0xFF6B7280),
+            ),
+          ),
+        ),
+      );
   }
 
   // ── Widget: Card Retailer ─────────────────────────────────────────────
@@ -501,7 +501,7 @@ class _StatusDropdownButtonState extends State<_StatusDropdownButton>
                         ),
                         child: const Center(
                           child: Text(
-                            'Yes',
+                            'Ya',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -529,7 +529,7 @@ class _StatusDropdownButtonState extends State<_StatusDropdownButton>
                         ),
                         child: const Center(
                           child: Text(
-                            'Cancel',
+                            'Batal',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -598,7 +598,7 @@ class _StatusDropdownButtonState extends State<_StatusDropdownButton>
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'Select',
+                  'Pilih',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -651,7 +651,7 @@ class _StatusDropdownButtonState extends State<_StatusDropdownButton>
                           top: Radius.circular(12)),
                     ),
                     child: Text(
-                      'Active',
+                      'Aktif',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -680,7 +680,7 @@ class _StatusDropdownButtonState extends State<_StatusDropdownButton>
                           bottom: Radius.circular(12)),
                     ),
                     child: Text(
-                      'Inactive',
+                      'Nonaktif',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,

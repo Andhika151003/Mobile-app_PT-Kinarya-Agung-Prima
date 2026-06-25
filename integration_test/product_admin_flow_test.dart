@@ -31,7 +31,7 @@ void main() {
           isLoginScreen = true;
           break;
         }
-        if (find.text('Products').evaluate().isNotEmpty) {
+        if (find.text('Produk').evaluate().isNotEmpty) {
           break;
         }
       }
@@ -67,8 +67,8 @@ void main() {
 
       // 3. Navigate to Products Tab
       // [TC - 64 : Admin Menampilkan daftar produk]
-      // Tap the 'Products' item in BottomNavigationBar
-      final productsTabFinder = find.text('Products');
+      // Tap the 'Produk' item in BottomNavigationBar
+      final productsTabFinder = find.text('Produk');
       expect(productsTabFinder, findsOneWidget);
       await tester.tap(productsTabFinder);
       await tester.pumpAndSettle();
@@ -222,7 +222,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 700));
 
       // Verify Add Stock Dialog is displayed
-      expect(find.text('Add Stock'), findsOneWidget);
+      expect(find.text('Tambah Stok'), findsOneWidget);
 
       // Increment stock 3 times with settling in between to avoid pointer clashes
       final incrementBtnFinder = find.byKey(const Key('add_stock_increment'));
@@ -248,7 +248,7 @@ void main() {
       // Wait for database update to execute
       await tester.pump(const Duration(seconds: 2));
       // Success SnackBar should have appeared and dialog closed
-      expect(find.text('Add Stock'), findsNothing);
+      expect(find.text('Tambah Stok'), findsNothing);
     });
   });
 }

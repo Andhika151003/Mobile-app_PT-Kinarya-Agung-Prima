@@ -15,8 +15,8 @@ class ProfileCsView extends StatefulWidget {
 class _ProfileCsViewState extends State<ProfileCsView> {
   final ProfileCsController _csController = ProfileCsController();
 
-  String csName = 'Loading...';
-  String contact = 'Loading...';
+  String csName = 'Memuat...';
+  String contact = 'Memuat...';
   String csId = '-';
   int totalTickets = 0;
   bool isLoading = true;
@@ -75,7 +75,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
                       final count = snapshot.data ?? 0;
                       return _buildStatsCard(
                         icon: Icons.inventory_2_outlined,
-                        title: 'Total Tickets',
+                        title: 'Total Tiket',
                         value: FormatUtil.formatCompact(count),
                       );
                     }
@@ -112,7 +112,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Sure you want to log out?',
+                  'Apakah Anda yakin ingin keluar?',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
@@ -137,7 +137,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
                           ),
                         ),
                         child: const Text(
-                          'Cancel',
+                          'Batal',
                           style: TextStyle(
                             color: primaryGreen,
                             fontWeight: FontWeight.bold,
@@ -176,7 +176,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
                             if (context.mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error logging out: $e')),
+                                SnackBar(content: Text('Gagal logout: $e')),
                               );
                             }
                           }
@@ -191,7 +191,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
                           ),
                         ),
                         child: const Text(
-                          'Log Out',
+                          'Keluar',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
@@ -231,7 +231,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
         ),
       ),
       title: const Text(
-        'My Profile',
+        'Profil Saya',
         style: TextStyle(
           color: Colors.black,
           fontSize: 16,
@@ -268,7 +268,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Customer Service',
+            'Layanan Pelanggan',
             style: TextStyle(
               fontSize: 14,
               color: Colors.blueGrey.shade600,
@@ -285,7 +285,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Service Details',
+          'Detail Layanan',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
@@ -293,11 +293,11 @@ class _ProfileCsViewState extends State<ProfileCsView> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildDetailRow('CS ID', csId),
+        _buildDetailRow('ID CS', csId),
         const SizedBox(height: 16),
-        _buildDetailRow('Department', 'Technical Support'),
+        _buildDetailRow('Departemen', 'Dukungan Teknis'),
         const SizedBox(height: 16),
-        _buildDetailRow('Contact', contact),
+        _buildDetailRow('Kontak', contact),
       ],
     );
   }
@@ -374,7 +374,7 @@ class _ProfileCsViewState extends State<ProfileCsView> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         ),
         child: const Text(
-          'Log Out',
+          'Keluar',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),

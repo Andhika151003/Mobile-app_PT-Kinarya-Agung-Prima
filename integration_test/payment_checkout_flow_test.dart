@@ -29,7 +29,7 @@ void main() {
           isLoginScreen = true;
           break;
         }
-        if (find.text('Products').evaluate().isNotEmpty) break;
+        if (find.text('Produk').evaluate().isNotEmpty) break;
       }
 
       // 2. Login
@@ -55,9 +55,16 @@ void main() {
         await tester.pumpAndSettle();
       }
 
+      // Check and dismiss promo popup if present
+      final claimBtn = find.text('Klaim Penawaran Sekarang');
+      if (claimBtn.evaluate().isNotEmpty) {
+        await tester.tap(claimBtn);
+        await tester.pumpAndSettle();
+      }
+
       // 3. Navigasi ke tab Products
-      expect(find.text('Products'), findsOneWidget);
-      await tester.tap(find.text('Products'));
+      expect(find.text('Produk'), findsOneWidget);
+      await tester.tap(find.text('Produk'));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
@@ -75,7 +82,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // 5. Add to Cart
-      expect(find.text('Product Details'), findsOneWidget);
+      expect(find.text('Detail Produk'), findsOneWidget);
       final addToCartBtn = find.byKey(const Key('btn_add_to_cart_detail'));
       expect(addToCartBtn, findsOneWidget);
       await tester.ensureVisible(addToCartBtn);
@@ -110,9 +117,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // 7. Verifikasi Cart ada isinya
-      expect(find.text('Shopping Cart'), findsOneWidget);
+      expect(find.text('Keranjang Belanja'), findsOneWidget);
       expect(find.text('Keranjang Masih Kosong'), findsNothing);
-      expect(find.text('Order Summary'), findsOneWidget);
+      expect(find.text('Ringkasan Pesanan'), findsOneWidget);
 
       // 8. Proceed to Checkout
       final checkoutBtn = find.byKey(const Key('btn_checkout'));
@@ -126,14 +133,14 @@ void main() {
 
       // 9. Verifikasi halaman Checkout
       expect(find.text('Checkout'), findsOneWidget);
-      expect(find.text('SHIPPING'), findsOneWidget);
-      expect(find.text('PAYMENT'), findsOneWidget);
-      expect(find.text('PROMOS'), findsOneWidget);
+      expect(find.text('PENGIRIMAN'), findsOneWidget);
+      expect(find.text('PEMBAYARAN'), findsOneWidget);
+      expect(find.text('PROMO'), findsOneWidget);
       expect(find.text('Total'), findsOneWidget);
-      expect(find.text('Place order'), findsOneWidget);
+      expect(find.text('Buat Pesanan'), findsOneWidget);
 
       // 10. Pilih metode pembayaran (BCA VA)
-      await tester.tap(find.text('PAYMENT'));
+      await tester.tap(find.text('PEMBAYARAN'));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
@@ -146,7 +153,7 @@ void main() {
       expect(find.text('BCA Virtual Account'), findsOneWidget);
 
       // 11. Place Order
-      final placeOrderBtn = find.text('Place order');
+      final placeOrderBtn = find.text('Buat Pesanan');
       await tester.ensureVisible(placeOrderBtn);
       await tester.pumpAndSettle();
       await tester.tap(placeOrderBtn);
@@ -181,7 +188,7 @@ void main() {
           isLoginScreen = true;
           break;
         }
-        if (find.text('Products').evaluate().isNotEmpty) break;
+        if (find.text('Produk').evaluate().isNotEmpty) break;
       }
 
       // 2. Login
@@ -207,8 +214,15 @@ void main() {
         await tester.pumpAndSettle();
       }
 
+      // Check and dismiss promo popup if present
+      final claimBtn = find.text('Klaim Penawaran Sekarang');
+      if (claimBtn.evaluate().isNotEmpty) {
+        await tester.tap(claimBtn);
+        await tester.pumpAndSettle();
+      }
+
       // 3. Add produk spesifik "Kahf..." ke Cart
-      await tester.tap(find.text('Products'));
+      await tester.tap(find.text('Produk'));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
@@ -258,7 +272,7 @@ void main() {
 
       // 5. Langsung Place Order tanpa pilih pembayaran
       expect(find.text('Checkout'), findsOneWidget);
-      final placeOrderBtn = find.text('Place order');
+      final placeOrderBtn = find.text('Buat Pesanan');
       await tester.ensureVisible(placeOrderBtn);
       await tester.pumpAndSettle();
       await tester.tap(placeOrderBtn);

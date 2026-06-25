@@ -106,6 +106,19 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
     }
   }
 
+  String _getFilterLabel(String filter) {
+    switch (filter) {
+      case 'All Transactions':
+        return 'Semua Transaksi';
+      case 'Today':
+        return 'Hari Ini';
+      case 'This Week':
+        return 'Minggu Ini';
+      default:
+        return filter.displayStatus;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,7 +139,7 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
           children: [
             Icon(Icons.receipt_long_outlined, color: Colors.black87),
             SizedBox(width: 8),
-            Text('Transactions', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Transaksi', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -150,7 +163,7 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
                       controller: _searchController,
                       style: const TextStyle(fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Search ID, Name, or Product...',
+                        hintText: 'Cari ID, Nama, atau Produk...',
                         hintStyle:
                             TextStyle(fontSize: 14, color: Colors.grey.shade400),
                         prefixIcon:
@@ -230,7 +243,7 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
                         ),
                       ),
                       child: Text(
-                        filter.displayStatus,
+                        _getFilterLabel(filter),
                         style: TextStyle(
                           color: isSelected ? Colors.white : Colors.black87,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
@@ -260,7 +273,7 @@ class _AllTransactionsAdminViewState extends State<AllTransactionsAdminView> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              _searchQuery.isNotEmpty ? 'No results found' : 'No transactions found',
+                              _searchQuery.isNotEmpty ? 'Tidak ada hasil ditemukan' : 'Belum ada transaksi',
                               style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
                             ),
                           ],

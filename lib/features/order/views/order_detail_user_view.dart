@@ -89,7 +89,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Order Details',
+          'Detail Pesanan',
           style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -123,7 +123,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             const SizedBox(height: 20),
 
             // 2. Order Status Stepper
-            const Text('Order Status', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+            const Text('Status Pesanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 12),
             _buildStatusStepper(order.status, order),
             
@@ -132,7 +132,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             const SizedBox(height: 24),
 
             // 3. Shipping Information
-            const Text('Shipping Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+            const Text('Informasi Pengiriman', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -141,7 +141,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Shipping Address', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  Text('Alamat Pengiriman', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                   const SizedBox(height: 8),
                   Text(order.fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black)),
                   const SizedBox(height: 4),
@@ -172,7 +172,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             const SizedBox(height: 24),
 
             // 4. Order Items & Summary
-            const Text('Order Items', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+            const Text('Produk Pesanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade200)),
@@ -187,15 +187,15 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                         if (order.discountAmount > 0) ...[
                           const SizedBox(height: 8),
                           _buildSummaryRow(
-                            'Discount', 
+                            'Diskon', 
                             '-${currency.format(order.discountAmount)}',
                             valueColor: Colors.red.shade600,
                           ),
                         ],
                         const SizedBox(height: 8),
-                        _buildSummaryRow('Tax (11%)', currency.format(order.tax)),
+                        _buildSummaryRow('Pajak (11%)', currency.format(order.tax)),
                         const SizedBox(height: 8),
-                        _buildSummaryRow('Shipping', order.shippingCost == 0 ? 'Free' : currency.format(order.shippingCost)),
+                        _buildSummaryRow('Pengiriman', order.shippingCost == 0 ? 'Gratis' : currency.format(order.shippingCost)),
                         const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1)),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -216,13 +216,13 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Payment Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                const Text('Informasi Pembayaran', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                 GestureDetector(
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => PaymentStatusView(orderId: widget.orderId)),
                   ),
-                  child: const Text('View Details', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _primaryColor)),
+                  child: const Text('Lihat Detail', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _primaryColor)),
                 ),
               ],
             ),
@@ -318,7 +318,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Total Amount', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text('Total Pembayaran', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     const SizedBox(height: 4),
                     Text(currency.format(total), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
                   ],
@@ -328,7 +328,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Payment Status', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text('Status Pembayaran', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -657,7 +657,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Payment Method', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text('Metode Pembayaran', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -673,7 +673,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Transaction ID', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text('ID Transaksi', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     const SizedBox(height: 4),
                     Text('TXN-$txnDisplay', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
@@ -688,7 +688,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Payment Date', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text('Tanggal Pembayaran', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     const SizedBox(height: 4),
                     Text(date != null ? DateFormat('MMMM dd, yyyy').format(date) : '-', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black)),
                   ],
@@ -698,7 +698,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Invoice ID', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text('ID Invoice', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     const SizedBox(height: 4),
                     Text(invoiceId, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black)),
                   ],
@@ -718,7 +718,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
                   PdfService.generateAndOpenInvoice(_order!);
                 },
                 icon: const Icon(Icons.download_outlined, size: 18),
-                label: const Text('Download Invoice',
+                label: const Text('Unduh Invoice',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey.shade100,

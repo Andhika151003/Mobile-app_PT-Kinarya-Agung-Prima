@@ -48,12 +48,12 @@ class _FormAddCsViewState extends State<FormAddCsView> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Customer Support added successfully'), backgroundColor: Colors.green),
+        const SnackBar(content: Text('Customer Support berhasil ditambahkan'), backgroundColor: Colors.green),
       );
       Navigator.pop(context, true);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${_controller.errorMessage ?? "Unknown error"}'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Error: ${_controller.errorMessage ?? "Kesalahan tidak diketahui"}'), backgroundColor: Colors.red),
       );
     }
   }
@@ -65,7 +65,7 @@ class _FormAddCsViewState extends State<FormAddCsView> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Add Customer Support', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Inter')),
+        title: const Text('Tambah Customer Support', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Inter')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 18),
           onPressed: () => Navigator.pop(context),
@@ -78,36 +78,36 @@ class _FormAddCsViewState extends State<FormAddCsView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildLabel('Full Name'),
+              _buildLabel('Nama Lengkap'),
               TextFormField(
                 controller: _usernameController,
-                decoration: _inputDecoration('Enter full name'),
-                validator: (v) => v!.isEmpty ? 'Required' : null,
+                decoration: _inputDecoration('Masukkan nama lengkap'),
+                validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
               ),
               const SizedBox(height: 20),
               _buildLabel('Email'),
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: _inputDecoration('Enter email address'),
-                validator: (v) => v!.isEmpty ? 'Required' : null,
+                decoration: _inputDecoration('Masukkan alamat email'),
+                validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
               ),
               const SizedBox(height: 20),
               _buildLabel('Password'),
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: _inputDecoration('Enter password'),
-                validator: (v) => v!.length < 6 ? 'Min 6 characters' : null,
+                decoration: _inputDecoration('Masukkan password'),
+                validator: (v) => v!.length < 6 ? 'Minimal 6 karakter' : null,
               ),
               const SizedBox(height: 20),
-              _buildLabel('Phone Number'),
+              _buildLabel('Nomor Telepon'),
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _inputDecoration('Enter phone number'),
-                validator: (v) => v!.isEmpty ? 'Required' : null,
+                decoration: _inputDecoration('Masukkan nomor telepon'),
+                validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
               ),
               const SizedBox(height: 40),
               SizedBox(
@@ -122,7 +122,7 @@ class _FormAddCsViewState extends State<FormAddCsView> {
                   ),
                   child: _isLoading 
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Add Customer Support', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Inter')),
+                    : const Text('Tambah Customer Support', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Inter')),
                 ),
               ),
             ],

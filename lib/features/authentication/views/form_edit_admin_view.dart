@@ -88,14 +88,14 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
 
       if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Admin Profile updated successfully!')),
+            const SnackBar(content: Text('Profil Admin berhasil diperbarui!')),
           );
           Navigator.pop(context, true);
         }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update: $e')),
+          SnackBar(content: Text('Gagal memperbarui: $e')),
         );
       }
     } finally {
@@ -120,7 +120,7 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
                     Center(child: _buildProfilePictureUpload(primaryGreen)),
                     const SizedBox(height: 32),
                     const Text(
-                      'Business Information',
+                      'Informasi Usaha',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -129,9 +129,9 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
                     ),
                     const SizedBox(height: 20),
                     
-                    _buildTextField('Business Name', 'Enter Your Name', _nameController, key: const Key('businessNameField')),
-                    _buildTextField('Business Type', 'Enter Your Business Type', _typeController, key: const Key('businessTypeField')),
-                    _buildTextField('Contact', 'Enter Your Number', _contactController, key: const Key('contactField'), isNumber: true),
+                    _buildTextField('Nama Usaha', 'Masukkan Nama Anda', _nameController, key: const Key('businessNameField')),
+                    _buildTextField('Jenis Usaha', 'Masukkan Jenis Usaha', _typeController, key: const Key('businessTypeField')),
+                    _buildTextField('Kontak', 'Masukkan Nomor Anda', _contactController, key: const Key('contactField'), isNumber: true),
                     
                     const SizedBox(height: 32),
                     _buildActionButtons(context, primaryGreen),
@@ -164,7 +164,7 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
         ),
       ),
       title: const Text(
-        'Edit Profile',
+        'Ubah Profil',
         style: TextStyle(
           color: Colors.black,
           fontSize: 16,
@@ -247,7 +247,7 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
             maxLines: maxLines,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return '* $label is required';
+                return '* $label wajib diisi';
               }
               return null;
             },
@@ -304,7 +304,7 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
                 : const Text(
-                    'Save Changes',
+                    'Simpan Perubahan',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -325,7 +325,7 @@ class _FormProfileAdminViewState extends State<FormProfileAdminView> {
               ),
             ),
             child: Text(
-              'Cancel',
+              'Batal',
               style: TextStyle(
                 color: primaryGreen,
                 fontWeight: FontWeight.bold,

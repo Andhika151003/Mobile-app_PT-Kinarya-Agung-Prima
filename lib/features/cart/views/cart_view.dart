@@ -48,7 +48,7 @@ class _CartViewState extends State<CartView> {
           ),
         ),
         title: const Text(
-          'Shopping Cart',
+          'Keranjang Belanja',
           style: TextStyle(
             color: Colors.black,
             fontSize: 16,
@@ -135,7 +135,7 @@ class _CartViewState extends State<CartView> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Order Summary',
+                      'Ringkasan Pesanan',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -152,7 +152,7 @@ class _CartViewState extends State<CartView> {
                     ),
                     const SizedBox(height: 12),
                     _buildSummaryRow(
-                      'Shipping',
+                      'Pengiriman',
                       NumberFormat.currency(
                         locale: 'id_ID',
                         symbol: 'Rp ',
@@ -212,7 +212,7 @@ class _CartViewState extends State<CartView> {
                           elevation: 0,
                         ),
                         child: const Text(
-                          'Proceed to Checkout',
+                          'Lanjutkan ke Pembayaran',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white,
@@ -321,11 +321,11 @@ class _CartViewState extends State<CartView> {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         if (minLimit > 1)
-                          Text('Min. Order: $minLimit', style: const TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold)),
+                          Text('Min. Pesanan: $minLimit', style: const TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold)),
                         if (minLimit > 1 && isAtMax)
                           const Text(' • ', style: TextStyle(color: Colors.grey, fontSize: 11)),
                         if (isAtMax)
-                          Text('Stock: $maxLimit', style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                          Text('Stok: $maxLimit', style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),

@@ -98,7 +98,7 @@ class _RegisterViewState extends State<RegisterView> {
                     // Title
                     const Center(
                       child: Text(
-                        'Create a retailer account',
+                        'Daftar akun ritel',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 24,
@@ -113,7 +113,7 @@ class _RegisterViewState extends State<RegisterView> {
                     // Subtitle
                     Center(
                       child: Text(
-                        'Enter your email to sign up for this app',
+                        'Masukkan email Anda untuk mendaftar',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
@@ -143,7 +143,7 @@ class _RegisterViewState extends State<RegisterView> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         maxLength: 255,
-                        decoration: _inputDecoration('Enter your email'),
+                        decoration: _inputDecoration('Masukkan email Anda'),
                         validator: controller.validateEmail,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
@@ -152,7 +152,7 @@ class _RegisterViewState extends State<RegisterView> {
 
                     // Full Name Field
                     const Text(
-                      'Full Name',
+                      'Nama Lengkap',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -170,7 +170,7 @@ class _RegisterViewState extends State<RegisterView> {
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
                         ],
-                        decoration: _inputDecoration('Enter your full name'),
+                        decoration: _inputDecoration('Masukkan nama lengkap Anda'),
                         validator: controller.validateFullName,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
@@ -179,7 +179,7 @@ class _RegisterViewState extends State<RegisterView> {
 
                     // Business Type Field (Dropdown)
                     const Text(
-                      'Business Type',
+                      'Jenis Usaha',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -204,8 +204,8 @@ class _RegisterViewState extends State<RegisterView> {
                             _selectedBusinessType = value;
                           });
                         },
-                        decoration: _inputDecoration('Select business type'),
-                        validator: (value) => value == null ? 'Please select your business type' : null,
+                        decoration: _inputDecoration('Pilih jenis usaha'),
+                        validator: (value) => value == null ? 'Harap pilih jenis usaha Anda' : null,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         icon: const Icon(Icons.keyboard_arrow_down),
                         dropdownColor: Colors.white,
@@ -216,7 +216,7 @@ class _RegisterViewState extends State<RegisterView> {
 
                     // Phone Number Field
                     const Text(
-                      'Phone Number',
+                      'Nomor Telepon',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -275,7 +275,7 @@ class _RegisterViewState extends State<RegisterView> {
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         maxLength: 64,
-                        decoration: _inputDecoration('Create a password').copyWith(
+                        decoration: _inputDecoration('Buat password').copyWith(
                           suffixIcon: IconButton(
                           icon: Semantics(
                             label: 'btn_register_password_visibility',
@@ -299,7 +299,7 @@ class _RegisterViewState extends State<RegisterView> {
 
                     // Confirm Password Field
                     const Text(
-                      'Confirm Password',
+                      'Konfirmasi Password',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -315,7 +315,7 @@ class _RegisterViewState extends State<RegisterView> {
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirmPassword,
                         maxLength: 64,
-                        decoration: _inputDecoration('Confirm your password').copyWith(
+                        decoration: _inputDecoration('Konfirmasi password Anda').copyWith(
                           suffixIcon: IconButton(
                           icon: Semantics(
                             label: 'btn_register_confirm_password_visibility',
@@ -369,7 +369,7 @@ class _RegisterViewState extends State<RegisterView> {
                                   ),
                                 )
                               : const Text(
-                                  'Create Account',
+                                  'Daftar',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -386,7 +386,7 @@ class _RegisterViewState extends State<RegisterView> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Already have an account?',
+                          'Sudah punya akun?',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
@@ -408,7 +408,7 @@ class _RegisterViewState extends State<RegisterView> {
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             child: const Text(
-                              'Login',
+                              'Masuk',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,

@@ -51,7 +51,7 @@ class _OrderCsViewState extends State<OrderCsView> {
         backgroundColor: Colors.white,
         appBar: AppBar(
           title: const Text(
-            "Retailer's Order",
+            "Pesanan Retailer",
             style: TextStyle(
               fontFamily: 'Inter',
               fontWeight: FontWeight.w600,
@@ -347,7 +347,7 @@ class _OrderCsViewState extends State<OrderCsView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Items: ${order.items.length}  Payment: $paymentStatus',
+                  'Produk: ${order.items.length}  Pembayaran: $paymentStatus',
                   style: const TextStyle(
                     fontSize: 12,
                     fontFamily: 'Inter',

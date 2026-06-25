@@ -23,6 +23,15 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
     super.dispose();
   }
 
+  String _getStatusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending': return 'DIPROSES';
+      case 'resolved': return 'SELESAI';
+      case 'rejected': return 'DITOLAK';
+      default: return status.toUpperCase();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,7 +43,7 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
                 autofocus: true,
                 style: const TextStyle(color: Colors.black, fontSize: 18),
                 decoration: const InputDecoration(
-                  hintText: 'Search order ID, issue...',
+                  hintText: 'Cari ID pesanan, kendala...',
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: Colors.grey),
                 ),
@@ -45,7 +54,7 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
                 },
               )
             : const Text(
-                'History Complaint',
+                'Riwayat Komplain',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
         backgroundColor: Colors.white,
@@ -132,7 +141,7 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
           ),
           const SizedBox(height: 16),
           Text(
-            _isSearching ? 'No results found' : 'No complaint history found',
+            _isSearching ? 'Tidak ada hasil ditemukan' : 'Tidak ada riwayat komplain',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
@@ -214,7 +223,7 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Order ID: #${complaint.orderId}',
+                        'ID Pesanan: #${complaint.orderId}',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 12,
@@ -243,7 +252,7 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
                           ),
                           if (complaint.status != 'pending')
                             Text(
-                              'Handled by: ${complaint.resolvedByName ?? 'CS'}',
+                              'Ditangani oleh: ${complaint.resolvedByName ?? 'CS'}',
                               style: TextStyle(
                                 color: Colors.blue.shade300,
                                 fontSize: 11,
@@ -272,7 +281,7 @@ class _AdminComplaintHistoryViewState extends State<AdminComplaintHistoryView> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        status.toUpperCase(),
+        _getStatusLabel(status),
         style: TextStyle(
           color: color,
           fontSize: 10,

@@ -22,8 +22,8 @@ void main() {
       await loginAsCS(tester);
 
       // Navigate to CS/Complaint/Order menu
-      for(int i=0; i<20; i++) { await tester.pump(const Duration(milliseconds: 500)); if(find.text('Supports').evaluate().isNotEmpty) break; }
-      final keluhanMenu = find.text('Supports'); // Replace with actual CS menu text
+      for(int i=0; i<20; i++) { await tester.pump(const Duration(milliseconds: 500)); if(find.text('Dukungan').evaluate().isNotEmpty) break; }
+      final keluhanMenu = find.text('Dukungan'); // Replace with actual CS menu text
       if (keluhanMenu.evaluate().isNotEmpty) {
         await tester.tap(keluhanMenu);
         await tester.pumpAndSettle();
@@ -43,7 +43,7 @@ void main() {
          await tester.pumpAndSettle();
          
          // Verify we are on the order detail page validating complaint
-         final hasDetailKeluhan = find.text('Detail Keluhan').evaluate().isNotEmpty;
+         final hasDetailKeluhan = find.text('Detail Komplain').evaluate().isNotEmpty;
          final hasDetailPesanan = find.text('Detail Pesanan').evaluate().isNotEmpty;
          expect(hasDetailKeluhan || hasDetailPesanan, isTrue);
          expect(find.text('Validasi'), findsWidgets); // e.g. a validate button

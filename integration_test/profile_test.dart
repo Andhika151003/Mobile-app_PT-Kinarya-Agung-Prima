@@ -24,8 +24,8 @@ void main() {
       expect(find.text('rt@email.com'), findsOneWidget);
       expect(find.text('08234567890'), findsOneWidget);
       expect(find.text('Pet Shop').first, findsOneWidget);
-      expect(find.text('Total Orders'), findsOneWidget);
-      expect(find.text('Total Spent'), findsOneWidget);
+      expect(find.text('Total Pesanan'), findsOneWidget);
+      expect(find.text('Total Pengeluaran'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -37,15 +37,15 @@ void main() {
       await loginAs(tester, 'rt@email.com', '12345678');
       await goToProfile(tester);
 
-      await tester.tap(find.text('Edit'));
+      await tester.tap(find.text('Ubah'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('businessNameField')), 'Toko Baru');
       await tester.enterText(find.byKey(const Key('contactField')), '08999999999');
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Simpan Perubahan'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Profile updated successfully!'), findsOneWidget);
+      expect(find.text('Profil berhasil diperbarui!'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -57,14 +57,14 @@ void main() {
       await loginAs(tester, 'rt@email.com', '12345678');
       await goToProfile(tester);
 
-      await tester.tap(find.text('Edit'));
+      await tester.tap(find.text('Ubah'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('businessNameField')), '');
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Simpan Perubahan'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Business Name is required'), findsOneWidget);
+      expect(find.textContaining('Nama Usaha wajib diisi'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -76,14 +76,14 @@ void main() {
       await loginAs(tester, 'rt@email.com', '12345678');
       await goToProfile(tester);
 
-      await tester.tap(find.text('Edit'));
+      await tester.tap(find.text('Ubah'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('contactField')), '');
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Simpan Perubahan'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Contact is required'), findsOneWidget);
+      expect(find.textContaining('Kontak wajib diisi'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -99,7 +99,7 @@ void main() {
       expect(find.text('Distributor'), findsOneWidget);
       expect(find.textContaining('#DS'), findsOneWidget);
       expect(find.text('08123456789'), findsOneWidget);
-      expect(find.text('Staff Management'), findsOneWidget);
+      expect(find.text('Manajemen Staf'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -111,15 +111,15 @@ void main() {
       await loginAs(tester, 'ad@email.com', '12345678');
       await goToProfile(tester);
 
-      await tester.tap(find.text('Edit'));
+      await tester.tap(find.text('Ubah'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('businessNameField')), 'Admin Baru');
       await tester.enterText(find.byKey(const Key('contactField')), '08111111111');
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Simpan Perubahan'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Admin Profile updated successfully!'), findsOneWidget);
+      expect(find.text('Profil Admin berhasil diperbarui!'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -131,14 +131,14 @@ void main() {
       await loginAs(tester, 'ad@email.com', '12345678');
       await goToProfile(tester);
 
-      await tester.tap(find.text('Edit'));
+      await tester.tap(find.text('Ubah'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('businessNameField')), '');
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Simpan Perubahan'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Business Name is required'), findsOneWidget);
+      expect(find.textContaining('Nama Usaha wajib diisi'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -150,14 +150,14 @@ void main() {
       await loginAs(tester, 'ad@email.com', '12345678');
       await goToProfile(tester);
 
-      await tester.tap(find.text('Edit'));
+      await tester.tap(find.text('Ubah'));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('contactField')), '');
-      await tester.tap(find.text('Save Changes'));
+      await tester.tap(find.text('Simpan Perubahan'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Contact is required'), findsOneWidget);
+      expect(find.textContaining('Kontak wajib diisi'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
 
@@ -170,11 +170,11 @@ void main() {
       await goToProfile(tester);
 
       expect(find.text('Customer Support'), findsOneWidget);
-      expect(find.text('Customer Service'), findsOneWidget);
+      expect(find.text('Layanan Pelanggan'), findsOneWidget);
       expect(find.textContaining('#CS'), findsOneWidget);
-      expect(find.text('Technical Support'), findsOneWidget);
+      expect(find.text('Dukungan Teknis'), findsOneWidget);
       expect(find.text('08345678901'), findsOneWidget);
-      expect(find.text('Total Tickets'), findsOneWidget);
+      expect(find.text('Total Tiket'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
     });
   });
