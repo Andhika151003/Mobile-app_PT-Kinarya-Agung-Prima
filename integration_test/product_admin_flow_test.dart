@@ -1,3 +1,5 @@
+@Timeout(Duration(minutes: 5))
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -45,18 +47,21 @@ void main() {
           'admin@gmail.com',
         );
         await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 500));
 
         await tester.enterText(
           find.byKey(const Key('login_password_field')),
           'admin123',
         );
         await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 500));
 
         await tester.tap(find.byKey(const Key('login_submit_btn')));
         await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 700));
 
         // Wait a few seconds for Firebase Auth session and data synchronization
-        await tester.pump(const Duration(seconds: 4));
+        await tester.pump(const Duration(milliseconds: 1500));
         await tester.pumpAndSettle();
       }
 
@@ -67,9 +72,10 @@ void main() {
       expect(productsTabFinder, findsOneWidget);
       await tester.tap(productsTabFinder);
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 700));
 
       // Wait for products to load from Firestore stream
-      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
 
       // 4. Flow 1: Add a New Product
@@ -78,6 +84,7 @@ void main() {
       expect(fabFinder, findsOneWidget);
       await tester.tap(fabFinder);
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 700));
 
       // Fill in Basic Information
       await tester.enterText(
@@ -85,12 +92,14 @@ void main() {
         'Automated Test Soap ${DateTime.now().millisecondsSinceEpoch}',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       await tester.enterText(
         find.byKey(const Key('add_product_sku_field')),
         'SKU-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Select Category
       final categoryDropdownFinder = find.byKey(
@@ -98,16 +107,19 @@ void main() {
       );
       await tester.tap(categoryDropdownFinder);
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 700));
 
       final categoryItemFinder = find.text('Beauty Care').last;
       await tester.tap(categoryItemFinder);
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 700));
 
       await tester.enterText(
         find.byKey(const Key('add_product_brand_field')),
         'AutoBrand',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Pricing & MOQ
       await tester.enterText(
@@ -115,12 +127,14 @@ void main() {
         '25000',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       await tester.enterText(
         find.byKey(const Key('add_product_moq_field')),
         '2',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Inventory
       await tester.enterText(
@@ -128,12 +142,14 @@ void main() {
         '50',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       await tester.enterText(
         find.byKey(const Key('add_product_low_stock_field')),
         '5',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Description
       await tester.enterText(
@@ -141,6 +157,7 @@ void main() {
         'This is a product created automatically by the Black Box UI Automation Test.',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Shipping & Dimensions
       await tester.enterText(
@@ -148,32 +165,37 @@ void main() {
         '0.5',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       await tester.enterText(
         find.byKey(const Key('add_product_length_field')),
         '15',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       await tester.enterText(
         find.byKey(const Key('add_product_width_field')),
         '10',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       await tester.enterText(
         find.byKey(const Key('add_product_height_field')),
         '5',
       );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Save the Product
       final saveBtnFinder = find.byKey(const Key('add_product_save_btn'));
       await tester.tap(saveBtnFinder);
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 700));
 
       // Wait for the firebase upload/add request to complete
-      await tester.pump(const Duration(seconds: 5));
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
       // 5. Flow 2: Add Stock to an Existing Product
@@ -193,11 +215,11 @@ void main() {
       // Ensure the widget is visible in viewport before tapping
       await tester.ensureVisible(addStockButtonFinder);
       await tester.pumpAndSettle();
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 700));
 
       await tester.tap(addStockButtonFinder);
       await tester.pumpAndSettle();
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 700));
 
       // Verify Add Stock Dialog is displayed
       expect(find.text('Add Stock'), findsOneWidget);
@@ -207,27 +229,27 @@ void main() {
       
       await tester.tap(incrementBtnFinder);
       await tester.pumpAndSettle();
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 500));
       
       await tester.tap(incrementBtnFinder);
       await tester.pumpAndSettle();
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 500));
       
       await tester.tap(incrementBtnFinder);
       await tester.pumpAndSettle();
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Save the Stock
       final saveStockBtnFinder = find.byKey(const Key('add_stock_save'));
       await tester.tap(saveStockBtnFinder);
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 700));
 
       // Wait for database update to execute
-      await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
-
+      await tester.pump(const Duration(seconds: 2));
       // Success SnackBar should have appeared and dialog closed
       expect(find.text('Add Stock'), findsNothing);
     });
   });
 }
+

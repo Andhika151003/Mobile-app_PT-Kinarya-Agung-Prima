@@ -1,8 +1,11 @@
+@Timeout(Duration(minutes: 5))
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:ecommerce/main.dart' as app;
 import 'helpers/test_utils.dart';
+
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -50,12 +53,14 @@ void main() {
         confirmPassword: 'password123',
       );
 
+      await tester.pump(const Duration(seconds: 1));
       await tester.ensureVisible(find.byKey(const Key('createAccountButton')));
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.text('Verify Your Email'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-9: Email kosong', (tester) async {
@@ -75,11 +80,13 @@ void main() {
         confirmPassword: 'password123',
       );
 
+      await tester.pump(const Duration(seconds: 1));
       await tester.ensureVisible(find.byKey(const Key('createAccountButton')));
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
       expect(find.text('Email is required'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-10: Format email invalid', (tester) async {
@@ -99,11 +106,13 @@ void main() {
         confirmPassword: 'password123',
       );
 
+      await tester.pump(const Duration(seconds: 1));
       await tester.ensureVisible(find.byKey(const Key('createAccountButton')));
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
       expect(find.text('Please enter a valid email address'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-11: Email sudah terdaftar', (tester) async {
@@ -123,11 +132,13 @@ void main() {
         confirmPassword: 'password123',
       );
 
+      await tester.pump(const Duration(seconds: 1));
       await tester.ensureVisible(find.byKey(const Key('createAccountButton')));
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
       expect(find.text('Email already registered'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-12: Full name kosong', (tester) async {
@@ -147,11 +158,13 @@ void main() {
         confirmPassword: 'password123',
       );
 
+      await tester.pump(const Duration(seconds: 1));
       await tester.ensureVisible(find.byKey(const Key('createAccountButton')));
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
       expect(find.text('Full Name is required'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-13: Business type tidak dipilih', (tester) async {
@@ -171,11 +184,13 @@ void main() {
         confirmPassword: 'password123',
       );
 
+      await tester.pump(const Duration(seconds: 1));
       await tester.ensureVisible(find.byKey(const Key('createAccountButton')));
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
       expect(find.text('Please select your business type'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-14: Phone kosong', (tester) async {
@@ -195,11 +210,13 @@ void main() {
         confirmPassword: 'password123',
       );
 
+      await tester.pump(const Duration(seconds: 1));
       await tester.ensureVisible(find.byKey(const Key('createAccountButton')));
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
       expect(find.text('Phone Number is required'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-15: Phone kurang dari 10 digit', (tester) async {
@@ -220,11 +237,13 @@ void main() {
         confirmPassword: 'password123',
       );
 
+      await tester.pump(const Duration(seconds: 1));
       await tester.ensureVisible(find.byKey(const Key('createAccountButton')));
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
       expect(find.text('Please enter valid phone number'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-16: Password kosong', (tester) async {
@@ -244,11 +263,13 @@ void main() {
         confirmPassword: 'password123',
       );
 
+      await tester.pump(const Duration(seconds: 1));
       await tester.ensureVisible(find.byKey(const Key('createAccountButton')));
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
       expect(find.text('Password is required'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-17: Confirm password kosong', (tester) async {
@@ -268,11 +289,13 @@ void main() {
         confirmPassword: '',
       );
 
+      await tester.pump(const Duration(seconds: 1));
       await tester.ensureVisible(find.byKey(const Key('createAccountButton')));
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
       expect(find.text('Please confirm your password'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-18: Password dan confirm tidak sama', (tester) async {
@@ -292,11 +315,13 @@ void main() {
         confirmPassword: 'password456',
       );
 
+      await tester.pump(const Duration(seconds: 1));
       await tester.ensureVisible(find.byKey(const Key('createAccountButton')));
       await tester.tap(find.byKey(const Key('createAccountButton')));
       await tester.pumpAndSettle();
 
       expect(find.text('Passwords do not match'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
   });
 }

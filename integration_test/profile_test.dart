@@ -1,8 +1,11 @@
+@Timeout(Duration(minutes: 5))
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:ecommerce/main.dart' as app;
 import 'helpers/test_utils.dart';
+
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +26,7 @@ void main() {
       expect(find.text('Pet Shop').first, findsOneWidget);
       expect(find.text('Total Orders'), findsOneWidget);
       expect(find.text('Total Spent'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-23: Retailer edit profil valid', (tester) async {
@@ -42,6 +46,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Profile updated successfully!'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-24: Retailer edit nama kosong', (tester) async {
@@ -60,6 +65,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Business Name is required'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-25: Retailer edit contact kosong', (tester) async {
@@ -78,6 +84,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Contact is required'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-26: Admin lihat profil', (tester) async {
@@ -93,6 +100,7 @@ void main() {
       expect(find.textContaining('#DS'), findsOneWidget);
       expect(find.text('08123456789'), findsOneWidget);
       expect(find.text('Staff Management'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-27: Admin edit profil valid', (tester) async {
@@ -112,6 +120,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Admin Profile updated successfully!'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-28: Admin edit nama kosong', (tester) async {
@@ -130,6 +139,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Business Name is required'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-29: Admin edit contact kosong', (tester) async {
@@ -148,6 +158,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Contact is required'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
 
     testWidgets('TC-30: CS lihat profil', (tester) async {
@@ -164,6 +175,7 @@ void main() {
       expect(find.text('Technical Support'), findsOneWidget);
       expect(find.text('08345678901'), findsOneWidget);
       expect(find.text('Total Tickets'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
     });
   });
 }

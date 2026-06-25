@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../notification/services/push_notification_service.dart';
+import '../../../core/firebase_provider.dart';
 
 class CheckoutController {
   final FirebaseFirestore _firestore;
@@ -19,8 +20,8 @@ class CheckoutController {
     http.Client? client,
     String? backendUrl,
     PushNotificationService? pushNotificationService,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _auth = auth ?? FirebaseAuth.instance,
+  }) : _firestore = firestore ?? AppFirebase.firestore,
+       _auth = auth ?? AppFirebase.auth,
        _client = client ?? http.Client(),
        _backendUrl = backendUrl ?? dotenv.get('BACKEND_URL'),
        _pushNotificationService = pushNotificationService ?? PushNotificationService();

@@ -1,12 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/promotion.dart';
+import '../../../core/firebase_provider.dart';
 
 class PromotionUserController {
   final FirebaseFirestore _firestore;
 
   PromotionUserController({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _firestore = firestore ?? AppFirebase.firestore;
 
   Future<List<PromotionModel>> getActivePromotions() async {
     try {

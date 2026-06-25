@@ -41,7 +41,7 @@ void main() {
 
     // 2. Ritel menambahkan produk saat stok produk dibawah MOQ.
     test(
-      '2. Ritel menambahkan produk saat stok produk dibawah MOQ (Harus tetap bisa tambah seadanya stok)',
+      '2. Ritel menambahkan produk saat stok produk dibawah MOQ (Harus tidak bisa ditambahkan ke keranjang)',
       () {
         // Skenario: MOQ 10, tapi stok cuma 5.
         cartController.addToCart(
@@ -56,8 +56,8 @@ void main() {
           category: 'Kesehatan',
         );
 
-        // Logika di CartController biasanya akan meng-clamp ke stockLimit
-        expect(cartController.items[0].quantity, 5);
+        // Harus gagal masuk ke keranjang
+        expect(cartController.items.isEmpty, isTrue);
       },
     );
 

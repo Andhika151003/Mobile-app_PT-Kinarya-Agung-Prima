@@ -9,6 +9,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:ecommerce/core/firebase_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:ecommerce/features/cart/controllers/cart_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MockUserCredential extends Fake implements UserCredential {
   final User _user;
@@ -134,11 +136,21 @@ Future<void> setupTestEnvironment() async {
     // Already initialized or ignore
   }
 
+  SharedPreferences.setMockInitialValues({'hasSeenPromo_v1': true});
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenPromo_v1', true);
+  } catch (e) {
+    //asdasd
+  }
+
   final mockAuth = CustomMockAuth();
   final mockFirestore = FakeFirebaseFirestore();
 
   AppFirebase.mockAuth = mockAuth;
   AppFirebase.mockFirestore = mockFirestore;
+
+  CartController.setAuthInstance(mockAuth);
 
   // 1. Admin
   final adminCred = await mockAuth.createUserWithEmailAndPassword(
@@ -225,6 +237,26 @@ Future<void> setupTestEnvironment() async {
     'revenue': 0,
   });
 
+  // 6. Promotions
+  await mockFirestore.collection('promotions').doc('PROMO-1').set({
+    'title': 'Diskon Spesial',
+    'description': 'Diskon 10% untuk semua produk',
+    'discountType': 'percentage',
+    'discountValue': 10.0,
+    'productIds': <dynamic>[],
+    'applicableTo': 'all',
+    'startDate': Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 1))),
+    'endDate': Timestamp.fromDate(DateTime.now().add(const Duration(days: 10))),
+    'startTime': '00:00',
+    'endTime': '23:59',
+    'status': 'active',
+    'imageUrl': '',
+    'sku': 'PROMO10',
+    'createdAt': Timestamp.now(),
+    'createdBy': adminCred.user!.uid,
+    'maxDiscount': 100000.0,
+  });
+
   // Add Dummy Orders for testing
   await mockFirestore.collection('orders').doc('ORD-12345').set({
     'orderId': 'ORD-12345',
@@ -280,6 +312,21 @@ Future<void> setupTestEnvironment() async {
     'paidAt': Timestamp.now(),
   });
 
+  // 7. Complaints
+  await mockFirestore.collection('complaints').doc('COMP-1').set({
+    'userId': retailerCred.user!.uid,
+    'storeName': 'Toko Retailer',
+    'title': 'Barang Rusak',
+    'imgUrl': '',
+    'orderId': 'ORD-12345',
+    'productName': 'Whiskas',
+    'issueType': 'Barang Rusak',
+    'description': 'Kemasan whiskas robek saat diterima',
+    'imageUrls': <String>[],
+    'status': 'pending',
+    'createdAt': Timestamp.now(),
+  });
+
   // Reset the auth current user state to signed out
   await mockAuth.signOut();
 }
@@ -297,22 +344,41 @@ Future<void> loginAs(WidgetTester tester, String email, String password) async {
   await tester.enterText(emailFinder, email);
   await tester.ensureVisible(passwordFinder);
   await tester.enterText(passwordFinder, password);
+  
+  await tester.pump(const Duration(milliseconds: 500));
   await tester.ensureVisible(loginButtonFinder);
   await tester.tap(loginButtonFinder);
+  await tester.pumpAndSettle();
+  
+  // Dismiss keyboard/focus and complete transitions
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pumpAndSettle();
+  await tester.pump(const Duration(milliseconds: 700));
   await tester.pumpAndSettle();
 }
 
 Future<void> goToRegister(WidgetTester tester) async {
   final signUpTextFinder = find.text('Sign Up');
   expect(signUpTextFinder, findsOneWidget);
+  
+  await tester.pump(const Duration(milliseconds: 500));
   await tester.tap(signUpTextFinder);
   await tester.pumpAndSettle();
+  await tester.pump(const Duration(milliseconds: 700));
 }
 
 Future<void> goToProfile(WidgetTester tester) async {
-  final profileTabFinder = find.text('Profile');
-  expect(profileTabFinder, findsOneWidget);
-  await tester.tap(profileTabFinder);
+  // Ensure keyboard/focus is dismissed to prevent hit-test blocking
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pumpAndSettle();
+
+  final profileTabFinder = find.byIcon(Icons.person_outline);
+  expect(profileTabFinder, findsWidgets);
+  
+  await tester.pump(const Duration(milliseconds: 500));
+  await tester.tap(profileTabFinder.last);
+  await tester.pumpAndSettle();
+  await tester.pump(const Duration(milliseconds: 700));
   await tester.pumpAndSettle();
 }
 

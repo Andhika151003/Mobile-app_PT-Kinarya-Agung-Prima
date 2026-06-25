@@ -1,3 +1,5 @@
+@Timeout(Duration(minutes: 5))
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -5,9 +7,8 @@ import 'package:ecommerce/main.dart' as app;
 import 'package:ecommerce/features/shared/main_navigation_admin.dart';
 import 'helpers/test_utils.dart';
 
-// Helper: navigasi ke halaman Orders (index 2) menggunakan state langsung
+
 Future<void> goToOrdersPage(WidgetTester tester) async {
-  // Cari state dari MainNavigationAdmin dan langsung set index
   final navFinder = find.byType(MainNavigationAdmin);
   for (int i = 0; i < 20; i++) {
     await tester.pump(const Duration(milliseconds: 500));
@@ -16,13 +17,16 @@ Future<void> goToOrdersPage(WidgetTester tester) async {
 
   if (navFinder.evaluate().isNotEmpty) {
     final state = tester.state<MainNavigationAdminState>(navFinder);
-    state.setIndex(2); // Index 2 = Orders
+    state.setIndex(2);
     await tester.pumpAndSettle();
-    // Beri waktu _fetchOrders() selesai
     for (int i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 500));
       if (find.byType(ListView).evaluate().isNotEmpty ||
-          find.byKey(const Key('card_admin_order_ORD-12345')).evaluate().isNotEmpty) break;
+          find
+              .byKey(const Key('card_admin_order_ORD-12345'))
+              .evaluate()
+              .isNotEmpty)
+        break;
     }
   }
 }
@@ -42,13 +46,18 @@ void main() {
         await loginAs(tester, 'ad@email.com', '12345678');
         await tester.pump(const Duration(seconds: 2));
 
-        // Navigasi ke halaman Orders
         await goToOrdersPage(tester);
 
-        // Verify list of orders is present
         final hasListView = find.byType(ListView).evaluate().isNotEmpty;
-        final hasCard = find.byKey(const Key('card_admin_order_ORD-12345')).evaluate().isNotEmpty;
-        expect(hasListView || hasCard, isTrue, reason: 'Daftar pesanan tidak ditemukan setelah navigasi ke Orders');
+        final hasCard = find
+            .byKey(const Key('card_admin_order_ORD-12345'))
+            .evaluate()
+            .isNotEmpty;
+        expect(
+          hasListView || hasCard,
+          isTrue,
+          reason: 'Daftar pesanan tidak ditemukan setelah navigasi ke Orders',
+        );
 
         await tester.pump(const Duration(seconds: 2));
       },
@@ -71,7 +80,11 @@ void main() {
         // Tunggu order card ORD-12345 (status Paid = Dikemas)
         for (int i = 0; i < 20; i++) {
           await tester.pump(const Duration(milliseconds: 500));
-          if (find.byKey(const Key('card_admin_order_ORD-12345')).evaluate().isNotEmpty) break;
+          if (find
+              .byKey(const Key('card_admin_order_ORD-12345'))
+              .evaluate()
+              .isNotEmpty)
+            break;
         }
 
         // Open detail pesanan Paid
@@ -114,7 +127,11 @@ void main() {
       // Tunggu order card ORD-67890
       for (int i = 0; i < 20; i++) {
         await tester.pump(const Duration(milliseconds: 500));
-        if (find.byKey(const Key('card_admin_order_ORD-67890')).evaluate().isNotEmpty) break;
+        if (find
+            .byKey(const Key('card_admin_order_ORD-67890'))
+            .evaluate()
+            .isNotEmpty)
+          break;
       }
 
       // Open detail

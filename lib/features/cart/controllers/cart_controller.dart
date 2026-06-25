@@ -117,7 +117,7 @@ class CartController extends ChangeNotifier {
       }
 
       final beforeLen = _items.length;
-      _items.removeWhere((item) => item.stockLimit <= 0);
+      _items.removeWhere((item) => item.stockLimit < item.minOrder || item.stockLimit <= 0);
       if (_items.length != beforeLen) changed = true;
 
       if (changed) {
@@ -142,6 +142,10 @@ class CartController extends ChangeNotifier {
     required int minOrder,
     required int stockLimit,
   }) {
+    if (stockLimit < minOrder) {
+      return;
+    }
+
     final existingIndex = _items.indexWhere((item) => item.id == id);
 
     int finalQuantity = quantity;
@@ -149,7 +153,7 @@ class CartController extends ChangeNotifier {
       finalQuantity = stockLimit;
     }
     if (finalQuantity < minOrder) {
-      finalQuantity = minOrder > stockLimit ? stockLimit : minOrder;
+      finalQuantity = minOrder;
     }
 
     if (existingIndex >= 0) {
