@@ -6,14 +6,21 @@ import '../models/notification_model.dart';
 import '../../order/views/order_detail_admin_view.dart';
 
 class NotificationAdminView extends StatefulWidget {
-  const NotificationAdminView({super.key});
+  final NotificationAdminController? controller;
+  const NotificationAdminView({super.key, this.controller});
 
   @override
   State<NotificationAdminView> createState() => _NotificationAdminViewState();
 }
 
 class _NotificationAdminViewState extends State<NotificationAdminView> {
-  final NotificationAdminController _controller = NotificationAdminController();
+  late final NotificationAdminController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = widget.controller ?? NotificationAdminController();
+  }
 
   @override
   Widget build(BuildContext context) {

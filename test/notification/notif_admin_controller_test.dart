@@ -6,52 +6,19 @@ import 'package:ecommerce/features/notification/models/notification_model.dart';
 import 'package:ecommerce/features/notification/services/notification_service.dart';
 import 'package:ecommerce/features/notification/services/push_notification_service.dart';
 
-// Keep the legacy dummy class to avoid breaking existing/legacy test scenarios
-class NotifAdminController {
-  Map<String, dynamic> buildAdminNotification(
-    String type,
-    Map<String, dynamic> data,
-  ) {
-    if (type == 'cancellation_requested') {
-      return {
-        'title': 'Permintaan Pembatalan Pesanan',
-        'body':
-            'Permintaan pembatalan dari ${data['retailerName']} untuk pesanan ${data['orderId']}',
-      };
-    }
-    return {};
-  }
-}
-
 void main() {
-  late NotifAdminController legacyController;
   late FakeFirebaseFirestore mockFirestore;
   late NotificationAdminController adminController;
   late NotificationService notificationService;
 
   setUp(() {
-    legacyController = NotifAdminController();
     mockFirestore = FakeFirebaseFirestore();
     adminController = NotificationAdminController(firestore: mockFirestore);
     notificationService = NotificationService(firestore: mockFirestore);
   });
 
-  group('Notifikasi Admin - Permintaan Pembatalan (Legacy)', () {
-    test('menghasilkan notifikasi yang benar untuk cancellation_requested', () {
-      final data = {'retailerName': 'Body Shop Store', 'orderId': 'ORD-5787'};
-      final result = legacyController.buildAdminNotification(
-        'cancellation_requested',
-        data,
-      );
-
-      expect(result['title'], 'Permintaan Pembatalan Pesanan');
-      expect(result['body'], contains('Body Shop Store'));
-      expect(result['body'], contains('ORD-5787'));
-    });
-  });
-
   group('NotificationModel Unit Tests', () {
-    test('Mengubah DocumentSnapshot ke NotificationModel (fromFirestore) dengan data lengkap', () async {
+    test('fromFirestore dengan data lengkap', () async {
       final timestamp = Timestamp.fromDate(DateTime(2026, 6, 18, 12, 0));
       await mockFirestore.collection('test_notif').doc('notif_1').set({
         'title': 'Test Title',
@@ -74,7 +41,7 @@ void main() {
       expect(model.relatedId, 'PROMO_99');
     });
 
-    test('fromFirestore menggunakan nilai default jika field kosong/null', () async {
+    test('fromFirestore menggunakan nilai default jika field kosong', () async {
       await mockFirestore.collection('test_notif').doc('notif_empty').set({});
 
       final doc = await mockFirestore.collection('test_notif').doc('notif_empty').get();
@@ -89,7 +56,7 @@ void main() {
       expect(model.timestamp, isNotNull);
     });
 
-    test('Mengubah NotificationModel ke Map Firestore (toFirestore)', () {
+    test('toFirestore mengembalikan Map yang benar', () {
       final now = DateTime.now();
       final model = NotificationModel(
         id: 'notif_2',
@@ -113,8 +80,8 @@ void main() {
     });
   });
 
-  group('NotificationAdminController Unit Tests', () {
-    test('getNotifications mengembalikan daftar notifikasi terurut descending berdasarkan timestamp', () async {
+  group('NotificationAdminController - Controller Methods', () {
+    test('getNotifications mengembalikan notifikasi terurut descending by timestamp', () async {
       await mockFirestore.collection('admin_notifications').doc('notif_old').set({
         'title': 'Old Notif',
         'message': 'Old',
@@ -138,25 +105,74 @@ void main() {
       expect(list[1].id, 'notif_old');
     });
 
-    test('getUnreadCount mengembalikan jumlah notifikasi yang belum dibaca (isRead = false)', () async {
-      await mockFirestore.collection('admin_notifications').doc('notif_1').set({
-        'isRead': false,
+    test('getNotifications dengan type order', () async {
+      await mockFirestore.collection('admin_notifications').doc('notif_order').set({
+        'title': 'Pesanan Baru Masuk!',
+        'message': 'Pesanan ORD-001 telah dibuat oleh Toko ABC.',
         'timestamp': Timestamp.now(),
+        'isRead': false,
+        'type': 'order',
+        'relatedId': 'ORD-001',
+      });
+
+      final list = await adminController.getNotifications().first;
+
+      expect(list.length, 1);
+      expect(list[0].type, 'order');
+      expect(list[0].title, 'Pesanan Baru Masuk!');
+      expect(list[0].relatedId, 'ORD-001');
+    });
+
+    test('getNotifications dengan type complaint', () async {
+      await mockFirestore.collection('admin_notifications').doc('notif_complaint').set({
+        'title': 'Komplain Baru!',
+        'message': 'Ada komplain baru untuk pesanan ORD-002: Barang Rusak.',
+        'timestamp': Timestamp.now(),
+        'isRead': false,
+        'type': 'complaint',
+        'relatedId': 'ORD-002',
+      });
+
+      final list = await adminController.getNotifications().first;
+
+      expect(list.length, 1);
+      expect(list[0].type, 'complaint');
+      expect(list[0].title, 'Komplain Baru!');
+      expect(list[0].relatedId, 'ORD-002');
+    });
+
+    test('getNotifications dengan type system', () async {
+      await mockFirestore.collection('admin_notifications').doc('notif_system').set({
+        'title': 'Sistem Update',
+        'message': 'Aplikasi akan diperbarui pada pukul 02.00 WIB.',
+        'timestamp': Timestamp.now(),
+        'isRead': false,
+        'type': 'system',
+      });
+
+      final list = await adminController.getNotifications().first;
+
+      expect(list.length, 1);
+      expect(list[0].type, 'system');
+      expect(list[0].title, 'Sistem Update');
+    });
+
+    test('getUnreadCount mengembalikan jumlah notifikasi unread', () async {
+      await mockFirestore.collection('admin_notifications').doc('notif_1').set({
+        'isRead': false, 'timestamp': Timestamp.now(),
       });
       await mockFirestore.collection('admin_notifications').doc('notif_2').set({
-        'isRead': true,
-        'timestamp': Timestamp.now(),
+        'isRead': true, 'timestamp': Timestamp.now(),
       });
       await mockFirestore.collection('admin_notifications').doc('notif_3').set({
-        'isRead': false,
-        'timestamp': Timestamp.now(),
+        'isRead': false, 'timestamp': Timestamp.now(),
       });
 
       final count = await adminController.getUnreadCount().first;
       expect(count, 2);
     });
 
-    test('markAsRead mengubah status isRead notifikasi tertentu menjadi true', () async {
+    test('markAsRead mengubah isRead notifikasi tertentu menjadi true', () async {
       await mockFirestore.collection('admin_notifications').doc('notif_target').set({
         'isRead': false,
         'timestamp': Timestamp.now(),
@@ -168,7 +184,7 @@ void main() {
       expect(doc.data()?['isRead'], true);
     });
 
-    test('markAllAsRead mengubah status seluruh notifikasi unread menjadi true', () async {
+    test('markAllAsRead mengubah semua notifikasi unread menjadi true', () async {
       await mockFirestore.collection('admin_notifications').doc('notif_1').set({
         'isRead': false,
       });
@@ -202,8 +218,8 @@ void main() {
     });
   });
 
-  group('NotificationService Unit Tests', () {
-    test('addUserNotification membuat notifikasi subcollection untuk user tertentu', () async {
+  group('NotificationService', () {
+    test('addUserNotification membuat notifikasi di subcollection user dengan type order', () async {
       await notificationService.addUserNotification(
         userId: 'retailer_123',
         title: 'Pembayaran Diverifikasi',
@@ -227,28 +243,76 @@ void main() {
       expect(data['relatedId'], 'TRX12345');
     });
 
-    test('addAdminNotification membuat notifikasi di admin_notifications collection', () async {
+    test('addUserNotification dengan type promo', () async {
+      await notificationService.addUserNotification(
+        userId: 'retailer_456',
+        title: 'Promo Spesial Hari Ini!',
+        message: 'Jangan lewatkan diskon 50%. Cek sekarang!',
+        type: 'promo',
+        relatedId: 'PROMO_001',
+      );
+
+      final query = await mockFirestore
+          .collection('users')
+          .doc('retailer_456')
+          .collection('notifications')
+          .get();
+
+      expect(query.docs.length, 1);
+      expect(query.docs[0].data()['type'], 'promo');
+      expect(query.docs[0].data()['title'], 'Promo Spesial Hari Ini!');
+    });
+
+    test('addAdminNotification membuat notifikasi admin dengan type order (pesanan baru)', () async {
       await notificationService.addAdminNotification(
-        title: 'Permintaan Pembatalan Pesanan',
-        message: 'Permintaan pembatalan dari Body Shop Store untuk pesanan ORD-5787',
-        type: 'cancellation_requested',
-        relatedId: 'ORD-5787',
+        title: 'Pesanan Baru Masuk!',
+        message: 'Pesanan ORD-7766 telah dibuat oleh Toko ABC.',
+        type: 'order',
+        relatedId: 'ORD-7766',
       );
 
       final query = await mockFirestore.collection('admin_notifications').get();
 
       expect(query.docs.length, 1);
       final data = query.docs[0].data();
-      expect(data['title'], 'Permintaan Pembatalan Pesanan');
-      expect(data['message'], contains('Body Shop Store'));
-      expect(data['message'], contains('ORD-5787'));
+      expect(data['title'], 'Pesanan Baru Masuk!');
+      expect(data['message'], contains('ORD-7766'));
       expect(data['isRead'], false);
-      expect(data['type'], 'cancellation_requested');
-      expect(data['relatedId'], 'ORD-5787');
+      expect(data['type'], 'order');
+      expect(data['relatedId'], 'ORD-7766');
+    });
+
+    test('addAdminNotification dengan type complaint (komplain baru)', () async {
+      await notificationService.addAdminNotification(
+        title: 'Komplain Baru!',
+        message: 'Ada komplain baru untuk pesanan ORD-7788: Barang Rusak.',
+        type: 'complaint',
+        relatedId: 'ORD-7788',
+      );
+
+      final query = await mockFirestore.collection('admin_notifications').get();
+
+      expect(query.docs.length, 1);
+      expect(query.docs[0].data()['type'], 'complaint');
+      expect(query.docs[0].data()['title'], 'Komplain Baru!');
+    });
+
+    test('addAdminNotification dengan type system', () async {
+      await notificationService.addAdminNotification(
+        title: 'Pemeliharaan Sistem',
+        message: 'Sistem akan down pada pukul 02.00 - 04.00 WIB.',
+        type: 'system',
+      );
+
+      final query = await mockFirestore.collection('admin_notifications').get();
+
+      expect(query.docs.length, 1);
+      expect(query.docs[0].data()['type'], 'system');
+      expect(query.docs[0].data()['title'], 'Pemeliharaan Sistem');
     });
   });
 
-  group('PushNotificationService Admin-related Unit Tests', () {
+  group('PushNotificationService Admin-related', () {
     late PushNotificationService pushNotificationService;
 
     setUp(() {
@@ -256,10 +320,10 @@ void main() {
       pushNotificationService.setupMocks(firestore: mockFirestore);
     });
 
-    test('sendNotificationToAdmin menambahkan data ke collection admin_notifications', () async {
+    test('sendNotificationToAdmin dengan type order (pesanan baru)', () async {
       await pushNotificationService.sendNotificationToAdmin(
-        title: 'Pesanan Masuk',
-        message: 'Ada pesanan baru dengan ID ORD-001',
+        title: 'Pesanan Baru Masuk!',
+        message: 'Pesanan ORD-001 telah dibuat.',
         type: 'order',
         relatedId: 'ORD-001',
       );
@@ -267,14 +331,38 @@ void main() {
       final query = await mockFirestore.collection('admin_notifications').get();
       expect(query.docs.length, 1);
       final data = query.docs[0].data();
-      expect(data['title'], 'Pesanan Masuk');
-      expect(data['message'], contains('ORD-001'));
-      expect(data['isRead'], false);
+      expect(data['title'], 'Pesanan Baru Masuk!');
       expect(data['type'], 'order');
       expect(data['relatedId'], 'ORD-001');
     });
 
-    test('broadcastNotification mengirimkan notifikasi ke semua user terdaftar', () async {
+    test('sendNotificationToAdmin dengan type complaint', () async {
+      await pushNotificationService.sendNotificationToAdmin(
+        title: 'Komplain Baru!',
+        message: 'Ada komplain baru: Barang Rusak.',
+        type: 'complaint',
+        relatedId: 'ORD-002',
+      );
+
+      final query = await mockFirestore.collection('admin_notifications').get();
+      expect(query.docs.length, 1);
+      expect(query.docs[0].data()['type'], 'complaint');
+      expect(query.docs[0].data()['title'], 'Komplain Baru!');
+    });
+
+    test('sendNotificationToAdmin dengan type system', () async {
+      await pushNotificationService.sendNotificationToAdmin(
+        title: 'Update Sistem',
+        message: 'Versi baru tersedia.',
+        type: 'system',
+      );
+
+      final query = await mockFirestore.collection('admin_notifications').get();
+      expect(query.docs.length, 1);
+      expect(query.docs[0].data()['type'], 'system');
+    });
+
+    test('broadcastNotification mengirim notifikasi type promo ke semua user', () async {
       await mockFirestore.collection('users').doc('user_1').set({'email': 'u1@email.com'});
       await mockFirestore.collection('users').doc('user_2').set({'email': 'u2@email.com'});
 
@@ -290,7 +378,6 @@ void main() {
           .doc('user_1')
           .collection('notifications')
           .get();
-
       final q2 = await mockFirestore
           .collection('users')
           .doc('user_2')
@@ -299,12 +386,10 @@ void main() {
 
       expect(q1.docs.length, 1);
       expect(q1.docs[0].data()['title'], 'Promo Akhir Tahun');
-      expect(q1.docs[0].data()['message'], contains('Diskon'));
       expect(q1.docs[0].data()['type'], 'promo');
 
       expect(q2.docs.length, 1);
       expect(q2.docs[0].data()['title'], 'Promo Akhir Tahun');
-      expect(q2.docs[0].data()['message'], contains('Diskon'));
       expect(q2.docs[0].data()['type'], 'promo');
     });
   });

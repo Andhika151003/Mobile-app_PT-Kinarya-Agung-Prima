@@ -6,14 +6,21 @@ import '../models/notification_model.dart';
 import '../../order/views/order_detail_user_view.dart';
 
 class NotificationUserView extends StatefulWidget {
-  const NotificationUserView({super.key});
+  final NotificationUserController? controller;
+  const NotificationUserView({super.key, this.controller});
 
   @override
   State<NotificationUserView> createState() => _NotificationUserViewState();
 }
 
 class _NotificationUserViewState extends State<NotificationUserView> {
-  final NotificationUserController _controller = NotificationUserController();
+  late final NotificationUserController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = widget.controller ?? NotificationUserController();
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -8,51 +8,9 @@ import 'package:ecommerce/features/notification/controllers/notif_user_controlle
 import 'package:ecommerce/features/notification/models/notification_model.dart';
 import 'package:ecommerce/features/notification/services/push_notification_service.dart';
 
-// Keep the legacy dummy class to avoid breaking existing/legacy test scenarios
-class NotifUserController {
-  Map<String, String> buildUserNotification(
-    String type,
-    Map<String, String> data,
-  ) {
-    switch (type) {
-      case 'transaction_approved':
-        return {
-          'title': 'Pembayaran Diverifikasi',
-          'body':
-              'Pembayaran untuk transaksi ${data['transactionId']} telah disetujui Admin.',
-        };
-      case 'delivery_approved':
-        return {
-          'title': 'Pengiriman Disetujui',
-          'body':
-              'Pengiriman untuk pesanan ${data['orderId']} sedang dalam proses pengiriman.',
-        };
-      case 'delivery_rejected':
-        return {
-          'title': 'Pengiriman Ditolak',
-          'body':
-              'Pengiriman untuk pesanan ${data['orderId']} ditolak. Alasan: ${data['reason']}',
-        };
-      case 'cancellation_accepted':
-        return {
-          'title': 'Pembatalan Disetujui',
-          'body': 'Permintaan pembatalan telah disetujui Admin.',
-        };
-      case 'cancellation_rejected':
-        return {
-          'title': 'Pembatalan Ditolak',
-          'body': 'Pesanan tetap diproses.',
-        };
-      default:
-        return {'title': '', 'body': ''};
-    }
-  }
-}
-
 class MockFirebaseMessaging extends Mock implements FirebaseMessaging {}
 
 void main() {
-  late NotifUserController legacyController;
   late FakeFirebaseFirestore mockFirestore;
   late MockFirebaseAuth mockAuth;
   late NotificationUserController userController;
@@ -64,7 +22,6 @@ void main() {
   });
 
   setUp(() {
-    legacyController = NotifUserController();
     mockFirestore = FakeFirebaseFirestore();
     mockAuth = MockFirebaseAuth();
     userController = NotificationUserController(firestore: mockFirestore, auth: mockAuth);
@@ -77,100 +34,27 @@ void main() {
     );
   });
 
-  group('TC-04: Approve Transaksi (Legacy)', () {
-    test('Notifikasi ke user: pembayaran diverifikasi', () {
-      final data = {'transactionId': 'TRX25040001'};
-      final result = legacyController.buildUserNotification(
-        'transaction_approved',
-        data,
-      );
-
-      expect(result['title'], 'Pembayaran Diverifikasi');
-      expect(result['body'], contains('TRX25040001'));
-      expect(result['body'], contains('disetujui Admin'));
-    });
-  });
-
-  group('TC-06: Approve Delivery (Legacy)', () {
-    test('Notifikasi pengiriman disetujui', () {
-      final data = {'orderId': 'ORD-5785'};
-      final result = legacyController.buildUserNotification(
-        'delivery_approved',
-        data,
-      );
-
-      expect(result['title'], 'Pengiriman Disetujui');
-      expect(result['body'], contains('ORD-5785'));
-      expect(
-        result['body'],
-        contains('sedang dalam proses pengiriman'),
-      );
-    });
-  });
-
-  group('TC-07: Reject Delivery (Legacy)', () {
-    test('Notifikasi penolakan dengan alasan', () {
-      final data = {'orderId': 'ORD-5786', 'reason': 'Stok tidak tersedia'};
-      final result = legacyController.buildUserNotification(
-        'delivery_rejected',
-        data,
-      );
-
-      expect(result['title'], 'Pengiriman Ditolak');
-      expect(result['body'], contains('ORD-5786'));
-      expect(result['body'], contains('Stok tidak tersedia'));
-    });
-  });
-
-  group('Accept & Reject Cancellation (Legacy)', () {
-    test('Accept cancellation', () {
-      final data = {'orderId': 'ORD-5787'};
-      final result = legacyController.buildUserNotification(
-        'cancellation_accepted',
-        data,
-      );
-
-      expect(result['title'], 'Pembatalan Disetujui');
-      expect(result['body'], contains('telah disetujui Admin'));
-    });
-
-    test('Reject cancellation', () {
-      final data = {'orderId': 'ORD-5789'};
-      final result = legacyController.buildUserNotification(
-        'cancellation_rejected',
-        data,
-      );
-
-      expect(result['title'], 'Pembatalan Ditolak');
-      expect(result['body'], contains('Pesanan tetap diproses'));
-    });
-  });
-
   group('NotificationUserController - Unauthenticated State', () {
-    test('getNotifications mengembalikan stream kosong jika user belum login', () async {
-      // Mock auth currentUser is null
+    test('getNotifications mengembalikan stream kosong jika user null', () async {
       final list = await userController.getNotifications().first;
       expect(list, isEmpty);
     });
 
-    test('getUnreadCount mengembalikan 0 jika user belum login', () async {
+    test('getUnreadCount mengembalikan 0 jika user null', () async {
       final count = await userController.getUnreadCount().first;
       expect(count, 0);
     });
 
-    test('markAsRead return tanpa error jika user belum login', () async {
+    test('markAsRead return tanpa error jika user null', () async {
       await userController.markAsRead('some_notif_id');
-      // No exception thrown
     });
 
-    test('markAllAsRead return tanpa error jika user belum login', () async {
+    test('markAllAsRead return tanpa error jika user null', () async {
       await userController.markAllAsRead();
-      // No exception thrown
     });
 
-    test('deleteNotification return tanpa error jika user belum login', () async {
+    test('deleteNotification return tanpa error jika user null', () async {
       await userController.deleteNotification('some_notif_id');
-      // No exception thrown
     });
   });
 
@@ -184,7 +68,7 @@ void main() {
       userController = NotificationUserController(firestore: mockFirestore, auth: mockAuth);
     });
 
-    test('getNotifications mengembalikan notifikasi milik user terurut descending', () async {
+    test('getNotifications mengembalikan notifikasi user terurut descending', () async {
       final notifPath = mockFirestore.collection('users').doc(uid).collection('notifications');
 
       await notifPath.doc('n_old').set({
@@ -204,13 +88,69 @@ void main() {
       });
 
       final list = await userController.getNotifications().first;
-
       expect(list.length, 2);
       expect(list[0].id, 'n_new');
       expect(list[1].id, 'n_old');
     });
 
-    test('getUnreadCount mengembalikan jumlah notifikasi unread milik user', () async {
+    test('getNotifications dengan type order (pembayaran, pengiriman, pembatalan)', () async {
+      final notifPath = mockFirestore.collection('users').doc(uid).collection('notifications');
+
+      await notifPath.doc('n_order').set({
+        'title': 'Pembayaran Diterima',
+        'message': 'Pembayaran untuk pesanan ORD-123 telah kami konfirmasi.',
+        'timestamp': Timestamp.now(),
+        'isRead': false,
+        'type': 'order',
+        'relatedId': 'ORD-123',
+      });
+
+      final list = await userController.getNotifications().first;
+      expect(list.length, 1);
+      expect(list[0].type, 'order');
+      expect(list[0].title, 'Pembayaran Diterima');
+      expect(list[0].relatedId, 'ORD-123');
+    });
+
+    test('getNotifications dengan type promo', () async {
+      final notifPath = mockFirestore.collection('users').doc(uid).collection('notifications');
+
+      await notifPath.doc('n_promo').set({
+        'title': 'Promo Spesial Hari Ini!',
+        'message': 'Diskon hingga 50% untuk semua produk.',
+        'timestamp': Timestamp.now(),
+        'isRead': false,
+        'type': 'promo',
+        'relatedId': 'PROMO_001',
+      });
+
+      final list = await userController.getNotifications().first;
+      expect(list.length, 1);
+      expect(list[0].type, 'promo');
+      expect(list[0].title, 'Promo Spesial Hari Ini!');
+      expect(list[0].relatedId, 'PROMO_001');
+    });
+
+    test('getNotifications dengan type complaint', () async {
+      final notifPath = mockFirestore.collection('users').doc(uid).collection('notifications');
+
+      await notifPath.doc('n_complaint').set({
+        'title': 'Komplain Diproses',
+        'message': 'Komplain Anda untuk pesanan ORD-456 sedang diproses.',
+        'timestamp': Timestamp.now(),
+        'isRead': false,
+        'type': 'complaint',
+        'relatedId': 'ORD-456',
+      });
+
+      final list = await userController.getNotifications().first;
+      expect(list.length, 1);
+      expect(list[0].type, 'complaint');
+      expect(list[0].title, 'Komplain Diproses');
+      expect(list[0].relatedId, 'ORD-456');
+    });
+
+    test('getUnreadCount mengembalikan jumlah notifikasi unread', () async {
       final notifPath = mockFirestore.collection('users').doc(uid).collection('notifications');
 
       await notifPath.doc('n_1').set({'isRead': false, 'timestamp': Timestamp.now()});
@@ -221,7 +161,7 @@ void main() {
       expect(count, 2);
     });
 
-    test('markAsRead mengubah status isRead notifikasi user tertentu menjadi true', () async {
+    test('markAsRead mengubah isRead notifikasi tertentu menjadi true', () async {
       final notifPath = mockFirestore.collection('users').doc(uid).collection('notifications');
       await notifPath.doc('n_target').set({'isRead': false, 'timestamp': Timestamp.now()});
 
@@ -231,7 +171,7 @@ void main() {
       expect(doc.data()?['isRead'], true);
     });
 
-    test('markAllAsRead mengubah seluruh status isRead notifikasi user menjadi true', () async {
+    test('markAllAsRead mengubah semua notifikasi unread menjadi true', () async {
       final notifPath = mockFirestore.collection('users').doc(uid).collection('notifications');
 
       await notifPath.doc('n_1').set({'isRead': false});
@@ -260,22 +200,21 @@ void main() {
     });
   });
 
-  group('PushNotificationService User-related Unit Tests', () {
+  group('PushNotificationService User-related', () {
     const uid = 'retailer_456';
     late MockUser mockUser;
 
     test('saveTokenToFirestore tidak melakukan apa pun jika user belum login', () async {
-      mockAuth = MockFirebaseAuth(); // not logged in
+      mockAuth = MockFirebaseAuth();
       pushNotificationService.setupMocks(firestore: mockFirestore, auth: mockAuth, fcm: mockFcm);
 
       await pushNotificationService.saveTokenToFirestore();
 
-      // Ensure no users were added or edited
       final query = await mockFirestore.collection('users').get();
       expect(query.docs, isEmpty);
     });
 
-    test('saveTokenToFirestore menyimpan token FCM ke dokumen user saat terautentikasi', () async {
+    test('saveTokenToFirestore menyimpan FCM token ke dokumen user saat login', () async {
       mockUser = MockUser(uid: uid, email: 'retailer@example.com');
       mockAuth = MockFirebaseAuth(mockUser: mockUser, signedIn: true);
       pushNotificationService.setupMocks(firestore: mockFirestore, auth: mockAuth, fcm: mockFcm);
@@ -290,26 +229,24 @@ void main() {
       expect(doc.data()?['lastTokenUpdate'], isA<Timestamp>());
     });
 
-    test('clearToken menghapus field fcmToken dari dokumen user saat logout', () async {
+    test('clearToken menghapus field fcmToken dari dokumen user', () async {
       mockUser = MockUser(uid: uid, email: 'retailer@example.com');
       mockAuth = MockFirebaseAuth(mockUser: mockUser, signedIn: true);
       pushNotificationService.setupMocks(firestore: mockFirestore, auth: mockAuth, fcm: mockFcm);
 
-      // Seed token first
       await mockFirestore.collection('users').doc(uid).set({'fcmToken': 'existing_token'});
 
       await pushNotificationService.clearToken();
 
-      // Note: clearToken executes update with FieldValue.delete()
       final doc = await mockFirestore.collection('users').doc(uid).get();
       expect(doc.data()?.containsKey('fcmToken'), false);
     });
 
-    test('sendNotificationToUser menambahkan dokumen ke subcollection notifications user', () async {
+    test('sendNotificationToUser dengan type order (pembayaran diterima)', () async {
       await pushNotificationService.sendNotificationToUser(
         userId: 'user_target',
-        title: 'Pesanan Terkirim',
-        message: 'Pesanan Anda ORD-123 sedang dikirim',
+        title: 'Pembayaran Diterima',
+        message: 'Pembayaran untuk pesanan ORD-123 telah dikonfirmasi.',
         type: 'order',
         relatedId: 'ORD-123',
       );
@@ -322,11 +259,49 @@ void main() {
 
       expect(query.docs.length, 1);
       final data = query.docs[0].data();
-      expect(data['title'], 'Pesanan Terkirim');
-      expect(data['message'], contains('ORD-123'));
-      expect(data['isRead'], false);
+      expect(data['title'], 'Pembayaran Diterima');
       expect(data['type'], 'order');
       expect(data['relatedId'], 'ORD-123');
+    });
+
+    test('sendNotificationToUser dengan type promo', () async {
+      await pushNotificationService.sendNotificationToUser(
+        userId: 'user_target',
+        title: 'Promo Akhir Pekan',
+        message: 'Diskon 30% untuk semua item!',
+        type: 'promo',
+        relatedId: 'PROMO_WEEKEND',
+      );
+
+      final query = await mockFirestore
+          .collection('users')
+          .doc('user_target')
+          .collection('notifications')
+          .get();
+
+      expect(query.docs.length, 1);
+      expect(query.docs[0].data()['type'], 'promo');
+      expect(query.docs[0].data()['title'], 'Promo Akhir Pekan');
+    });
+
+    test('sendNotificationToUser dengan type complaint', () async {
+      await pushNotificationService.sendNotificationToUser(
+        userId: 'user_target',
+        title: 'Komplain Diproses',
+        message: 'Komplain Anda sedang ditinjau admin.',
+        type: 'complaint',
+        relatedId: 'ORD-456',
+      );
+
+      final query = await mockFirestore
+          .collection('users')
+          .doc('user_target')
+          .collection('notifications')
+          .get();
+
+      expect(query.docs.length, 1);
+      expect(query.docs[0].data()['type'], 'complaint');
+      expect(query.docs[0].data()['title'], 'Komplain Diproses');
     });
   });
 }

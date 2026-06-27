@@ -10,6 +10,8 @@ import 'package:test_api/src/backend/invoker.dart';
 
 // START: GENERATED TEST IMPORTS
 import 'login_automation_test.dart' as __login_automation_test;
+import 'notification_automation_test.dart' as __notification_automation_test;
+import 'statistik_automation_test.dart' as __statistik_automation_test;
 // END: GENERATED TEST IMPORTS
 
 Future<void> main() async {
@@ -73,6 +75,8 @@ Future<void> main() async {
 
 // START: GENERATED TEST GROUPS
   group('.login_automation_test', __login_automation_test.main);
+  group('.notification_automation_test', __notification_automation_test.main);
+  group('.statistik_automation_test', __statistik_automation_test.main);
 // END: GENERATED TEST GROUPS
 
   final dartTestGroup = await testExplorationCompleter.future;
