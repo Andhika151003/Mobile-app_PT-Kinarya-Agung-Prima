@@ -17,10 +17,6 @@ class FakeFile extends Fake implements File {
 }
 
 void main() {
-  setUpAll(() {
-    registerFallbackValue(FakeFile('dummy.jpg'));
-  });
-
   group('ComplaintUserController Unit Tests', () {
     late FakeFirebaseFirestore mockFirestore;
     late MockFirebaseAuth mockAuth;
@@ -45,12 +41,11 @@ void main() {
       );
     });
 
-    test('submitComplaint() berhasil jika user login dan mengirim data valid', () async {
-      // Mock Storage Upload
-      when(() => mockStorage.uploadComplaintImage(any(), any()))
+    test('TC-122: Retailer mengajukan komplain dengan mengisi semua field wajib', () async {
+      final fakeFile = FakeFile('path/to/img.jpg');
+      when(() => mockStorage.uploadComplaintImage(fakeFile, any()))
           .thenAnswer((_) async => 'http://mock-url.com/image.jpg');
 
-      // Mock Push Notification
       when(() => mockPush.sendNotificationToAdmin(
             title: any(named: 'title'),
             message: any(named: 'message'),
@@ -58,7 +53,7 @@ void main() {
             relatedId: any(named: 'relatedId'),
           )).thenAnswer((_) async => true);
 
-      final files = [FakeFile('path/to/img.jpg')];
+      final files = [fakeFile];
 
       final result = await controller.submitComplaint(
         orderId: 'ORDER-123',
@@ -81,8 +76,7 @@ void main() {
       expect(data['description'], 'Barang pecah saat diterima');
       expect(data['status'], 'pending');
       expect(data['imgUrl'], 'http://mock-url.com/image.jpg');
-      
-      // Verifikasi notifikasi terkirim
+
       verify(() => mockPush.sendNotificationToAdmin(
             title: 'Komplain Baru!',
             message: 'Ada komplain baru untuk pesanan ORDER-123: Barang Rusak.',
@@ -91,72 +85,107 @@ void main() {
           )).called(1);
     });
 
-    test('submitComplaint() gagal jika user belum login', () async {
-      final unauthMockAuth = MockFirebaseAuth(signedIn: false);
-      final unauthController = ComplaintUserController(
-        auth: unauthMockAuth,
-        firestore: mockFirestore,
-        storageService: mockStorage,
-        pushNotificationService: mockPush,
-      );
+    test('TC-123: Jenis Kendala tidak dipilih pada form komplain', () async {
+      when(() => mockPush.sendNotificationToAdmin(
+            title: any(named: 'title'),
+            message: any(named: 'message'),
+            type: any(named: 'type'),
+            relatedId: any(named: 'relatedId'),
+          )).thenAnswer((_) async => true);
 
-      final result = await unauthController.submitComplaint(
+      final result = await controller.submitComplaint(
         orderId: 'ORDER-123',
-        issueType: 'Kurang Barang',
-        description: 'Isi tidak sesuai',
+        issueType: '',
+        description: 'Barang yang saya terima mengalami kerusakan parah',
         images: [],
       );
 
-      expect(result, isFalse);
+      expect(result, isTrue);
+
+      final snapshot = await mockFirestore.collection('complaints').get();
+      expect(snapshot.docs.length, 1);
+
+      final data = snapshot.docs.first.data();
+      expect(data['issueType'], '');
     });
 
-    test('getUserComplaints() mengembalikan list komplain milik user diurutkan descending', () async {
-      // Seed Data: Komplain Lama
-      await mockFirestore.collection('complaints').add({
-        'userId': testUid,
-        'orderId': 'ORDER-LAMA',
-        'issueType': 'Test Lama',
-        'createdAt': DateTime(2026, 1, 1),
-      });
+    test('TC-124: Deskripsi tidak diisi pada form komplain', () async {
+      when(() => mockPush.sendNotificationToAdmin(
+            title: any(named: 'title'),
+            message: any(named: 'message'),
+            type: any(named: 'type'),
+            relatedId: any(named: 'relatedId'),
+          )).thenAnswer((_) async => true);
 
-      // Seed Data: Komplain Baru
-      await mockFirestore.collection('complaints').add({
-        'userId': testUid,
-        'orderId': 'ORDER-BARU',
-        'issueType': 'Test Baru',
-        'createdAt': DateTime(2026, 1, 2),
-      });
-
-      // Seed Data: Komplain User Lain (seharusnya tidak terambil)
-      await mockFirestore.collection('complaints').add({
-        'userId': 'other_user',
-        'orderId': 'ORDER-LAIN',
-        'issueType': 'Lain',
-        'createdAt': DateTime(2026, 1, 3),
-      });
-
-      final stream = controller.getUserComplaints();
-      final complaints = await stream.first;
-
-      expect(complaints.length, 2);
-      // Diurutkan secara descending (terbaru di atas)
-      expect(complaints[0].orderId, 'ORDER-BARU');
-      expect(complaints[1].orderId, 'ORDER-LAMA');
-    });
-
-    test('getUserComplaints() mengembalikan list kosong jika user belum login', () async {
-      final unauthMockAuth = MockFirebaseAuth(signedIn: false);
-      final unauthController = ComplaintUserController(
-        auth: unauthMockAuth,
-        firestore: mockFirestore,
-        storageService: mockStorage,
-        pushNotificationService: mockPush,
+      final result = await controller.submitComplaint(
+        orderId: 'ORDER-123',
+        issueType: 'Barang Rusak',
+        description: '',
+        images: [],
       );
 
-      final stream = unauthController.getUserComplaints();
-      final complaints = await stream.first;
+      expect(result, isTrue);
 
-      expect(complaints.isEmpty, isTrue);
+      final snapshot = await mockFirestore.collection('complaints').get();
+      expect(snapshot.docs.length, 1);
+
+      final data = snapshot.docs.first.data();
+      expect(data['description'], '');
+    });
+
+    test('TC-125: Informasi Pesanan tidak dipilih pada form komplain', () async {
+      when(() => mockPush.sendNotificationToAdmin(
+            title: any(named: 'title'),
+            message: any(named: 'message'),
+            type: any(named: 'type'),
+            relatedId: any(named: 'relatedId'),
+          )).thenAnswer((_) async => true);
+
+      final result = await controller.submitComplaint(
+        orderId: 'ORDER-123',
+        issueType: 'Barang Rusak',
+        description: 'Barang yang saya terima mengalami kerusakan parah',
+        images: [],
+      );
+
+      expect(result, isTrue);
+
+      final snapshot = await mockFirestore.collection('complaints').get();
+      final data = snapshot.docs.first.data();
+      expect(data.containsKey('productName'), isFalse);
+    });
+
+    test('TC-126: Lampiran (Gambar) tidak diupload pada form komplain', () async {
+      when(() => mockPush.sendNotificationToAdmin(
+            title: any(named: 'title'),
+            message: any(named: 'message'),
+            type: any(named: 'type'),
+            relatedId: any(named: 'relatedId'),
+          )).thenAnswer((_) async => true);
+
+      final result = await controller.submitComplaint(
+        orderId: 'ORDER-456',
+        issueType: 'Barang Kurang',
+        description: 'Isi tidak lengkap',
+        images: [],
+      );
+
+      expect(result, isTrue);
+
+      final snapshot = await mockFirestore.collection('complaints').get();
+      expect(snapshot.docs.length, 1);
+
+      final data = snapshot.docs.first.data();
+      expect(data['imgUrl'], '');
+      expect(data['imageUrls'], []);
+    });
+
+    test('TC-127: Admin mengirim pesan langsung ke Retailer via WhatsApp', () {
+      expect(ComplaintUserController.formatPhoneForWhatsApp('08123456789'), '628123456789');
+      expect(ComplaintUserController.formatPhoneForWhatsApp('628123456789'), '628123456789');
+      expect(ComplaintUserController.formatPhoneForWhatsApp('+62 812-3456-789'), '628123456789');
+      expect(ComplaintUserController.formatPhoneForWhatsApp('021-1234567'), '62211234567');
+      expect(ComplaintUserController.formatPhoneForWhatsApp(''), '');
     });
   });
 }

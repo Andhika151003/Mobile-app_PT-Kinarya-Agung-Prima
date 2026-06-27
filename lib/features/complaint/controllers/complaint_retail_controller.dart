@@ -22,6 +22,14 @@ class ComplaintUserController {
         _storageService = storageService ?? SupabaseStorageService(),
         _pushNotificationService = pushNotificationService ?? PushNotificationService();
 
+  static String formatPhoneForWhatsApp(String phoneNumber) {
+    String clean = phoneNumber.replaceAll(RegExp(r'\D'), '');
+    if (clean.startsWith('0')) {
+      clean = '62${clean.substring(1)}';
+    }
+    return clean;
+  }
+
   Future<bool> submitComplaint({
     required String orderId,
     String? productName,
