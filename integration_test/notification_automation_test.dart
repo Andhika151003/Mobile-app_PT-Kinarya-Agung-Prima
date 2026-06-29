@@ -20,15 +20,14 @@ void main() {
     await $(find.bySemanticsLabel('input_login_email')).enterText(email);
     await $(find.bySemanticsLabel('input_login_password')).enterText(password);
     await $('Log In').tap();
-    await $.pump(const Duration(seconds: 5));
+    await $.pumpAndSettle(const Duration(seconds: 10));
   }
 
   Future<void> _tapNotifIconByIcon($, IconData icon) async {
     final btn = find.byIcon(icon);
     await $.tester.ensureVisible(btn);
     await $.tester.tap(btn);
-    await $.pump();
-    await $.pump(const Duration(seconds: 2));
+    await $.pumpAndSettle(const Duration(seconds: 5));
   }
 
   group('Admin Notifikasi', () {
@@ -46,7 +45,7 @@ void main() {
 
       await _tapNotifIconByIcon($, Icons.notifications_none_outlined);
 
-      await $.pump(const Duration(seconds: 1));
+      await $.pumpAndSettle(const Duration(seconds: 3));
 
       final hasOrder = find.byIcon(Icons.shopping_cart_outlined).evaluate().isNotEmpty;
       final hasComplaint = find.byIcon(Icons.error_outline).evaluate().isNotEmpty;
@@ -68,7 +67,7 @@ void main() {
       final hasMarkAll = find.text('Mark All Read').evaluate().isNotEmpty;
       if (hasMarkAll) {
         await $('Mark All Read').tap();
-        await $.pump(const Duration(seconds: 1));
+        await $.pumpAndSettle(const Duration(seconds: 3));
       }
 
       expect($('Admin Notifications'), findsOneWidget);
@@ -101,7 +100,7 @@ void main() {
 
       await _tapNotifIconByIcon($, Icons.notifications_outlined);
 
-      await $.pump(const Duration(seconds: 1));
+      await $.pumpAndSettle(const Duration(seconds: 3));
 
       final hasOrder = find.byIcon(Icons.shopping_bag_outlined).evaluate().isNotEmpty;
       final hasPromo = find.byIcon(Icons.local_offer_outlined).evaluate().isNotEmpty;
@@ -124,7 +123,7 @@ void main() {
       final hasBacaSemua = find.text('Baca Semua').evaluate().isNotEmpty;
       if (hasBacaSemua) {
         await $('Baca Semua').tap();
-        await $.pump(const Duration(seconds: 1));
+        await $.pumpAndSettle(const Duration(seconds: 3));
       }
 
       expect($('Notifikasi'), findsOneWidget);
@@ -144,7 +143,7 @@ void main() {
     patrolTest('7. CS login dan verifikasi dashboard', ($) async {
       await _loginAs($, 'cs@email.com', '12345678');
 
-      await $.pump(const Duration(seconds: 2));
+      await $.pumpAndSettle(const Duration(seconds: 5));
 
       final hasWelcome = find.textContaining('Welcome').evaluate().isNotEmpty;
 

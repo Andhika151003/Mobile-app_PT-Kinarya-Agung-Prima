@@ -26,11 +26,10 @@ void main() {
     await $(find.bySemanticsLabel('input_login_email')).enterText('ad@email.com');
     await $(find.bySemanticsLabel('input_login_password')).enterText('12345678');
     await $('Log In').tap();
-    await $.pump(const Duration(seconds: 5));
+    await $.pumpAndSettle(const Duration(seconds: 10));
 
-    // Tap tab Analytics di bottom navigation
     await $('Analytics').tap();
-    await $.pump(const Duration(seconds: 5));
+    await $.pumpAndSettle(const Duration(seconds: 10));
   }
 
   patrolTest('1. Login admin dan buka halaman statistik', ($) async {
@@ -80,6 +79,7 @@ void main() {
 
     // Section Sales Trend
     expect($('Sales Trend'), findsOneWidget);
+    expect($('Category Popularity'), findsOneWidget);
 
     // Tombol refresh
     final refreshBtn = find.byIcon(Icons.refresh);
