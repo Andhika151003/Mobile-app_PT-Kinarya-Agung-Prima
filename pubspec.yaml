@@ -51,9 +51,7 @@ dev_dependencies:
   firebase_auth_mocks: ^0.15.1
   flutter_launcher_icons: ^0.13.1
   mocktail: ^1.0.5
-  patrol: ^4.5.0
   test_api: any
-  firebase_core_platform_interface: ^7.1.0
 
 flutter:
   uses-material-design: true
