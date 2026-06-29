@@ -33,7 +33,7 @@ class _AdminCsViewState extends State<AdminCsView> {
               backgroundColor: Colors.white,
               elevation: 0,
               title: const Text(
-                'Customer Support Management',
+                'Manajemen Customer Support',
                 style: TextStyle(
                   color: Color(0xFF1F2937),
                   fontSize: 18,
@@ -82,9 +82,9 @@ class _AdminCsViewState extends State<AdminCsView> {
                     children: [
                       _buildStatItem('Total CS', '${controller.csList.length}'),
                       const SizedBox(width: 12),
-                      _buildStatItem('Active', '${controller.getActiveCSCount()}', color: Colors.green),
+                      _buildStatItem('Aktif', '${controller.getActiveCSCount()}', color: Colors.green),
                       const SizedBox(width: 12),
-                      _buildStatItem('Inactive', '${controller.getInactiveCSCount()}', color: Colors.red),
+                      _buildStatItem('Nonaktif', '${controller.getInactiveCSCount()}', color: Colors.red),
                     ],
                   ),
                 ),
@@ -94,11 +94,11 @@ class _AdminCsViewState extends State<AdminCsView> {
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: Row(
                     children: [
-                      _filterChip('All', 'all'),
+                      _filterChip('Semua', 'all'),
                       const SizedBox(width: 8),
-                      _filterChip('Active', 'active'),
+                      _filterChip('Aktif', 'active'),
                       const SizedBox(width: 8),
-                      _filterChip('Inactive', 'inactive'),
+                      _filterChip('Nonaktif', 'inactive'),
                     ],
                   ),
                 ),
@@ -116,7 +116,7 @@ class _AdminCsViewState extends State<AdminCsView> {
                                   size: 64, color: Colors.grey[400]),
                               const SizedBox(height: 16),
                               Text(
-                                'No Customer Support found',
+                                'Customer Support tidak ditemukan',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontFamily: 'Inter',
@@ -232,7 +232,7 @@ class _AdminCsViewState extends State<AdminCsView> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    isActive ? 'ACTIVE' : 'INACTIVE',
+                    isActive ? 'AKTIF' : 'NONAKTIF',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -277,13 +277,13 @@ class _AdminCsViewState extends State<AdminCsView> {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(newStatus ? 'Activate CS?' : 'Deactivate CS?'),
-        content: Text('Are you sure you want to change this Customer Support status?'),
+        title: Text(newStatus ? 'Aktifkan CS?' : 'Nonaktifkan CS?'),
+        content: Text('Apakah Anda yakin ingin mengubah status Customer Support ini?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(newStatus ? 'Activate' : 'Deactivate', style: TextStyle(color: newStatus ? Colors.green : Colors.red)),
+            child: Text(newStatus ? 'Aktifkan' : 'Nonaktifkan', style: TextStyle(color: newStatus ? Colors.green : Colors.red)),
           ),
         ],
       ),

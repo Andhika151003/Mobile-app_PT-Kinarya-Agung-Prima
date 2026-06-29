@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/firebase_provider.dart';
 
 class RegisterController extends ChangeNotifier {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
   RegisterController({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+      : _auth = auth ?? AppFirebase.auth,
+        _firestore = firestore ?? AppFirebase.firestore;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -22,32 +23,32 @@ class RegisterController extends ChangeNotifier {
 
   String? validateFullName(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Full Name is required';
+      return 'Nama Lengkap wajib diisi';
     }
     if (value.trim().length < 3) {
-      return 'Please enter a full name';
+      return 'Harap masukkan nama lengkap';
     }
     return null;
   }
 
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return 'Email wajib diisi';
     }
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
-      return 'Please enter a valid email address';
+      return 'Harap masukkan alamat email yang valid';
     }
     return null;
   }
 
   String? validatePhoneNumber(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Phone Number is required';
+      return 'Nomor Telepon wajib diisi';
     }
     final phoneDigits = value.replaceAll(RegExp(r'\D'), '');
     if (phoneDigits.length < 10 || phoneDigits.length > 13) {
-      return 'Please enter valid phone number';
+      return 'Harap masukkan nomor telepon yang valid';
     }
     return null;
   }
@@ -55,20 +56,20 @@ class RegisterController extends ChangeNotifier {
 
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password is required';
+      return 'Password wajib diisi';
     }
     if (value.length < 8) {
-      return 'Password must be at least 8 characters';
+      return 'Password harus minimal 8 karakter';
     }
     return null;
   }
 
   String? validateConfirmPassword(String? value, String password) {
     if (value == null || value.isEmpty) {
-      return 'Please confirm your password';
+      return 'Harap konfirmasi password Anda';
     }
     if (value != password) {
-      return 'Passwords do not match';
+      return 'Password tidak cocok';
     }
     return null;
   }
@@ -110,28 +111,28 @@ class RegisterController extends ChangeNotifier {
       String message;
       switch (e.code) {
         case 'email-already-in-use':
-          message = 'Email already registered';
+          message = 'Email sudah terdaftar';
           break;
         case 'invalid-email':
-          message = 'Please enter a valid email address';
+          message = 'Harap masukkan alamat email yang valid';
           break;
         case 'weak-password':
-          message = 'Password must be at least 8 characters';
+          message = 'Password harus minimal 8 karakter';
           break;
         case 'too-many-requests':
-          message = 'Firebase is blocking requests due to too many attempts. Please try again later.';
+          message = 'Terlalu banyak percobaan. Harap coba lagi nanti.';
           break;
         case 'network-request-failed':
-          message = 'Network error. Please check your internet connection.';
+          message = 'Kesalahan jaringan. Harap periksa koneksi internet Anda.';
           break;
         default:
-          message = 'Registration failed: ${e.message}';
+          message = 'Pendaftaran gagal: ${e.message}';
       }
       _setError(message);
       _setLoading(false);
       return false;
     } catch (e) {
-      _setError('Registration failed: ${e.toString()}');
+      _setError('Pendaftaran gagal: ${e.toString()}');
       _setLoading(false);
       return false;
     }

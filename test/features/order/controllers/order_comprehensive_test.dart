@@ -61,9 +61,9 @@ void main() {
     );
   });
 
-  group('Comprehensive Unit Test: Modul Pesanan (Order)', () {
+  group('Unit Test: Modul Pesanan (Order) - TC-96 s/d TC-107', () {
     
-    test('14. Ritel melihat daftar pesanan miliknya', () async {
+    test('TC-96: Ritel melihat daftar pesanan yang dia order', () async {
       await fakeFirestore.collection('orders').doc('ORD-001').set({
         'orderId': 'ORD-001',
         'userId': 'retailer_1',
@@ -84,7 +84,7 @@ void main() {
       expect(snapshot.docs[0]['orderId'], 'ORD-001');
     });
 
-    test('15. Ritel melihat detail pesanan', () async {
+    test('TC-97: Ritel melihat detail pesanan', () async {
       await fakeFirestore.collection('orders').doc('ORD-DETAIL').set({
         'orderId': 'ORD-DETAIL',
         'userId': 'retailer_1',
@@ -97,7 +97,7 @@ void main() {
       expect(detail!['fullName'], 'Toko Berkah');
     });
 
-    test('16. Validasi pencarian pesanan (Empty State jika tidak ketemu)', () {
+    test('TC-98: Validasi pencarian pesanan dengan data yang tidak valid (Empty State)', () {
       final allOrders = [
         {'orderId': 'ORD-1', 'fullName': 'Retailer A'},
         {'orderId': 'ORD-2', 'fullName': 'Retailer B'},
@@ -107,7 +107,7 @@ void main() {
       expect(results, isEmpty);
     });
 
-    test('18. Admin melihat seluruh daftar pesanan', () async {
+    test('TC-100: Admin melihat seluruh daftar pesanan dari berbagai ritel', () async {
       await fakeFirestore.collection('orders').doc('ORD-1').set({
         'userId': 'R1',
         'createdAt': Timestamp.now(),
@@ -121,21 +121,26 @@ void main() {
       expect(allOrders.length, 2);
     });
 
-    test('19. Admin memperbarui status pesanan Paid -> Shipped', () async {
-      await fakeFirestore.collection('orders').doc('ORD-SHIP').set({
-        'orderId': 'ORD-SHIP',
-        'status': 'Paid',
-        'userId': 'retailer_1',
-        'statsRecorded': true,
-      });
+    test('TC-101: Admin memperbarui seluruh status pesanan (Ordered, Paid, Shipped, Delivered, Cancelled, Expired)', () async {
+      final statusesToTest = ['Ordered', 'Paid', 'Shipped', 'Delivered', 'Cancelled', 'Expired'];
 
-      await adminController.updateOrderStatus('ORD-SHIP', 'Shipped');
+      for (var targetStatus in statusesToTest) {
+        final orderId = 'ORD-UPDATE-$targetStatus';
+        await fakeFirestore.collection('orders').doc(orderId).set({
+          'orderId': orderId,
+          'status': 'Ordered',
+          'userId': 'retailer_1',
+          'statsRecorded': false,
+        });
 
-      final updatedDoc = await fakeFirestore.collection('orders').doc('ORD-SHIP').get();
-      expect(updatedDoc.data()!['status'], 'Shipped');
+        await adminController.updateOrderStatus(orderId, targetStatus);
+
+        final updatedDoc = await fakeFirestore.collection('orders').doc(orderId).get();
+        expect(updatedDoc.data()!['status'], targetStatus);
+      }
     });
 
-    test('20. Admin membatalkan pesanan secara manual', () async {
+    test('TC-102: Admin membatalkan pesanan secara manual', () async {
       await fakeFirestore.collection('orders').doc('ORD-CANCEL').set({
         'orderId': 'ORD-CANCEL',
         'status': 'Ordered',
@@ -150,7 +155,7 @@ void main() {
       expect(updatedDoc.data()!['status'], 'Cancelled');
     });
 
-    test('21. Customer Support melihat detail pesanan', () async {
+    test('TC-103: Customer Support (CS) melihat detail pesanan untuk memvalidasi keluhan', () async {
       await fakeFirestore.collection('orders').doc('ORD-CS').set({
         'orderId': 'ORD-CS',
         'status': 'Delivered',
@@ -159,6 +164,67 @@ void main() {
       final order = await csController.getOrderById('ORD-CS');
       expect(order, isNotNull);
       expect(order!.orderId, 'ORD-CS');
+    });
+
+    test('TC-104: Ritel mengajukan pembatalan (cancel) pesanan berstatus Ordered', () async {
+      await fakeFirestore.collection('orders').doc('ORD-REQ-ORDERED').set({
+        'orderId': 'ORD-REQ-ORDERED',
+        'status': 'Ordered',
+        'userId': 'retailer_1',
+      });
+
+      final result = await userController.requestCancellation('ORD-REQ-ORDERED', 'Salah memesan produk');
+      expect(result, isTrue);
+
+      final doc = await fakeFirestore.collection('orders').doc('ORD-REQ-ORDERED').get();
+      expect(doc.data()?['cancellationReason'], 'Salah memesan produk');
+      expect(doc.data()?['cancellationStatus'], 'Requested');
+    });
+
+    test('TC-105: Ritel mengajukan pembatalan (cancel) pesanan berstatus Paid', () async {
+      await fakeFirestore.collection('orders').doc('ORD-REQ-PAID').set({
+        'orderId': 'ORD-REQ-PAID',
+        'status': 'Paid',
+        'userId': 'retailer_1',
+      });
+
+      final result = await userController.requestCancellation('ORD-REQ-PAID', 'Menginginkan pergantian alamat');
+      expect(result, isTrue);
+
+      final doc = await fakeFirestore.collection('orders').doc('ORD-REQ-PAID').get();
+      expect(doc.data()?['cancellationReason'], 'Menginginkan pergantian alamat');
+      expect(doc.data()?['cancellationStatus'], 'Requested');
+    });
+
+    test('TC-106: Admin menerima (approve) permintaan cancel dari ritel', () async {
+      await fakeFirestore.collection('orders').doc('ORD-APP-CANCEL').set({
+        'orderId': 'ORD-APP-CANCEL',
+        'status': 'Ordered',
+        'userId': 'retailer_1',
+        'cancellationStatus': 'Requested',
+        'items': [],
+        'statsRecorded': false,
+      });
+
+      await adminController.cancelOrder('ORD-APP-CANCEL', cancellationStatus: 'Approved');
+
+      final doc = await fakeFirestore.collection('orders').doc('ORD-APP-CANCEL').get();
+      expect(doc.data()?['status'], 'Cancelled');
+      expect(doc.data()?['cancellationStatus'], 'Approved');
+    });
+
+    test('TC-107: Admin menolak permintaan cancel dari ritel', () async {
+      await fakeFirestore.collection('orders').doc('ORD-REJ-CANCEL').set({
+        'orderId': 'ORD-REJ-CANCEL',
+        'status': 'Ordered',
+        'userId': 'retailer_1',
+        'cancellationStatus': 'Requested',
+      });
+
+      await adminController.rejectCancellation('ORD-REJ-CANCEL');
+
+      final doc = await fakeFirestore.collection('orders').doc('ORD-REJ-CANCEL').get();
+      expect(doc.data()?['cancellationStatus'], 'Rejected');
     });
   });
 }

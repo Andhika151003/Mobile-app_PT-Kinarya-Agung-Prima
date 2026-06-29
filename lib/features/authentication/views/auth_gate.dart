@@ -3,6 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'login_view.dart';
+import 'profile_admin_view.dart';
+import 'profile_cs_view.dart';
+import 'profile_user_view.dart';
+import '../../dashboard/views/dashboard_admin_view.dart';
+import '../../dashboard/views/dashboard_cs_view.dart';
+import '../../dashboard/views/dashboard_user_view.dart';
+import '../../../core/firebase_provider.dart';
 import '../../shared/main_navigation_user.dart';
 import '../../shared/main_navigation_admin.dart';
 import '../../shared/main_navigation_cs.dart';
@@ -112,7 +119,7 @@ class _AuthGateState extends State<AuthGate> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      stream: AppFirebase.auth.authStateChanges(),
       builder: (context, authSnapshot) {
 
         if (authSnapshot.connectionState == ConnectionState.waiting) {
@@ -127,7 +134,7 @@ class _AuthGateState extends State<AuthGate> {
         }
 
         return StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
+          stream: AppFirebase.firestore
               .collection('users')
               .doc(authSnapshot.data!.uid)
               .snapshots(),
@@ -175,7 +182,7 @@ class _AuthGateState extends State<AuthGate> {
                   _isHandlingDeactivation = true;
                   // Fetch admin phone BEFORE signing out just in case
                   // Tampilkan popup menggunakan global navigator key
-                  FirebaseFirestore.instance
+                  AppFirebase.firestore
                       .collection('users')
                       .where('role', isEqualTo: 'admin')
                       .limit(1)
@@ -186,7 +193,7 @@ class _AuthGateState extends State<AuthGate> {
                       adminPhone = adminSnapshot.docs.first.data()['phoneNumber'];
                     }
                     WidgetsBinding.instance.addPostFrameCallback((_) async {
-                      await FirebaseAuth.instance.signOut();
+                      await AppFirebase.auth.signOut();
                       _showDeactivatedDialog(adminPhone);
                       if (mounted) {
                         setState(() {
@@ -197,7 +204,7 @@ class _AuthGateState extends State<AuthGate> {
                   }).catchError((e) {
                     debugPrint('Error fetching admin phone: $e');
                     WidgetsBinding.instance.addPostFrameCallback((_) async {
-                      await FirebaseAuth.instance.signOut();
+                      await AppFirebase.auth.signOut();
                       _showDeactivatedDialog(null);
                       if (mounted) {
                         setState(() {
@@ -228,7 +235,7 @@ class _AuthGateState extends State<AuthGate> {
             
             // Jika dokumen benar-benar tidak ada di database
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              FirebaseAuth.instance.signOut();
+              AppFirebase.auth.signOut();
             });
             return const LoginView();
           },

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/firebase_provider.dart';
 
 
 class VerifyEmailView extends StatefulWidget {
@@ -20,7 +20,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
   void initState() {
     super.initState();
 
-    isEmailVerified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+    isEmailVerified = AppFirebase.auth.currentUser?.emailVerified ?? false;
 
     if (!isEmailVerified) {
       sendVerificationEmail();
@@ -39,7 +39,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
   }
 
   Future checkEmailVerified() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = AppFirebase.auth.currentUser;
     if (user == null) return;
 
     try {
@@ -49,7 +49,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
     }
 
     if (mounted) {
-      final updatedUser = FirebaseAuth.instance.currentUser;
+      final updatedUser = AppFirebase.auth.currentUser;
       if (updatedUser != null) {
         setState(() {
           isEmailVerified = updatedUser.emailVerified;
@@ -62,7 +62,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
 
   Future sendVerificationEmail() async {
     try {
-      final user = FirebaseAuth.instance.currentUser!;
+      final user = AppFirebase.auth.currentUser!;
       await user.sendEmailVerification();
 
       if (mounted) {
@@ -125,7 +125,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
               
               // Title
               const Text(
-                'Verify Your Email',
+                'Verifikasi Email Anda',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -138,7 +138,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
               
               // Main Message
               Text(
-                'A verification link has been sent to your email. Please check your inbox and follow the instructions.',
+                'Link verifikasi telah dikirim ke email Anda. Silakan periksa kotak masuk Anda dan ikuti petunjuknya.',
                 style: TextStyle(
                   fontSize: 15,
                   color: Colors.grey.shade600,
@@ -189,7 +189,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Automatically checking status...',
+                    'Memeriksa status secara otomatis...',
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey.shade500,
@@ -199,7 +199,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                 ],
               ),
               const SizedBox(height: 40),
-
+ 
               // Action Buttons
               SizedBox(
                 width: double.infinity,
@@ -215,7 +215,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                     ),
                   ),
                   child: Text(
-                    canResendEmail ? 'Resend Verification Email' : 'Please wait...',
+                    canResendEmail ? 'Kirim Ulang Email Verifikasi' : 'Harap tunggu...',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
@@ -224,7 +224,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
               
               TextButton(
                 onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
+                  await AppFirebase.auth.signOut();
                   if (context.mounted) {
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   }
@@ -234,7 +234,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 child: const Text(
-                  'Back to Login',
+                  'Kembali ke Login',
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),

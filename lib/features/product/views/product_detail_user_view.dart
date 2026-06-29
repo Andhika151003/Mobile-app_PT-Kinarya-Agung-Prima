@@ -25,6 +25,14 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
   final ProductUserController _productUserController = ProductUserController();
   PromotionModel? _activePromo;
 
+  final Map<String, String> _categoryMap = const {
+    'All Products': 'Semua Produk',
+    'Beauty Care': 'Kecantikan',
+    'Pet Care': 'Hewan Peliharaan',
+    'Health': 'Kesehatan',
+    'Foods': 'Makanan',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -73,7 +81,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Minimum order is $minOrder pcs'),
+          content: Text('Minimum pemesanan adalah $minOrder pcs'),
           duration: const Duration(seconds: 1),
         ),
       );
@@ -166,7 +174,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
               ),
             ),
             child: Text(
-              isOutOfStock ? 'Out of Stock' : 'Add to Cart',
+              isOutOfStock ? 'Stok Habis' : 'Tambah ke Keranjang',
               style: TextStyle(
                 color: isOutOfStock ? Colors.grey.shade600 : Colors.white,
                 fontSize: 16,
@@ -275,11 +283,11 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             const SizedBox(height: 24),
 
             // 4. DESKRIPSI
-            _buildSectionTitle('Description'),
+            _buildSectionTitle('Deskripsi'),
             const SizedBox(height: 8),
             Text(
               widget.product.description.isEmpty
-                  ? 'No description available for this product.'
+                  ? 'Deskripsi tidak tersedia untuk produk ini.'
                   : widget.product.description,
               style: TextStyle(
                 fontSize: 14,
@@ -290,17 +298,17 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
             const SizedBox(height: 24),
 
             // 5. PRODUCT INFORMATION
-            _buildSectionTitle('Product Information'),
+            _buildSectionTitle('Informasi Produk'),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: _buildInfoCard('Category', widget.product.category),
+                  child: _buildInfoCard('Kategori', _categoryMap[widget.product.category] ?? widget.product.category),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildInfoCard(
-                    'Brand',
+                    'Merek',
                     widget.product.brand?.isNotEmpty == true
                         ? widget.product.brand!
                         : '-',
@@ -313,7 +321,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
               children: [
                 Expanded(
                   child: _buildInfoCard(
-                    'Stock',
+                    'Stok',
                     currentStock <= 0
                         ? 'Stok Habis'
                         : (widget.product.isLowStock ? '$currentStock pcs (Stok Menipis)' : '$currentStock pcs'),
@@ -325,7 +333,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildInfoCard(
-                    'Weight',
+                    'Berat',
                     '${widget.product.weight ?? 0} kg',
                   ),
                 ),
@@ -336,7 +344,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
               children: [
                 Expanded(
                   child: _buildInfoCard(
-                    'Dimensions (LxWxH)',
+                    'Dimensi (PxLxT)',
                     '${widget.product.length ?? 0} x ${widget.product.width ?? 0} x ${widget.product.height ?? 0} cm',
                   ),
                 ),
@@ -360,7 +368,7 @@ class _ProductDetailUserViewState extends State<ProductDetailUserView> {
       automaticallyImplyLeading: false,
       titleSpacing: 24,
       title: const Text(
-        'Product Details',
+        'Detail Produk',
         style: TextStyle(
           color: Colors.black,
           fontSize: 18,

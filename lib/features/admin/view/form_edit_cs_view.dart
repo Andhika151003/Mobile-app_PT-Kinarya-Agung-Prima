@@ -63,7 +63,7 @@ class _FormEditCsViewState extends State<FormEditCsView> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${_controller.errorMessage ?? "Unknown error"}'),
+          content: Text('Error: ${_controller.errorMessage ?? "Kesalahan tidak diketahui"}'),
           backgroundColor: Colors.red,
         ),
       );

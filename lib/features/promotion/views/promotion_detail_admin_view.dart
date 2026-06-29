@@ -107,7 +107,7 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Confirm',
+                  const Text('Konfirmasi',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                   GestureDetector(
@@ -142,7 +142,7 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
                   const SizedBox(width: 16),
                   const Expanded(
                     child: Text(
-                      'Are you sure you want to delete this promotion?',
+                      'Apakah Anda yakin ingin menghapus promosi ini?',
                       style: TextStyle(
                           fontSize: 14,
                           color: Color(0xFF374151),
@@ -160,11 +160,11 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: const BorderSide(
-                            color: Color(0xFF2E7D32), width: 1.5),
+                          color: Color(0xFF2E7D32), width: 1.5),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                       ),
-                      child: const Text('Yes',
+                      child: const Text('Ya',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -178,11 +178,11 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: const BorderSide(
-                            color: Color(0xFF2E7D32), width: 1.5),
+                          color: Color(0xFF2E7D32), width: 1.5),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                       ),
-                      child: const Text('No',
+                      child: const Text('Tidak',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -218,7 +218,7 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Promotion Details',
+          'Detail Promosi',
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 18,
@@ -275,7 +275,7 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Promotion Banner',
+                          'Banner Promosi',
                           style: TextStyle(
                               fontSize: 12, color: Color(0xFF9CA3AF)),
                         ),
@@ -304,41 +304,41 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
             const SizedBox(height: 24),
 
             // ── Basic Information ─────────────────────────────
-            const Text('Basic Information',
+            const Text('Informasi Dasar',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF1F2937))),
             const SizedBox(height: 12),
             _infoTable([
-              _InfoRow('Promotion ID', _promotion.sku),
-              _InfoRow('Discount Type',
+              _InfoRow('ID Promosi', _promotion.sku),
+              _InfoRow('Tipe Diskon',
                   _discountTypeLabel(_promotion.discountType)),
-              _InfoRow('Discount Amount', _promotion.discountText),
+              _InfoRow('Jumlah Diskon', _promotion.discountText),
               if (_promotion.maxDiscount != null && _promotion.maxDiscount! > 0)
-                _InfoRow('Max Discount', _formatPrice(_promotion.maxDiscount)),
+                _InfoRow('Diskon Maksimal', _formatPrice(_promotion.maxDiscount)),
             ]),
 
             const SizedBox(height: 24),
 
             // ── Schedule ──────────────────────────────────────
-            const Text('Schedule',
+            const Text('Jadwal',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF1F2937))),
             const SizedBox(height: 12),
             _infoTable([
-              _InfoRow('Start Date', _formatDate(_promotion.startDate)),
-              _InfoRow('End Date', _formatDate(_promotion.endDate)),
-              _InfoRow('Start Time', _promotion.startTime),
-              _InfoRow('End Time', _promotion.endTime),
+              _InfoRow('Tanggal Mulai', _formatDate(_promotion.startDate)),
+              _InfoRow('Tanggal Berakhir', _formatDate(_promotion.endDate)),
+              _InfoRow('Jam Mulai', _promotion.startTime),
+              _InfoRow('Jam Berakhir', _promotion.endTime),
             ]),
 
             const SizedBox(height: 24),
 
             // ── Description ───────────────────────────────────
-            const Text('Description',
+            const Text('Deskripsi',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -364,7 +364,7 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
             const SizedBox(height: 24),
 
             // ── Applied Products ──────────────────────────────
-            const Text('Applied Product',
+            const Text('Produk yang Diterapkan',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -392,7 +392,7 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
                             Icon(Icons.all_inclusive, color: Color(0xFF2E7D32), size: 20),
                             SizedBox(width: 8),
                             Text(
-                              'All products applied',
+                              'Berlaku untuk semua produk',
                               style: TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2E7D32)),
                             ),
@@ -410,7 +410,7 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
                                   color: const Color(0xFFE5E7EB)),
                             ),
                             child: const Text(
-                              'No products applied',
+                              'Tidak ada produk yang diterapkan',
                               style: TextStyle(
                                   fontSize: 13, color: Color(0xFF9CA3AF)),
                             ),
@@ -531,10 +531,14 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
     );
   }
 
+  Widget _buildImageThumbnail(String url) {
+    return Container(); 
+  }
+
   String _formatDate(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
     ];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
@@ -542,13 +546,13 @@ class _PromotionDetailAdminViewState extends State<PromotionDetailAdminView> {
   String _discountTypeLabel(String type) {
     switch (type) {
       case 'percentage':
-        return 'Percentage';
+        return 'Persentase';
       case 'fixed':
-        return 'Fixed Amount';
+        return 'Potongan Harga Tetap';
       case 'bogo':
-        return 'BOGO';
+        return 'Beli 1 Gratis 1 (BOGO)';
       case 'bundle':
-        return 'Bundle Deal';
+        return 'Paket (Bundle)';
       default:
         return type;
     }

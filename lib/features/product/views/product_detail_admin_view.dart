@@ -57,13 +57,13 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                   const SizedBox(height: 24),
                   
 
-                  _buildInfoRow('Regular Price', currencyFormatter.format(_currentProduct.price)),
+                  _buildInfoRow('Harga Reguler', currencyFormatter.format(_currentProduct.price)),
                   const SizedBox(height: 16),
-                  _buildInfoRow('MOQ (Min. Order)', '${_currentProduct.moq ?? 1} units'),
+                  _buildInfoRow('MOQ (Min. Pesanan)', '${_currentProduct.moq ?? 1} unit'),
                   const SizedBox(height: 16),
                   _buildInfoRow(
-                    'Stock Available', 
-                    '${_currentProduct.stock} units',
+                    'Stok Tersedia', 
+                    '${_currentProduct.stock} unit',
                     valueColor: _currentProduct.stock <= 0
                         ? Colors.red
                         : (_currentProduct.isLowStock ? Colors.orange.shade800 : Colors.black),
@@ -78,11 +78,11 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Product Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                  const Text('Detail Produk', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                   const SizedBox(height: 16),
-                  _buildDetailIconRow(Icons.category_outlined, 'Category:', _currentProduct.category),
+                  _buildDetailIconRow(Icons.category_outlined, 'Kategori:', _currentProduct.category),
                   const SizedBox(height: 12),
-                  _buildDetailIconRow(Icons.domain_outlined, 'Brand:', _currentProduct.brand ?? 'No Brand'), 
+                  _buildDetailIconRow(Icons.domain_outlined, 'Merek:', _currentProduct.brand ?? 'Tanpa Merek'), 
                 ],
               ),
             ),
@@ -93,14 +93,14 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Shipping Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                  const Text('Informasi Pengiriman', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                   const SizedBox(height: 16),
-                  _buildDetailIconRow(Icons.monitor_weight_outlined, 'Weight:', '${_currentProduct.weight ?? 0} kg'),
+                  _buildDetailIconRow(Icons.monitor_weight_outlined, 'Berat:', '${_currentProduct.weight ?? 0} kg'),
                   const SizedBox(height: 12),
                   _buildDetailIconRow(
                     Icons.straighten_outlined, 
-                    'Dimensions:', 
-                    '${_currentProduct.length ?? 0}L x ${_currentProduct.width ?? 0}W x ${_currentProduct.height ?? 0}H cm'
+                    'Dimensi:', 
+                    '${_currentProduct.length ?? 0}P x ${_currentProduct.width ?? 0}L x ${_currentProduct.height ?? 0}T cm'
                   ), 
                 ],
               ),
@@ -112,7 +112,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Description', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                  const Text('Deskripsi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                   const SizedBox(height: 12),
                   Text(
                     _currentProduct.description,
@@ -130,7 +130,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Performance Stats',
+                    'Statistik Kinerja',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                   const SizedBox(height: 16),
@@ -138,7 +138,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                     children: [
                       Expanded(
                         child: _buildStatCard(
-                          title: 'Monthly Sales',
+                          title: 'Penjualan Bulanan',
                           value: FormatUtil.formatCompact(_currentProduct.monthlySales ?? 0),
                           percentage: _currentProduct.monthlySalesTrend ?? 0.0, 
                           titleColor: Colors.blue.shade600,
@@ -148,7 +148,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildStatCard(
-                          title: 'Revenue',
+                          title: 'Pendapatan',
                           value: FormatUtil.formatCompact(_currentProduct.revenue ?? 0, isCurrency: true),
                           percentage: _currentProduct.revenueTrend ?? 0.0, 
                           titleColor: Colors.purple.shade400,
@@ -185,7 +185,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
           ),
         ),
       ),
-      title: const Text('Product Details', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+      title: const Text('Detail Produk', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
       actions: [
         IconButton(
           key: const Key('detail_product_edit_btn'),
@@ -282,8 +282,8 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
     final bool isLow = _currentProduct.isLowStock;
 
     final String statusText = isOut
-        ? 'Out of Stock'
-        : (isLow ? 'Low Stock Alert' : 'In Stock');
+        ? 'Stok Habis'
+        : (isLow ? 'Peringatan Stok Menipis' : 'Stok Tersedia');
 
     final Color bgColor = isOut
         ? Colors.red.shade50
@@ -413,7 +413,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
               const SizedBox(height: 20),
               
               const Text(
-                'Delete Product',
+                'Hapus Produk',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
               ),
               const SizedBox(height: 12),
@@ -421,7 +421,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Text(
-                  'This product will be permanently\nremoved from your inventory.',
+                  'Produk ini akan dihapus secara\npermanen dari inventaris Anda.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade500, height: 1.4),
                 ),
@@ -438,7 +438,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   alignment: Alignment.center,
                   child: Text(
-                    'Cancel',
+                    'Batal',
                     style: TextStyle(color: primaryGreen, fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ),
@@ -462,7 +462,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Product deleted successfully'),
+                          content: Text('Produk berhasil dihapus'),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -480,7 +480,7 @@ class _ProductDetailAdminViewState extends State<ProductDetailAdminView> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   alignment: Alignment.center,
                   child: const Text(
-                    'Delete',
+                    'Hapus',
                     style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ),

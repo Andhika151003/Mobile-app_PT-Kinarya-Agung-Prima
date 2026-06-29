@@ -119,7 +119,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category!'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Harap pilih kategori!'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -156,7 +156,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${_nameController.text} updated successfully!'), 
+            content: Text('${_nameController.text} berhasil diperbarui!'), 
             backgroundColor: primaryGreen,
           ),
         );
@@ -165,7 +165,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
       if (mounted) {
         Navigator.pop(context); 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update product: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Gagal memperbarui produk: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -184,12 +184,12 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. PRODUCT IMAGE SECTION
-              _buildSectionTitle('Product Image'),
+              _buildSectionTitle('Gambar Produk'),
               const SizedBox(height: 12),
               _buildImageUploadSection(),
               const SizedBox(height: 8),
               Text(
-                'Update your photos (up to 8). First photo will be the cover image.',
+                'Perbarui foto Anda (hingga 8). Foto pertama akan menjadi gambar sampul.',
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
               ),
               const SizedBox(height: 24),
@@ -197,9 +197,9 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
               const SizedBox(height: 24),
 
               // 2. BASIC INFORMATION
-              _buildSectionTitle('Basic Information'),
+              _buildSectionTitle('Informasi Dasar'),
               const SizedBox(height: 16),
-              _buildTextFieldLabel('Product Name'),
+              _buildTextFieldLabel('Nama Produk'),
               _buildTextField(
                 keyField: const Key('edit_product_name_field'),
                 controller: _nameController,
@@ -212,21 +212,21 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
                 hint: 'e.g. PRD-1003',
                 isRequired: false,
               ),
-              _buildTextFieldLabel('Category'),
+              _buildTextFieldLabel('Kategori'),
               _buildCategoryDropdown(),
-              _buildTextFieldLabel('Brand'),
+              _buildTextFieldLabel('Merek'),
               _buildTextField(
                 keyField: const Key('edit_product_brand_field'),
                 controller: _brandController,
-                hint: 'e.g. Vaseline',
+                hint: 'misal. Vaseline',
                 isRequired: false,
               ),
               const SizedBox(height: 24),
 
               // 3. PRICING
-              _buildSectionTitle('Pricing'),
+              _buildSectionTitle('Harga'),
               const SizedBox(height: 16),
-              _buildTextFieldLabel('Regular Price'),
+              _buildTextFieldLabel('Harga Reguler'),
               _buildTextField(
                 keyField: const Key('edit_product_price_field'),
                 controller: _regularPriceController,
@@ -234,7 +234,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
                 isNumber: true,
                 hint: '85000',
               ),
-              _buildTextFieldLabel('Minimum Order Quantity'),
+              _buildTextFieldLabel('Jumlah Pesanan Minimum'),
               _buildTextField(
                 keyField: const Key('edit_product_moq_field'),
                 controller: _moqController,
@@ -247,7 +247,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
                   }
                   final intValue = int.tryParse(value);
                   if (intValue == null || intValue < 1) {
-                    return 'Min. Order minimal 1';
+                    return 'Min. Pesanan minimal 1';
                   }
                   return null;
                 },
@@ -255,16 +255,16 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
               const SizedBox(height: 24),
 
               // 4. INVENTORY
-              _buildSectionTitle('Inventory'),
+              _buildSectionTitle('Inventaris'),
               const SizedBox(height: 16),
-              _buildTextFieldLabel('Stock Quantity'),
+              _buildTextFieldLabel('Jumlah Stok'),
               _buildTextField(
                 keyField: const Key('edit_product_stock_field'),
                 controller: _stockController,
                 isNumber: true,
                 hint: '1000',
               ),
-              _buildTextFieldLabel('Low Stock Alert'),
+              _buildTextFieldLabel('Peringatan Stok Menipis'),
               _buildTextField(
                 keyField: const Key('edit_product_low_stock_field'),
                 controller: _lowStockController,
@@ -275,21 +275,21 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
               const SizedBox(height: 24),
 
               // 5. SPECIFICATIONS
-              _buildSectionTitle('Specifications'),
+              _buildSectionTitle('Spesifikasi'),
               const SizedBox(height: 16),
-              _buildTextFieldLabel('Description'),
+              _buildTextFieldLabel('Deskripsi'),
               _buildTextField(
                 keyField: const Key('edit_product_desc_field'),
                 controller: _descriptionController,
                 maxLines: 4,
-                hint: 'Enter product description...',
+                hint: 'Masukkan deskripsi produk...',
               ),
               const SizedBox(height: 24),
 
               // 6. SHIPPING
-              _buildSectionTitle('Shipping'),
+              _buildSectionTitle('Pengiriman'),
               const SizedBox(height: 16),
-              _buildTextFieldLabel('Weight (kg)'),
+              _buildTextFieldLabel('Berat (kg)'),
               _buildTextField(
                 keyField: const Key('edit_product_weight_field'),
                 controller: _weightController,
@@ -297,7 +297,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
                 hint: '4.00',
                 isRequired: false,
               ),
-              _buildTextFieldLabel('Dimensions (cm)'),
+              _buildTextFieldLabel('Dimensi (cm)'),
               _buildDimensionsRow(),
 
               const SizedBox(height: 40),
@@ -333,7 +333,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
         ),
       ),
       title: const Text(
-        'Edit Product',
+        'Ubah Produk',
         style: TextStyle(
           color: Colors.black,
           fontSize: 18,
@@ -355,7 +355,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
             child: const Text(
-              'Update',
+              'Perbarui',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -477,7 +477,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
           ),
         ),
         hint: Text(
-          'Select Category',
+          'Pilih Kategori',
           style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
         ),
         items: _categories.map((String category) {
@@ -560,7 +560,7 @@ class _FormEditProductAdminViewState extends State<FormEditProductAdminView> {
                 children: [
                   Icon(Icons.add, color: Colors.grey.shade400, size: 28),
                   const SizedBox(height: 4),
-                  Text('Add Photo', style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
+                  Text('Tambah Foto', style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
                 ],
               ),
             ),

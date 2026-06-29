@@ -362,7 +362,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Confirm',
+                    'Konfirmasi',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                   ),
                   GestureDetector(
@@ -403,7 +403,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                   const SizedBox(width: 16),
                   const Expanded(
                     child: Text(
-                      'Are you sure you want to delete this promotion?',
+                      'Apakah Anda yakin ingin menghapus promosi ini?',
                       style: TextStyle(
                         fontSize: 14,
                         color: Color(0xFF374151),
@@ -430,7 +430,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                         ),
                       ),
                       child: const Text(
-                        'Yes',
+                        'Ya',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -454,7 +454,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                         ),
                       ),
                       child: const Text(
-                        'No',
+                        'Tidak',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -536,8 +536,8 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
     if (success) {
       await _showSuccessDialog(
         widget.promotion == null
-            ? 'Successfully Created'
-            : 'Successfully Saved',
+            ? 'Promosi Berhasil Dibuat'
+            : 'Promosi Berhasil Disimpan',
       );
       if (!mounted) return;
       Navigator.pop(context);
@@ -563,14 +563,14 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Promotion deleted'),
+          content: Text('Promosi berhasil dihapus'),
           backgroundColor: Colors.red,
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Failed to delete promotion'),
+          content: Text('Gagal menghapus promosi'),
           backgroundColor: Colors.red,
         ),
       );
@@ -674,7 +674,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isEditing ? 'Edit Promotion' : 'Add Promotion',
+          isEditing ? 'Edit Promosi' : 'Tambah Promosi',
           style: const TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 18,
@@ -711,7 +711,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
               child: TextButton(
                 onPressed: _savePromotion,
                 child: Text(
-                  isEditing ? 'Update' : 'Save',
+                  isEditing ? 'Perbarui' : 'Simpan',
                   style: const TextStyle(
                     color: Color(0xFF2E7D32),
                     fontWeight: FontWeight.w700,
@@ -766,7 +766,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             ],
 
             // ── Product Image ─────────────────────────────────
-            _label('Product Image'),
+            _label('Gambar Promosi'),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: _pickImage,
@@ -812,8 +812,8 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                           const SizedBox(height: 8),
                           Text(
                             isEditing
-                                ? 'Replace Promotion Banner'
-                                : 'Upload Promotion Banner',
+                                ? 'Ganti Banner Promosi'
+                                : 'Unggah Banner Promosi',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF9CA3AF),
@@ -843,7 +843,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             const SizedBox(height: 24),
 
             // ── Promotion Title ───────────────────────────────
-            _label('Promotion Title'),
+            _label('Judul Promosi'),
             const SizedBox(height: 8),
             TextField(
               controller: _titleController,
@@ -856,7 +856,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                 }
               },
               decoration: _inputDeco(
-                isEditing ? 'Change Promotion Title' : 'Enter Promotion Title',
+                isEditing ? 'Ubah Judul Promosi' : 'Masukkan Judul Promosi',
                 hasError: _titleError,
               ),
             ),
@@ -865,22 +865,22 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             const SizedBox(height: 20),
 
             // ── Description ───────────────────────────────────
-            _label('Description'),
+            _label('Deskripsi'),
             const SizedBox(height: 8),
             TextField(
               controller: _descriptionController,
               maxLines: 4,
               decoration: _inputDeco(
                 isEditing
-                    ? 'Change Promotion Description'
-                    : 'Enter Promotion Description',
+                    ? 'Ubah Deskripsi Promosi'
+                    : 'Masukkan Deskripsi Promosi',
               ),
             ),
 
             const SizedBox(height: 20),
 
             // ── Discount Type ─────────────────────────────────
-            _label('Discount Type'),
+            _label('Tipe Diskon'),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -906,12 +906,12 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                   items: const [
                     DropdownMenuItem(
                       value: 'percentage',
-                      child: Text('Percentage'),
+                      child: Text('Persentase'),
                     ),
-                    DropdownMenuItem(value: 'bogo', child: Text('BOGO')),
+                    DropdownMenuItem(value: 'bogo', child: Text('Beli 1 Gratis 1 (BOGO)')),
                     DropdownMenuItem(
                       value: 'bundle',
-                      child: Text('Bundle Deal'),
+                      child: Text('Paket (Bundle)'),
                     ),
                   ],
                   onChanged: (v) => setState(() {
@@ -928,7 +928,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             // ── Discount Amount ───────────────────────────────
             if (_discountType != 'bogo') ...[
               const SizedBox(height: 20),
-              _label('Discount Amount'),
+              _label('Jumlah Diskon'),
               const SizedBox(height: 8),
               TextField(
                 controller: _discountValueController,
@@ -944,10 +944,10 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                 decoration:
                     _inputDeco(
                       isEditing
-                          ? 'Change Discount Value'
+                          ? 'Ubah Jumlah Diskon'
                           : (_discountType == 'percentage'
-                                ? 'Enter Discount Percentage'
-                                : 'Enter Discount per Set (Rp)'),
+                                ? 'Masukkan Persentase Diskon'
+                                : 'Masukkan Diskon per Paket (Rp)'),
                       hasError: _discountAmountError,
                     ).copyWith(
                       suffixIcon: _discountType == 'percentage'
@@ -977,12 +977,12 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             const SizedBox(height: 20),
 
             // ── Maximum Discount (Optional) ──────────────────
-            _label('Maximum Discount Amount (Optional)'),
+            _label('Jumlah Diskon Maksimal (Opsional)'),
             const SizedBox(height: 8),
             TextField(
               controller: _maxDiscountController,
               keyboardType: TextInputType.number,
-              decoration: _inputDeco('Enter Maximum Discount (Rp)').copyWith(
+              decoration: _inputDeco('Masukkan Diskon Maksimal (Rp)').copyWith(
                 prefixText: 'Rp ',
                 prefixStyle: const TextStyle(
                   fontSize: 14,
@@ -999,13 +999,13 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             const SizedBox(height: 20),
 
             // ── Promotion Period ──────────────────────────────
-            _label('Promotion Period'),
+            _label('Periode Promosi'),
             const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
                   child: _datePicker(
-                    'Start Date',
+                    'Tanggal Mulai',
                     _startDate,
                     () => _selectDate(true),
                     hasError: _dateError,
@@ -1014,7 +1014,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _datePicker(
-                    'End Date',
+                    'Tanggal Berakhir',
                     _endDate,
                     () => _selectDate(false),
                     hasError: _dateError,
@@ -1030,13 +1030,13 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             const SizedBox(height: 20),
 
             // ── Promotion Time ────────────────────────────────
-            _label('Promotion Time'),
+            _label('Waktu Promosi'),
             const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
                   child: _timePicker(
-                    'Start Time',
+                    'Jam Mulai',
                     _startTime,
                     () => _selectTime(true),
                     hasError: _timeError,
@@ -1045,7 +1045,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _timePicker(
-                    'End Time',
+                    'Jam Berakhir',
                     _endTime,
                     () => _selectTime(false),
                     hasError: _timeError,
@@ -1059,26 +1059,26 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
             const SizedBox(height: 24),
 
             // ── Target Scope ──────────────────────────────────
-            _label('Promotion Scope'),
+            _label('Cakupan Promosi'),
             const SizedBox(height: 10),
             Row(
               children: [
-                _buildScopeChip('Specific Products', 'products'),
+                _buildScopeChip('Produk Tertentu', 'products'),
                 const SizedBox(width: 12),
-                _buildScopeChip('All Products', 'all'),
+                _buildScopeChip('Semua Produk', 'all'),
               ],
             ),
             const SizedBox(height: 24),
 
             // ── Product Selection ─────────────────────────────
             if (_applicableTo == 'products') ...[
-              _label('Product Selection'),
+              _label('Pilihan Produk'),
               const SizedBox(height: 6),
               if (_selectedProductIds.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
-                    '${_selectedProductIds.length} product(s) selected',
+                    '${_selectedProductIds.length} produk terpilih',
                     style: const TextStyle(
                       fontSize: 13,
                       color: Color(0xFF2E7D32),
@@ -1091,7 +1091,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
               // Search produk
               TextField(
                 decoration: InputDecoration(
-                  hintText: 'Search Product',
+                  hintText: 'Cari Produk',
                   hintStyle: TextStyle(fontSize: 14, color: Colors.grey[400]),
                   suffixIcon: Container(
                     margin: const EdgeInsets.all(8),
@@ -1197,7 +1197,7 @@ class _FormPromotionAdminViewState extends State<FormPromotionAdminView> {
                       child: Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          'No products found',
+                          'Tidak ada produk ditemukan',
                           style: TextStyle(
                             color: Colors.grey[400],
                             fontSize: 13,

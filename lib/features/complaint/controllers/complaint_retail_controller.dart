@@ -98,4 +98,13 @@ class ComplaintUserController {
           return complaints;
         });
   }
+
+  static String formatPhoneForWhatsApp(String phone) {
+    if (phone.isEmpty) return '';
+    String cleanNumber = phone.replaceAll(RegExp(r'\D'), '');
+    if (cleanNumber.startsWith('0')) {
+      cleanNumber = '62${cleanNumber.substring(1)}';
+    }
+    return cleanNumber;
+  }
 }

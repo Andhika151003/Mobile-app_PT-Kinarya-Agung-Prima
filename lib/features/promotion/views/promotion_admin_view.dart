@@ -48,7 +48,7 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
             onPressed: () => Navigator.pop(context),
           ),
           title: const Text(
-            'Promotions',
+            'Promosi',
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 18,
@@ -89,7 +89,7 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'No promotions found',
+                                'Tidak ada promosi ditemukan',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[400],
@@ -133,7 +133,7 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
       controller: _searchController,
       onChanged: controller.searchPromotions,
       decoration: InputDecoration(
-        hintText: 'Search Promotions',
+        hintText: 'Cari Promosi',
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
@@ -147,18 +147,18 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
 
   Widget _buildFilters(PromotionAdminController controller) {
     final statuses = [
-      {'label': 'All', 'value': 'all'},
-      {'label': 'Active', 'value': 'active'},
-      {'label': 'Upcoming', 'value': 'upcoming'},
-      {'label': 'Ending', 'value': 'ending_soon'},
-      {'label': 'Expired', 'value': 'expired'},
+      {'label': 'Semua', 'value': 'all'},
+      {'label': 'Aktif', 'value': 'active'},
+      {'label': 'Akan Datang', 'value': 'upcoming'},
+      {'label': 'Segera Berakhir', 'value': 'ending_soon'},
+      {'label': 'Kedaluwarsa', 'value': 'expired'},
     ];
 
     final types = [
-      {'label': 'All Types', 'value': 'all'},
-      {'label': 'Percentage', 'value': 'percentage'},
-      {'label': 'BOGO', 'value': 'bogo'},
-      {'label': 'Bundle', 'value': 'bundle'},
+      {'label': 'Semua Tipe', 'value': 'all'},
+      {'label': 'Persentase', 'value': 'percentage'},
+      {'label': 'Beli 1 Gratis 1 (BOGO)', 'value': 'bogo'},
+      {'label': 'Paket (Bundle)', 'value': 'bundle'},
     ];
 
     return Container(
@@ -258,19 +258,19 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
     Color statusColor, statusBgColor;
 
     if (promo.isUpcoming) {
-      statusText = 'Upcoming';
+      statusText = 'Akan Datang';
       statusColor = const Color(0xFF0891B2);
       statusBgColor = const Color(0xFFECFEFF);
     } else if (promo.isEndingSoon) {
-      statusText = 'Ending Soon';
+      statusText = 'Segera Berakhir';
       statusColor = const Color(0xFFD97706);
       statusBgColor = const Color(0xFFFEF3C7);
     } else if (promo.isActive) {
-      statusText = 'Active';
+      statusText = 'Aktif';
       statusColor = const Color(0xFF2E7D32);
       statusBgColor = const Color(0xFFE8F5E9);
     } else {
-      statusText = 'Expired';
+      statusText = 'Kedaluwarsa';
       statusColor = const Color(0xFF9CA3AF);
       statusBgColor = const Color(0xFFF3F4F6);
     }
@@ -286,7 +286,7 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
         controller.fetchAllPromotions();
         if (result == 'deleted' && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Promotion deleted successfully'),
+            content: Text('Promosi berhasil dihapus'),
             backgroundColor: Colors.red,
           ));
         }
@@ -353,7 +353,7 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Valid: ${promo.formattedDateRange}',
+                  'Berlaku: ${promo.formattedDateRange}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFF6B7280),
@@ -373,7 +373,7 @@ class _PromotionAdminViewState extends State<PromotionAdminView> {
                     if (promo.discountType == 'bogo' &&
                         promo.maxDiscount != null)
                       Text(
-                        'Up to ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(promo.maxDiscount)}',
+                        'Hingga ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(promo.maxDiscount)}',
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.orange.shade800,

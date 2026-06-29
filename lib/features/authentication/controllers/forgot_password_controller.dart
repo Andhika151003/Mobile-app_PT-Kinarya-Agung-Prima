@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../../../core/firebase_provider.dart';
 
 class ForgotPasswordController extends ChangeNotifier {
   final FirebaseAuth _auth;
@@ -9,16 +10,16 @@ class ForgotPasswordController extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   ForgotPasswordController({FirebaseAuth? auth, FirebaseFirestore? firestore}) 
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+      : _auth = auth ?? AppFirebase.auth,
+        _firestore = firestore ?? AppFirebase.firestore;
 
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return 'Email wajib diisi';
     }
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
-      return 'Enter a valid email address';
+      return 'Harap masukkan alamat email yang valid';
     }
     return null;
   }

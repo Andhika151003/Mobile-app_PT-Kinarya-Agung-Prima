@@ -1,8 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/firebase_provider.dart';
 import '../controllers/profile_user_controller.dart';
 
 class FormProfileUserView extends StatefulWidget {
@@ -65,9 +64,9 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
 
   Future<void> _fetchCurrentData() async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final user = AppFirebase.auth.currentUser;
       if (user != null) {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        final doc = await AppFirebase.firestore.collection('users').doc(user.uid).get();
         if (doc.exists && mounted) {
           final data = doc.data() as Map<String, dynamic>;
           setState(() {
@@ -107,14 +106,14 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
 
       if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile updated successfully!')),
+            const SnackBar(content: Text('Profil berhasil diperbarui!')),
           );
           Navigator.pop(context, true);
         }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update: $e')),
+          SnackBar(content: Text('Gagal memperbarui: $e')),
         );
       }
     } finally {
@@ -125,13 +124,13 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
   Future<void> _sendVerificationEmail() async {
     setState(() => _isSendingVerification = true);
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final user = AppFirebase.auth.currentUser;
       if (user != null) {
         await user.sendEmailVerification();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Verification link sent to your email!'),
+              content: Text('Link verifikasi dikirim ke email Anda!'),
               backgroundColor: Color(0xFF458833),
             ),
           );
@@ -141,10 +140,10 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
       if (mounted) {
         String errorMsg = e.toString();
         if (errorMsg.contains('too-many-requests')) {
-          errorMsg = 'Please wait a moment before trying again.';
+          errorMsg = 'Harap tunggu sebentar sebelum mencoba lagi.';
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send link: $errorMsg')),
+          SnackBar(content: Text('Gagal mengirim link: $errorMsg')),
         );
       }
     } finally {
@@ -169,7 +168,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                     Center(child: _buildProfilePictureUpload(primaryGreen)),
                     const SizedBox(height: 32),
                     const Text(
-                      'Business Information',
+                      'Informasi Usaha',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -180,13 +179,13 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                     
                     _buildEmailDisplay(),
                     const SizedBox(height: 16),
-                    _buildTextField('Business Name', 'Enter Your Name', _nameController, semanticLabel: 'input_edit_profile_name'),
+                    _buildTextField('Nama Usaha', 'Masukkan Nama Anda', _nameController, key: const Key('businessNameField'), semanticLabel: 'input_edit_profile_name'),
                     
                     // Business Type Dropdown
                     const Padding(
                       padding: EdgeInsets.only(bottom: 8.0),
                       child: Text(
-                        'Business Type',
+                        'Jenis Usaha',
                         style: TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500),
                       ),
                     ),
@@ -207,13 +206,13 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                               _selectedBusinessType = value;
                             });
                           },
-                          decoration: _inputDecorationEdit('Select business type'),
-                          validator: (value) => value == null ? 'Please select business type' : null,
+                          decoration: _inputDecorationEdit('Pilih jenis usaha'),
+                          validator: (value) => value == null ? 'Harap pilih jenis usaha' : null,
                         ),
                       ),
                     ),
 
-                    _buildTextField('Contact', 'Enter Your Number', _contactController, isNumber: true, semanticLabel: 'input_edit_profile_contact'),
+                    _buildTextField('Kontak', 'Masukkan Nomor Anda', _contactController, key: const Key('contactField'), isNumber: true, semanticLabel: 'input_edit_profile_contact'),
                     
                     const SizedBox(height: 32),
                     _buildActionButtons(context, primaryGreen),
@@ -246,7 +245,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
         ),
       ),
       title: const Text(
-        'Edit Profile',
+        'Ubah Profil',
         style: TextStyle(
           color: Colors.black,
           fontSize: 16,
@@ -307,7 +306,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
     );
   }
 
-  Widget _buildTextField(String label, String hintText, TextEditingController controller, {bool isNumber = false, int maxLines = 1, String? semanticLabel}) {
+  Widget _buildTextField(String label, String hintText, TextEditingController controller, {Key? key, bool isNumber = false, int maxLines = 1, String? semanticLabel}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -325,12 +324,13 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
           Semantics(
             label: semanticLabel,
             child: TextFormField(
+              key: key,
               controller: controller,
               keyboardType: isNumber ? TextInputType.number : (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
               maxLines: maxLines,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return '* $label is required';
+                  return '* $label wajib diisi';
                 }
                 return null;
               },
@@ -376,7 +376,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Email Address',
+          'Alamat Email',
           style: TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 8),
@@ -410,7 +410,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      _isEmailVerified ? 'Verified' : 'Not Verified',
+                      _isEmailVerified ? 'Terverifikasi' : 'Belum Terverifikasi',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -433,7 +433,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                   ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF458833)))
                   : const Icon(Icons.send_rounded, size: 16, color: Color(0xFF458833)),
               label: Text(
-                _isSendingVerification ? 'Sending...' : 'Send Verification Link',
+                _isSendingVerification ? 'Mengirim...' : 'Kirim Link Verifikasi',
                 style: const TextStyle(color: Color(0xFF458833), fontWeight: FontWeight.bold, fontSize: 13),
               ),
               style: TextButton.styleFrom(
@@ -469,7 +469,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
                 : const Text(
-                    'Save Changes',
+                    'Simpan Perubahan',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -490,7 +490,7 @@ class _FormProfileUserViewState extends State<FormProfileUserView> {
               ),
             ),
             child: Text(
-              'Cancel',
+              'Batal',
               style: TextStyle(
                 color: primaryGreen,
                 fontWeight: FontWeight.bold,

@@ -3,14 +3,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../supabase_storage_service.dart';
+import '../../../core/firebase_provider.dart';
 
 class AdminProfileController {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
   AdminProfileController({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+      : _auth = auth ?? AppFirebase.auth,
+        _firestore = firestore ?? AppFirebase.firestore;
 
   Future<Map<String, dynamic>?> getAdminProfile() async {
     try {

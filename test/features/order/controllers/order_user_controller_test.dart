@@ -33,7 +33,7 @@ void main() {
   });
 
   group('Unit Test OrderUserController', () {
-    test('getOrderById harus mengembalikan data jika dokumen ada', () async {
+    test('getOrderById harus mengembalikan data detail pesanan jika data pesanan ditemukan', () async {
       final orderData = {
         'orderId': 'KNY-123',
         'status': 'Ordered',
@@ -47,12 +47,12 @@ void main() {
       expect(result!['orderId'], equals('KNY-123'));
     });
 
-    test('getOrderById harus mengembalikan null jika dokumen tidak ada', () async {
+    test('getOrderById harus mengembalikan null jika data pesanan tidak ditemukan', () async {
       final result = await orderUserController.getOrderById('NON-EXISTENT');
       expect(result, isNull);
     });
 
-    test('syncDuitkuPayment harus memperbarui status jika sukses', () async {
+    test('syncDuitkuPayment harus memperbarui status pembayaran pesanan jika berhasil disinkronisasi', () async {
       // Setup mock response
       when(() => mockHttpClient.post(
             any(),
@@ -85,11 +85,11 @@ void main() {
       
       // Verifikasi status diperbarui (OrderStatsHelper biasanya dipanggil)
       // Karena OrderStatsHelper menggunakan FirebaseFirestore.instance secara internal (statis), 
-      // kita mungkin perlu berhati-hati di sini jika ia tidak menggunakan instance yang dipassing.
+      // kita mungkin perlu berhati-hai di sini jika ia tidak menggunakan instance yang dipassing.
       // Namun untuk unit test ini, kita fokus pada flow controller.
     });
 
-    test('receiveOrder harus memperbarui status menjadi Delivered', () async {
+    test('receiveOrder harus memperbarui status pesanan menjadi Diterima (Delivered) ketika ritel mengonfirmasi', () async {
        // Setup mock notification
       when(() => mockPushNotificationService.sendNotificationToAdmin(
             title: any(named: 'title'),

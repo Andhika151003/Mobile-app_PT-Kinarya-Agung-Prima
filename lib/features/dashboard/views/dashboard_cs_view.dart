@@ -60,7 +60,7 @@ class _DashboardCsViewState extends State<DashboardCsView> {
                     const SizedBox(height: 30),
 
                     Text(
-                      'Welcome $csName!',
+                      'Selamat Datang, $csName!',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -78,14 +78,14 @@ class _DashboardCsViewState extends State<DashboardCsView> {
                           children: [
                              Expanded(
                                child: _buildStatCard(
-                                 'Open Complaints',
+                                 'Komplain Terbuka',
                                  FormatUtil.formatCompact(stats['openComplaints'] ?? 0),
-                               ),
+                                ),
                              ),
                              const SizedBox(width: 16),
                              Expanded(
                                child: _buildStatCard(
-                                 'Resolved Today',
+                                 'Diselesaikan Hari Ini',
                                  FormatUtil.formatCompact(stats['resolvedToday'] ?? 0),
                                ),
                              ),
@@ -96,7 +96,7 @@ class _DashboardCsViewState extends State<DashboardCsView> {
                     const SizedBox(height: 32),
 
                     const Text(
-                      'Recent Complaints',
+                      'Komplain Terbaru',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -121,8 +121,8 @@ class _DashboardCsViewState extends State<DashboardCsView> {
                         if (complaints.isEmpty) {
                           return const Center(
                             child: Padding(
-                              padding: EdgeInsets.all(20.0),
-                              child: Text('No recent complaints'),
+                               padding: EdgeInsets.all(20.0),
+                              child: Text('Tidak ada komplain terbaru'),
                             ),
                           );
                         }
@@ -215,11 +215,11 @@ class _DashboardCsViewState extends State<DashboardCsView> {
     switch (status) {
       case 'resolved':
         statusColor = const Color(0xFF1B8A3A);
-        statusLabel = 'RESOLVED';
+        statusLabel = 'SELESAI';
         break;
       case 'rejected':
         statusColor = Colors.red;
-        statusLabel = 'REJECTED';
+        statusLabel = 'DITOLAK';
         break;
       default:
         statusColor = Colors.orange;

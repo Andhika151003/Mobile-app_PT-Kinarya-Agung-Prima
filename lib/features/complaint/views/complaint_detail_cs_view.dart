@@ -53,7 +53,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
       final success = await _controller.resolveComplaint(widget.complaint.id!);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Complaint resolved successfully')),
+          const SnackBar(content: Text('Komplain berhasil diselesaikan')),
         );
         Navigator.pop(context, true);
       }
@@ -74,7 +74,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
       final success = await _controller.rejectComplaint(widget.complaint.id!);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Complaint rejected')),
+          const SnackBar(content: Text('Komplain ditolak')),
         );
         Navigator.pop(context, true);
       }
@@ -93,7 +93,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
     final phoneNumber = _retailerProfile?['phoneNumber'];
     if (phoneNumber == null || phoneNumber.toString().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Retailer phone number not found')),
+        const SnackBar(content: Text('Nomor telepon retailer tidak ditemukan')),
       );
       return;
     }
@@ -125,9 +125,18 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open WhatsApp: $e')),
+          SnackBar(content: Text('Tidak dapat membuka WhatsApp: $e')),
         );
       }
+    }
+  }
+
+  String _getStatusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending': return 'DIPROSES';
+      case 'resolved': return 'SELESAI';
+      case 'rejected': return 'DITOLAK';
+      default: return status.toUpperCase();
     }
   }
 
@@ -136,7 +145,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('Complaint Detail', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Detail Komplain', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0.5,
@@ -179,7 +188,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          widget.complaint.status.toUpperCase(),
+                          _getStatusLabel(widget.complaint.status),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -192,7 +201,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text('Submitted At', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      const Text('Dikirim Pada', style: TextStyle(fontSize: 12, color: Colors.grey)),
                       const SizedBox(height: 4),
                       Text(
                         DateFormat('dd MMM yyyy, HH:mm').format(widget.complaint.createdAt),
@@ -206,7 +215,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
             const SizedBox(height: 20),
 
             // Retailer Profile Section
-            const Text('Retailer Profile', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text('Profil Retailer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             _buildInfoCard(
               child: _isLoadingProfile
@@ -227,16 +236,16 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _retailerProfile?['fullName'] ?? 'Unknown Retailer',
+                                _retailerProfile?['fullName'] ?? 'Retailer Tidak Dikenal',
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                _retailerProfile?['email'] ?? 'No email',
+                                _retailerProfile?['email'] ?? 'Tidak ada email',
                                 style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                               ),
                               Text(
-                                _retailerProfile?['phoneNumber'] ?? 'No phone number',
+                                _retailerProfile?['phoneNumber'] ?? 'Tidak ada nomor telepon',
                                 style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                               ),
                             ],
@@ -250,7 +259,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
                             backgroundColor: const Color(0xFF25D366).withValues(alpha: 0.1),
                             padding: const EdgeInsets.all(12),
                           ),
-                          tooltip: 'Chat on WhatsApp',
+                          tooltip: 'Chat di WhatsApp',
                         ),
                       ],
                     ),
@@ -258,24 +267,24 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
             const SizedBox(height: 20),
 
             // Order & Product Info
-            const Text('Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text('Informasi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             _buildInfoCard(
               child: Column(
                 children: [
-                  _buildDetailRow('Order ID', widget.complaint.orderId),
+                  _buildDetailRow('ID Pesanan', widget.complaint.orderId),
                   const Divider(height: 24),
-                  _buildDetailRow('Issue Type', widget.complaint.issueType),
+                  _buildDetailRow('Jenis Kendala', widget.complaint.issueType),
                   if (widget.complaint.productName != null) ...[
                     const Divider(height: 24),
-                    _buildDetailRow('Product', widget.complaint.productName!),
+                    _buildDetailRow('Produk', widget.complaint.productName!),
                   ],
                   if (widget.complaint.status != 'pending' && widget.complaint.resolvedByName != null) ...[
                     const Divider(height: 24),
-                    _buildDetailRow('Handled By', widget.complaint.resolvedByName!),
+                    _buildDetailRow('Ditangani Oleh', widget.complaint.resolvedByName!),
                     const Divider(height: 24),
                     _buildDetailRow(
-                      'Handled At', 
+                      'Ditangani Pada', 
                       DateFormat('dd MMM yyyy, HH:mm').format(widget.complaint.resolvedAt ?? DateTime.now())
                     ),
                   ],
@@ -285,7 +294,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
             const SizedBox(height: 24),
 
             // Description
-            const Text('Description', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text('Deskripsi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             _buildInfoCard(
               child: Text(
@@ -297,7 +306,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
 
             // Images
             if (widget.complaint.imgUrl.isNotEmpty || widget.complaint.imageUrls.isNotEmpty) ...[
-              const Text('Attachments', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text('Lampiran', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               SizedBox(
                 height: 120,
@@ -334,7 +343,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red),
                             )
-                          : const Text('Reject', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          : const Text('Tolak', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -355,7 +364,7 @@ class _ComplaintDetailCsViewState extends State<ComplaintDetailCsView> {
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
                           : const Text(
-                              'Resolve',
+                              'Selesaikan',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                     ),

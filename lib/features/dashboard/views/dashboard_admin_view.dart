@@ -11,6 +11,7 @@ import '../../shared/widgets/shimmer_loading.dart';
 import '../../notification/views/notif_admin_view.dart';
 import '../../notification/controllers/notif_admin_controller.dart';
 import 'package:ecommerce/features/order/controllers/order_admin_controller.dart';
+import '../../../core/firebase_provider.dart';
 
 
 class DashboardAdminView extends StatefulWidget {
@@ -22,7 +23,7 @@ class DashboardAdminView extends StatefulWidget {
 
 class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticKeepAliveClientMixin {
   final DashboardAdminController _controller = DashboardAdminController();
-  final NotificationAdminController _notifController = NotificationAdminController();
+  late final NotificationAdminController? _notifController;
 
   Map<String, dynamic> overviewStats = {};
   List<Map<String, dynamic>> promotions = [];
@@ -36,6 +37,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
   @override
   void initState() {
     super.initState();
+    _notifController = AppFirebase.isMocked ? null : NotificationAdminController();
     _loadDashboardData();
     
     _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
@@ -125,18 +127,15 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
                         _buildHeader(),
                       const SizedBox(height: 30),
                       _buildSectionHeader(
-                        'Overview',
-                        'Advanced Analytics',
-                        onAction: () {
-                          MainNavigationAdmin.of(context)?.setIndex(3);
-                        },
+                        'Ringkasan',
+                        '',
                       ),
                       const SizedBox(height: 15),
                       _buildOverviewCards(),
                       const SizedBox(height: 30),
                       _buildSectionHeader(
-                        'Active Promotions',
-                        '+ New Promo',
+                        'Promosi Aktif',
+                        '+ Promo Baru',
                         onAction: () async {
                           await Navigator.push(
                             context,
@@ -152,8 +151,8 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
                       _buildPromoList(),
                       const SizedBox(height: 30),
                       _buildSectionHeader(
-                        'My Retailers',
-                        'View All',
+                        'Retailer Saya',
+                        'Lihat Semua',
                         onAction: () {
                           Navigator.push(
                             context,
@@ -184,7 +183,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
       children: [
         Image.asset('assets/images/logo.png', height: 35),
         StreamBuilder<int>(
-          stream: _notifController.getUnreadCount(),
+          stream: _notifController != null ? _notifController.getUnreadCount() : Stream.value(0),
           builder: (context, snapshot) {
             final unreadCount = snapshot.data ?? 0;
             return Stack(
@@ -227,9 +226,9 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
           children: [
             Expanded(
               child: _buildSingleCard(
-                title: 'Total Sales',
+                title: 'Total Penjualan',
                 value: FormatUtil.formatCompact(overviewStats['totalSales'] ?? 0, isCurrency: true),
-                subtitle: 'Real-time revenue',
+                subtitle: 'Pendapatan real-time',
                 subtitleColor: Colors.blue.shade300,
                 icon: Icons.attach_money,
                 iconColor: Colors.blue,
@@ -238,9 +237,9 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
             const SizedBox(width: 10),
             Expanded(
               child: _buildSingleCard(
-                title: 'Orders',
+                title: 'Pesanan',
                 value: FormatUtil.formatCompact(overviewStats['totalOrders'] ?? 0),
-                subtitle: 'Paid orders',
+                subtitle: 'Pesanan terbayar',
                 subtitleColor: Colors.green,
                 icon: Icons.shopping_basket_outlined,
                 iconColor: Colors.green,
@@ -253,9 +252,9 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
           children: [
             Expanded(
               child: _buildSingleCard(
-                title: 'Customers',
+                title: 'Pelanggan',
                 value: FormatUtil.formatCompact(overviewStats['totalCustomers'] ?? 0),
-                subtitle: 'Registered Retailers',
+                subtitle: 'Retailer Terdaftar',
                 subtitleColor: Colors.orange.shade300,
                 icon: Icons.people_outline,
                 iconColor: Colors.teal,
@@ -264,9 +263,9 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
             const SizedBox(width: 10),
             Expanded(
               child: _buildSingleCard(
-                title: 'Conversion Rate',
+                title: 'Tingkat Konversi',
                 value: '${overviewStats['conversionRate'] ?? 0}%',
-                subtitle: 'Sales per Customer',
+                subtitle: 'Penjualan per Pelanggan',
                 subtitleColor: Colors.purple.shade300,
                 icon: Icons.trending_up,
                 iconColor: Colors.purple,
@@ -330,17 +329,18 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
           title,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        GestureDetector(
-          onTap: onAction,
-          child: Text(
-            actionText,
-            style: const TextStyle(
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
+        if (actionText.isNotEmpty)
+          GestureDetector(
+            onTap: onAction,
+            child: Text(
+              actionText,
+              style: const TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -350,7 +350,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20.0),
-          child: Text('No active promotions'),
+          child: Text('Tidak ada promosi aktif'),
         ),
       );
     }
@@ -369,7 +369,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20.0),
-          child: Text('No active or upcoming promotions'),
+          child: Text('Tidak ada promosi aktif atau mendatang'),
         ),
       );
     }
@@ -399,15 +399,15 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
             Color badgeTextColor;
 
             if (promoModel.isUpcoming) {
-              badgeText = 'UPCOMING';
+              badgeText = 'MENDATANG';
               badgeColor = Colors.cyan.shade50;
               badgeTextColor = Colors.cyan.shade700;
             } else if (promoModel.isEndingSoon) {
-              badgeText = 'ENDING SOON';
+              badgeText = 'SEGERA BERAKHIR';
               badgeColor = Colors.orange.shade50;
               badgeTextColor = Colors.orange;
             } else {
-              badgeText = 'ACTIVE';
+              badgeText = 'AKTIF';
               badgeColor = Colors.blue.shade50;
               badgeTextColor = Colors.blue;
             }
@@ -533,7 +533,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> with AutomaticK
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20.0),
-          child: Text('No retailers found'),
+          child: Text('Retailer tidak ditemukan'),
         ),
       );
     }

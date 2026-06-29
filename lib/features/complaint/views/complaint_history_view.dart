@@ -34,7 +34,7 @@ class _ComplaintHistoryViewState extends State<ComplaintHistoryView> {
                 autofocus: true,
                 style: const TextStyle(color: Colors.black, fontSize: 18),
                 decoration: const InputDecoration(
-                  hintText: 'Search order ID, issue...',
+                  hintText: 'Cari ID pesanan, kendala...',
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: Colors.grey),
                 ),
@@ -45,7 +45,7 @@ class _ComplaintHistoryViewState extends State<ComplaintHistoryView> {
                 },
               )
             : const Text(
-                'Complaint History',
+                'Riwayat Komplain',
                 style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
         backgroundColor: Colors.white,
@@ -116,7 +116,7 @@ class _ComplaintHistoryViewState extends State<ComplaintHistoryView> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    _isSearching ? 'No results found' : 'No complaint history found',
+                    _isSearching ? 'Tidak ada hasil ditemukan' : 'Tidak ada riwayat komplain',
                     style: const TextStyle(color: Colors.grey, fontSize: 16),
                   ),
                 ],
@@ -163,7 +163,7 @@ class _ComplaintHistoryViewState extends State<ComplaintHistoryView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Order #${complaint.orderId}',
+                      'Pesanan #${complaint.orderId}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 4),
@@ -202,7 +202,7 @@ class _ComplaintHistoryViewState extends State<ComplaintHistoryView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Handled by: ${complaint.resolvedByName}',
+                        'Ditangani oleh: ${complaint.resolvedByName}',
                         style: TextStyle(
                           color: Colors.blue.shade700,
                           fontSize: 12,
@@ -223,24 +223,28 @@ class _ComplaintHistoryViewState extends State<ComplaintHistoryView> {
   Widget _buildStatusBadge(String status) {
     Color bg;
     Color fg;
-    String label = status.toUpperCase();
+    String label = '';
 
     switch (status.toLowerCase()) {
       case 'pending':
         bg = Colors.orange.shade50;
         fg = Colors.orange.shade700;
+        label = 'DIPROSES';
         break;
       case 'resolved':
         bg = Colors.green.shade50;
         fg = Colors.green.shade700;
+        label = 'SELESAI';
         break;
       case 'rejected':
         bg = Colors.red.shade50;
         fg = Colors.red.shade700;
+        label = 'DITOLAK';
         break;
       default:
         bg = Colors.grey.shade50;
         fg = Colors.grey.shade700;
+        label = status.toUpperCase();
     }
 
     return Container(

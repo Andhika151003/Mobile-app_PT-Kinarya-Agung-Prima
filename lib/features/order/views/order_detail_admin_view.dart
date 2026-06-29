@@ -37,10 +37,12 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
   }
 
   Future<void> _fetchOrder() async {
+    OrderModel? initialOrder;
     try {
       final data = await _adminController.getOrderById(widget.orderId);
       if (data != null && mounted) {
         final order = OrderModel.fromMap(data);
+        initialOrder = order;
 
         if (order.status == 'Ordered') {
           await _adminController.syncAllPendingOrders();
@@ -61,7 +63,13 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          // Gunakan data awal jika sync gagal, agar UI tidak stuck loading
+          if (initialOrder != null) _order = initialOrder;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -255,7 +263,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Order Details', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text('Detail Pesanan', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
         actions: [
           if (_order != null &&
               (_order!.status == 'Delivered' ||
@@ -298,16 +306,16 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
             const SizedBox(height: 20),
 
             // 2. Order Status Stepper
-            const Text('Order Status', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+            const Text('Status Pesanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 12),
-            _buildStatusStepper(order.status, order),
+            _buildStatusStepper(order),
             
             _buildAdminActionButtons(order),
             
             const SizedBox(height: 24),
 
             // 3. Shipping Information
-            const Text('Shipping Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+            const Text('Informasi Pengiriman', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -316,7 +324,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Shipping Address', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  Text('Alamat Pengiriman', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                   const SizedBox(height: 8),
                   Text(order.fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black)),
                   const SizedBox(height: 4),
@@ -343,7 +351,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
             const SizedBox(height: 24),
 
             // 4. Order Items
-            const Text('Order Items', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+            const Text('Produk Pesanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade200)),
@@ -358,15 +366,15 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                         if (order.discountAmount > 0) ...[
                           const SizedBox(height: 8),
                           _buildSummaryRow(
-                            'Discount', 
+                            'Diskon', 
                             '-${currency.format(order.discountAmount)}',
                             valueColor: Colors.red.shade600,
                           ),
                         ],
                         const SizedBox(height: 8),
-                        _buildSummaryRow('Tax (11%)', currency.format(order.tax)),
+                        _buildSummaryRow('Pajak (11%)', currency.format(order.tax)),
                         const SizedBox(height: 8),
-                        _buildSummaryRow('Shipping', order.shippingCost == 0 ? 'Free' : currency.format(order.shippingCost)),
+                        _buildSummaryRow('Pengiriman', order.shippingCost == 0 ? 'Gratis' : currency.format(order.shippingCost)),
                         const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1)),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -384,7 +392,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
             const SizedBox(height: 24),
 
             // 5. Payment Information
-            const Text('Payment Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+            const Text('Informasi Pembayaran', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 8),
             _buildPaymentInfoCard(order.paymentMethod, order.createdAt, order.orderId, order.orderId),
           ],
@@ -410,7 +418,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
             ],
           ),
           const SizedBox(height: 4),
-          Text(date != null ? DateFormat('MMMM dd, yyyy • hh:mm a').format(date) : '-', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+          Text(date != null ? _formatFullDateTime(date) : '-', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
           const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1)),
           Row(
             children: [
@@ -418,7 +426,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Total Amount', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text('Total Pembayaran', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     const SizedBox(height: 4),
                     Text(currency.format(total), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
                   ],
@@ -428,7 +436,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Payment Status', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text('Status Pembayaran', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -547,21 +555,10 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
     return Column(children: actions);
   }
 
-  Widget _buildStatusStepper(String currentStatus, OrderModel order) {
+  Widget _buildStatusStepper(OrderModel order) {
     final steps = ['Ordered', 'Paid', 'Shipped', 'Delivered'];
-    int currentIndex = steps.indexOf(currentStatus);
-    bool isCancelledOrExpired = currentStatus == 'Cancelled' || currentStatus == 'Expired';
-    if (currentIndex == -1) {
-      if (order.deliveredAt != null) {
-        currentIndex = 3;
-      } else if (order.shippedAt != null) {
-        currentIndex = 2;
-      } else if (order.paidAt != null) {
-        currentIndex = 1;
-      } else {
-        currentIndex = 0;
-      }
-    }
+    final currentIndex = order.stepperIndex;
+    final isCancelledOrExpired = order.isCancelledOrExpired;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,7 +600,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
               ),
               const SizedBox(height: 8),
               Text(steps[index].displayStatus, style: TextStyle(fontSize: 12, fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal, color: isCompleted ? Colors.black : Colors.grey.shade500), textAlign: TextAlign.center),
-              if (stepDate != null) Text(DateFormat('MMM dd, HH:mm').format(stepDate), style: TextStyle(fontSize: 10, color: Colors.grey.shade500), textAlign: TextAlign.center),
+              if (stepDate != null) Text(_formatStepDate(stepDate), style: TextStyle(fontSize: 10, color: Colors.grey.shade500), textAlign: TextAlign.center),
             ],
           ),
         );
@@ -676,7 +673,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Payment Method', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  Text('Metode Pembayaran', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -692,7 +689,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Transaction ID', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  Text('ID Transaksi', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                   const SizedBox(height: 4),
                   Text('TXN-$shortTxn', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
@@ -707,9 +704,9 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Payment Date', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  Text('Tanggal Pembayaran', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                   const SizedBox(height: 4),
-                  Text(date != null ? DateFormat('MMMM dd, yyyy').format(date) : '-', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black)),
+                  Text(date != null ? _formatDate(date) : '-', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black)),
                 ],
               ),
             ),
@@ -717,7 +714,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Invoice ID', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  Text('ID Invoice', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                   const SizedBox(height: 4),
                   Text(invoiceId, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
@@ -739,7 +736,7 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
                   PdfService.generateAndOpenInvoice(_order!);
                 },
                 icon: const Icon(Icons.download_outlined, size: 18),
-                label: const Text('Download Invoice',
+                label: const Text('Unduh Invoice',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey.shade100,
@@ -788,5 +785,33 @@ class _OrderDetailAdminViewState extends State<OrderDetailAdminView> {
         ],
       ),
     );
+  }
+
+  String _formatFullDateTime(DateTime date) {
+    final months = [
+      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    final h = date.hour.toString().padLeft(2, '0');
+    final m = date.minute.toString().padLeft(2, '0');
+    return '${months[date.month]} ${date.day}, ${date.year} • $h:$m WIB';
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return '${months[date.month]} ${date.day}, ${date.year}';
+  }
+
+  String _formatStepDate(DateTime date) {
+    final months = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    final h = date.hour.toString().padLeft(2, '0');
+    final m = date.minute.toString().padLeft(2, '0');
+    return '${months[date.month]} ${date.day}, $h:$m';
   }
 }

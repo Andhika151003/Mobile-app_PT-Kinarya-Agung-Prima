@@ -21,7 +21,7 @@ class _NotificationAdminViewState extends State<NotificationAdminView> {
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: const Text(
-          'Admin Notifications',
+          'Notifikasi Admin',
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -35,7 +35,7 @@ class _NotificationAdminViewState extends State<NotificationAdminView> {
           TextButton(
             onPressed: () => _controller.markAllAsRead(),
             child: const Text(
-              'Mark All Read',
+              'Baca Semua',
               style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
@@ -69,7 +69,7 @@ class _NotificationAdminViewState extends State<NotificationAdminView> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No admin notifications',
+                    'Tidak ada notifikasi admin',
                     style: TextStyle(
                       color: Colors.grey[500],
                       fontSize: 16,

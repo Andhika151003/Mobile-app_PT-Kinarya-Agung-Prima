@@ -31,12 +31,13 @@ void main() {
       });
 
       // Order 2: Success, Recent
+      final subRecent = now.hour > 0 ? const Duration(hours: 1) : const Duration(seconds: 1);
       await firestore.collection('orders').add({
         'status': 'Paid',
         'total': 50000.0,
         'userId': 'user2',
         'fullName': 'Toko B',
-        'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
+        'createdAt': Timestamp.fromDate(now.subtract(subRecent)),
         'items': [
           {'title': 'Product 1', 'quantity': 1, 'price': 40000.0, 'category': 'Food'},
         ],

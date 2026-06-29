@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/notification_model.dart';
+import '../../../core/firebase_provider.dart';
 
 class NotificationUserController {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = AppFirebase.firestore;
+  final FirebaseAuth _auth = AppFirebase.auth;
 
   Stream<List<NotificationModel>> getNotifications() {
     final user = _auth.currentUser;

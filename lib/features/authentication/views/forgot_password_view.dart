@@ -34,7 +34,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
       if (mounted) {
         String errorMsg = e.toString();
         if (errorMsg.contains('user-not-found')) {
-          errorMsg = 'No user found with this email.';
+          errorMsg = 'Tidak ada pengguna dengan email ini.';
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMsg)),
@@ -49,9 +49,9 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Email Sent'),
+        title: const Text('Email Terkirim'),
         content: const Text(
-          'A password reset link has been sent to your email. Please check your inbox.',
+          'Link reset password telah dikirim ke email Anda. Silakan periksa kotak masuk Anda.',
         ),
         actions: [
           TextButton(
@@ -59,7 +59,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: Text('Back to Login', style: TextStyle(color: primaryGreen)),
+            child: Text('Kembali ke Login', style: TextStyle(color: primaryGreen)),
           ),
         ],
       ),
@@ -82,7 +82,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 onPressed: () => Navigator.pop(context),
               ),
               title: const Text(
-                'Forgot Password',
+                'Lupa Password',
                 style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
               ),
               centerTitle: true,
@@ -112,20 +112,21 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Enter your email address and we will send you a link to reset your password.',
+                      'Masukkan alamat email Anda dan kami akan mengirimkan link untuk mereset password.',
                       style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.5),
                     ),
                     const SizedBox(height: 32),
                     
                     // Email Field
                     const Text(
-                      'Email Address',
+                      'Alamat Email',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 8),
                     Semantics(
                       label: 'input_forgot_password_email',
                       child: TextFormField(
+                        key: const Key('forgotPasswordEmailField'),
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         validator: controller.validateEmail,
@@ -154,6 +155,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                       child: Semantics(
                         label: 'btn_forgot_password_submit',
                         child: ElevatedButton(
+                          key: const Key('sendResetLinkButton'),
                           onPressed: controller.isLoading ? null : () => _handleResetPassword(controller),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryGreen,
@@ -168,7 +170,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                 )
                               : const Text(
-                                  'Send Reset Link',
+                                  'Kirim Link Reset',
                                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                         ),

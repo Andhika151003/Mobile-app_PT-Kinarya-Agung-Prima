@@ -29,6 +29,20 @@ class _AllProductAdminViewState extends State<AllProductAdminView> {
     'Foods',
   ];
 
+  final Map<String, String> _categoryMap = const {
+    'All': 'Semua',
+    'Beauty Care': 'Kecantikan',
+    'Pet Care': 'Hewan Peliharaan',
+    'Health': 'Kesehatan',
+    'Foods': 'Makanan',
+  };
+
+  final Map<String, String> _sortMap = const {
+    'Name A-Z': 'Nama A-Z',
+    'Stock Low-High': 'Stok Terendah-Tertinggi',
+    'Best Selling': 'Paling Laris',
+  };
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -111,7 +125,7 @@ class _AllProductAdminViewState extends State<AllProductAdminView> {
                             items: _categories.map((String value) {
                               return DropdownMenuItem<String>(
                                 value: value,
-                                child: Text(value),
+                                child: Text(_categoryMap[value] ?? value),
                               );
                             }).toList(),
                             onChanged: (newValue) {
@@ -141,7 +155,7 @@ class _AllProductAdminViewState extends State<AllProductAdminView> {
                                 .map((String value) {
                               return DropdownMenuItem<String>(
                                 value: value,
-                                child: Text(value),
+                                child: Text(_sortMap[value] ?? value),
                               );
                             }).toList(),
                             onChanged: (newValue) {
@@ -284,7 +298,7 @@ class _AllProductAdminViewState extends State<AllProductAdminView> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'SKU: ${product.sku ?? '-'} | Kategori: ${product.category}',
+                      'SKU: ${product.sku ?? '-'} | Kategori: ${_categoryMap[product.category] ?? product.category}',
                       style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 8),
