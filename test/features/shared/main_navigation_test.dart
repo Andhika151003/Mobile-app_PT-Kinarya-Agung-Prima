@@ -15,8 +15,8 @@ void main() {
       expect(find.byType(BottomNavigationBar), findsOneWidget);
       expect(find.text('Admin Page 0'), findsOneWidget); // initially page 0
 
-      // Tap 'Products' (index 1)
-      await tester.tap(find.text('Products').last);
+      // Tap 'Produk' (index 1)
+      await tester.tap(find.text('Produk').last);
       await tester.pumpAndSettle();
       expect(find.text('Admin Page 1'), findsOneWidget);
     });
@@ -30,8 +30,8 @@ void main() {
       expect(find.byType(BottomNavigationBar), findsOneWidget);
       expect(find.text('User Page 0'), findsOneWidget);
 
-      // Tap 'Orders' (index 2)
-      await tester.tap(find.text('Orders').last);
+      // Tap 'Pesanan' (index 2)
+      await tester.tap(find.text('Pesanan').last);
       await tester.pumpAndSettle();
       expect(find.text('User Page 2'), findsOneWidget);
     });
@@ -46,13 +46,13 @@ void main() {
       expect(find.text('Cs Page 0'), findsOneWidget);
       
       // Verifikasi item di CS
-      expect(find.text('Home'), findsWidgets);
-      expect(find.text('Orders'), findsWidgets);
-      expect(find.text('Supports'), findsWidgets);
-      expect(find.text('Profile'), findsWidgets);
+      expect(find.text('Beranda'), findsWidgets);
+      expect(find.text('Pesanan'), findsWidgets);
+      expect(find.text('Dukungan'), findsWidgets);
+      expect(find.text('Profil'), findsWidgets);
 
-      // Coba tap item 'Orders'
-      await tester.tap(find.text('Orders').last);
+      // Coba tap item 'Pesanan'
+      await tester.tap(find.text('Pesanan').last);
       await tester.pumpAndSettle();
       expect(find.text('Cs Page 1'), findsOneWidget);
     });

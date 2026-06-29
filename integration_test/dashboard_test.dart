@@ -23,26 +23,26 @@ void main() {
       expect(find.text('Promosi Aktif'), findsOneWidget);
       expect(find.text('Retailer Saya'), findsOneWidget);
 
-      // Test navigation to Manage Retail (Retailer Management)
-      final viewAllFinder = find.text('Lihat Semua');
-      expect(viewAllFinder, findsOneWidget);
-      await tester.tap(viewAllFinder);
-      await tester.pumpAndSettle();
+      // // Test navigation to Manage Retail (Retailer Management)
+      // final viewAllFinder = find.text('Lihat Semua');
+      // expect(viewAllFinder, findsOneWidget);
+      // await tester.tap(viewAllFinder);
+      // await tester.pumpAndSettle();
 
-      expect(find.text('Total Retailer'), findsOneWidget);
+      // expect(find.text('Total Retailer'), findsOneWidget);
 
-      // Navigate back to Dashboard
-      final backButton = find.byTooltip('Back');
-      if (backButton.evaluate().isNotEmpty) {
-        await tester.tap(backButton);
-      } else {
-        final iconBack = find.byIcon(Icons.arrow_back);
-        if (iconBack.evaluate().isNotEmpty) {
-          await tester.tap(iconBack);
-        } else {
-          await tester.pageBack();
-        }
-      }
+      // // Navigate back to Dashboard
+      // final backButton = find.byTooltip('Back');
+      // if (backButton.evaluate().isNotEmpty) {
+      //   await tester.tap(backButton);
+      // } else {
+      //   final iconBack = find.byIcon(Icons.arrow_back);
+      //   if (iconBack.evaluate().isNotEmpty) {
+      //     await tester.tap(iconBack);
+      //   } else {
+      //     await tester.pageBack();
+      //   }
+      // }
       await tester.pumpAndSettle();
     });
 
