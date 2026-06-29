@@ -196,4 +196,23 @@ class OrderModel {
       cancellationStatus: cancellationStatus ?? this.cancellationStatus,
     );
   }
+
+  int get stepperIndex {
+    final steps = ['Ordered', 'Paid', 'Shipped', 'Delivered'];
+    int index = steps.indexOf(status);
+    if (index == -1) {
+      if (deliveredAt != null) {
+        return 3;
+      } else if (shippedAt != null) {
+        return 2;
+      } else if (paidAt != null) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+    return index;
+  }
+
+  bool get isCancelledOrExpired => status == 'Cancelled' || status == 'Expired';
 }

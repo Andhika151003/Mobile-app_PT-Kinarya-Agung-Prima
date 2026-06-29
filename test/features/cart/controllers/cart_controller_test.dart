@@ -15,13 +15,13 @@ void main() {
     cartController.clearCart();
   });
 
-  group('Unit Test CartController', () {
-    test('Keranjang awal harus kosong', () {
+  group('Unit Test CartController - TC-83 s/d TC-95', () {
+    test('TC-91: Keranjang awal harus kosong sebelum checkout', () {
       expect(cartController.items, isEmpty);
       expect(cartController.subtotal, equals(0.0));
     });
 
-    test('Tambah item ke keranjang', () {
+    test('TC-83: Ritel menambahkan produk ke dalam keranjang untuk pertama kali', () {
       cartController.addToCart(
         id: 'p1',
         title: 'Produk 1',
@@ -40,7 +40,7 @@ void main() {
       expect(cartController.subtotal, equals(200.0));
     });
 
-    test('Menambah item yang sudah ada akan memperbarui jumlahnya', () {
+    test('TC-94: Menambahkan produk yang sudah ada didalam keranjang', () {
       cartController.addToCart(
         id: 'p1',
         title: 'Produk 1',
@@ -69,7 +69,7 @@ void main() {
       expect(cartController.items[0].quantity, equals(5));
     });
 
-    test('Menambah item yang sudah ada tetap menghormati batas stok', () {
+    test('TC-87: Menambah jumlah produk hingga melebihi sisa stok (menghormati batas stok)', () {
       cartController.addToCart(
         id: 'p1',
         title: 'Produk 1',
@@ -97,7 +97,7 @@ void main() {
       expect(cartController.items[0].quantity, equals(5));
     });
 
-    test('Menambah jumlah (increment) quantity', () {
+    test('TC-86: Menambah jumlah produk dengan tombol (+)', () {
       cartController.addToCart(
         id: 'p1',
         title: 'Produk 1',
@@ -114,7 +114,7 @@ void main() {
       expect(cartController.items[0].quantity, equals(2));
     });
 
-    test('Mengurangi jumlah (decrement) menghormati minimal order', () {
+    test('TC-89: Mengurangi jumlah produk pada batas bawah MOQ (menghormati minimal order)', () {
       cartController.addToCart(
         id: 'p1',
         title: 'Produk 1',
@@ -131,7 +131,7 @@ void main() {
       expect(cartController.items[0].quantity, equals(2));
     });
 
-    test('Menghapus item dari keranjang', () {
+    test('TC-90: Menghapus produk dari keranjang secara manual', () {
       cartController.addToCart(
         id: 'p1',
         title: 'Produk 1',
@@ -148,7 +148,7 @@ void main() {
       expect(cartController.items, isEmpty);
     });
 
-    test('Kalkulasi total harus sesuai subtotal (ongkir 0)', () {
+    test('TC-92: Melakukan checkout dengan produk yang ingin dibeli (Kalkulasi total sesuai subtotal)', () {
       cartController.addToCart(
         id: 'p1',
         title: 'Produk 1',

@@ -125,7 +125,7 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
             // 2. Order Status Stepper
             const Text('Status Pesanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 12),
-            _buildStatusStepper(order.status, order),
+            _buildStatusStepper(order),
             
             _buildUserActionButtons(order.status, context),
 
@@ -347,21 +347,10 @@ class _OrderDetailUserViewState extends State<OrderDetailUserView> {
     );
   }
 
-  Widget _buildStatusStepper(String currentStatus, OrderModel order) {
+  Widget _buildStatusStepper(OrderModel order) {
     final steps = ['Ordered', 'Paid', 'Shipped', 'Delivered'];
-    int currentIndex = steps.indexOf(currentStatus);
-    bool isCancelledOrExpired = currentStatus == 'Cancelled' || currentStatus == 'Expired';
-    if (currentIndex == -1) {
-      if (order.deliveredAt != null) {
-        currentIndex = 3;
-      } else if (order.shippedAt != null) {
-        currentIndex = 2;
-      } else if (order.paidAt != null) {
-        currentIndex = 1;
-      } else {
-        currentIndex = 0;
-      }
-    }
+    final currentIndex = order.stepperIndex;
+    final isCancelledOrExpired = order.isCancelledOrExpired;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
